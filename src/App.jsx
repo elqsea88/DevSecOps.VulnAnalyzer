@@ -43,7 +43,7 @@ function App(){
     setSonarF(repoName,"_fetching",true);
     setSonarF(repoName,"_fetchError",null);
     try {
-      const params = new URLSearchParams({ branch: br, projectKey: cfg.sonarProjectKey + repoName });
+      const params = new URLSearchParams({ branch: br, projectKey: cfg.sonarProjectKey + (repoName || cfg.projectName) });
       const res = await fetch(`${url}/api/sonar-data?${params}`, { signal: AbortSignal.timeout(20000) });
       const json = await res.json();
       if (!json.ok) throw new Error(json.error || `HTTP ${res.status}`);
@@ -58,7 +58,7 @@ function App(){
 
   const getSonarUrl = (repoName, branch) => {
     const base = cfg.sonarBase.replace(/\/$/,"");
-    const key  = cfg.sonarProjectKey + repoName;
+    const key  = cfg.sonarProjectKey + (repoName || cfg.projectName);
     const br   = branch || cfg.ticket || "";
     return `${base}/dashboard?branch=${encodeURIComponent(br)}&id=${encodeURIComponent(key)}&codeScope=overall`;
   };
