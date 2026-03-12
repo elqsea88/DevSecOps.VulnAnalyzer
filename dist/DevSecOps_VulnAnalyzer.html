@@ -2006,7 +2006,7 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fet
 // ──────────────────────────────────────────────────────────────────
 // ── DocumentosPhase ─────────────────────────────────────────────────────────────────
 // Props destructured from App state
-function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, setVulnF, stats, sonarData, genDG, genDT, genCK, genCIP, dl1, dlAll, completePhase, showSources, setShowSources, getSourcesDisplay, TODAY, card, inp, ta, infoBox, warnBox, codeBox, lbl, btnP, btnS, btnG, sevBadge, claudeKey, setClaudeKey, fetchAI, aiLoading }) {
+function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, setVulnF, stats, sonarData, genDG, genDT, genCK, genCIP, dl1, dlAll, completePhase, showSources, setShowSources, getSourcesDisplay, TODAY, card, inp, ta, infoBox, warnBox, codeBox, lbl, btnP, btnS, btnG, sevBadge, claudeKey, setClaudeKey, fetchAI, aiLoading, fetchAI_DT, repos }) {
   return (
             <div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24,paddingBottom:18,borderBottom:"1px solid #1A2840"}}>
@@ -2161,16 +2161,96 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                       <div style={{display:"flex",gap:8,marginBottom:14}}>
                         <button style={btnG} onClick={()=>dl1("dt")}>⬇ Exportar TXT</button>
                       </div>
-                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-                        {[
-                          {k:"patron",l:"Patrón de Solución XSS",ph:"Reemplazar innerHTML → DOMPurify.sanitize()…"},
-                          {k:"deps",  l:"Dependencias a Actualizar",ph:"jquery-validation → ≥1.19.3\nselect2-bs3 → ≥4.0.13…"},
-                        ].map(({k,l,ph})=>(
-                          <div key={k}><label style={lbl}>{l}</label><textarea style={ta} value={docData[k]} onChange={e=>setDocData(p=>({...p,[k]:e.target.value}))} placeholder={ph}/></div>
-                        ))}
-                      </div>
-                      <div style={{marginTop:12}}>
-                        <div style={{fontSize:10,color:"#3A5070",fontFamily:"monospace",marginBottom:6}}>VISTA PREVIA</div>
+                      {stats.byType.length===0&&<div style={warnBox}>⚠ Importa el Excel para ver las Historias de Usuario.</div>}
+                      {stats.byType.map(({type,count})=>{
+                        const kb=getKB(type), ov=docData.vulnOv[type]||{};
+                        const typeFiles=[...new Set(issues.filter(i=>i.issueType===type).map(i=>i.filePath).filter(Boolean))];
+                        const repoUrls=Object.keys(repos||{}).map(r=>`${cfg.gitBase.replace(/\/$/,"")}/${r}`);
+                        const hasLittleContent=!ov.situacionEsperada&&!ov.reglaNegocio&&!ov.propuestaGeneral;
+                        const rowS={display:"grid",gridTemplateColumns:"180px 1fr",borderBottom:"1px solid #1A2840"};
+                        const lblS={padding:"10px 14px",background:"#0A1828",color:"#8AACCC",fontSize:11,fontWeight:700,display:"flex",alignItems:"flex-start",paddingTop:12};
+                        const valS={padding:"8px 12px",background:"#060B14"};
+                        return (
+                          <div key={type} style={{marginBottom:24,border:"1px solid #1E3050",borderRadius:8,overflow:"hidden"}}>
+                            {/* Card header */}
+                            <div style={{padding:"10px 16px",background:"#0D1F35",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid #1A2840"}}>
+                              <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                                <span style={{fontSize:20}}>{kb.icon}</span>
+                                <div>
+                                  <div style={{fontWeight:700,color:"#E0EDFF",fontSize:13}}>{kb.label!==type?kb.label:type}</div>
+                                  <div style={{fontSize:10,color:"#3A5070",fontFamily:"monospace"}}>{count} issues · {typeFiles.length} archivos</div>
+                                </div>
+                              </div>
+                              {(hasLittleContent||kb._isDefault)&&(
+                                <button
+                                  disabled={!!aiLoading["dt_"+type]}
+                                  onClick={()=>fetchAI_DT(type,count,typeFiles)}
+                                  style={{...btnG,fontSize:10,padding:"4px 10px",color:"#A78BFA",borderColor:"#7C3AED40",background:"#7C3AED08",opacity:aiLoading["dt_"+type]?0.6:1,cursor:aiLoading["dt_"+type]?"not-allowed":"pointer"}}
+                                >{aiLoading["dt_"+type]?"⟳ Generando…":"🤖 Extender con IA"}</button>
+                              )}
+                            </div>
+                            {/* Table rows */}
+                            <div>
+                              {/* HU + Alineación */}
+                              <div style={rowS}>
+                                <div style={lblS}>Historia de Usuario</div>
+                                <div style={{...valS,display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+                                  <input style={{...inp,flex:2,minWidth:180,fontSize:11}} value={ov.hu||""} onChange={e=>setVulnF(type,"hu",e.target.value)} placeholder="VTR329-1343, VTR329-1348"/>
+                                  <span style={{color:"#3A5070",fontSize:11,whiteSpace:"nowrap"}}>Alineación:</span>
+                                  <input style={{...inp,width:110,fontSize:11}} value={ov.alineacion!==undefined?ov.alineacion:"Chubb"} onChange={e=>setVulnF(type,"alineacion",e.target.value)} placeholder="Chubb"/>
+                                </div>
+                              </div>
+                              {/* Vuln name row */}
+                              <div style={rowS}>
+                                <div style={{...lblS,color:"#00D4FF"}}>{kb.label!==type?kb.label:type}</div>
+                                <div style={{...valS,color:"#8AACCC",fontSize:11,display:"flex",alignItems:"center"}}>{type}</div>
+                              </div>
+                              {/* Proceso Actual */}
+                              <div style={rowS}>
+                                <div style={lblS}>Proceso Actual</div>
+                                <div style={valS}><textarea style={{...ta,minHeight:80,fontSize:11}} value={ov.proceso||""} onChange={e=>setVulnF(type,"proceso",e.target.value)} placeholder="Proceso actual y deficiencias identificadas…"/></div>
+                              </div>
+                              {/* Situación Esperada */}
+                              <div style={rowS}>
+                                <div style={lblS}>Situación Esperada</div>
+                                <div style={valS}><textarea style={{...ta,minHeight:80,fontSize:11}} value={ov.situacionEsperada||""} onChange={e=>setVulnF(type,"situacionEsperada",e.target.value)} placeholder="Cómo debe funcionar correctamente el sistema…"/></div>
+                              </div>
+                              {/* Regla de Negocio */}
+                              <div style={rowS}>
+                                <div style={lblS}>Regla de Negocio</div>
+                                <div style={valS}><textarea style={{...ta,minHeight:70,fontSize:11}} value={ov.reglaNegocio||""} onChange={e=>setVulnF(type,"reglaNegocio",e.target.value)} placeholder="Regla de negocio asociada a esta corrección…"/></div>
+                              </div>
+                              {/* Dependencias */}
+                              <div style={rowS}>
+                                <div style={lblS}>Dependencias</div>
+                                <div style={valS}><textarea style={{...ta,minHeight:70,fontSize:11}} value={ov.depsTecnicas||""} onChange={e=>setVulnF(type,"depsTecnicas",e.target.value)} placeholder="Dependencias técnicas a actualizar o agregar…"/></div>
+                              </div>
+                              {/* Propuesta General */}
+                              <div style={rowS}>
+                                <div style={lblS}>Propuesta general</div>
+                                <div style={valS}><textarea style={{...ta,minHeight:80,fontSize:11}} value={ov.propuestaGeneral||""} onChange={e=>setVulnF(type,"propuestaGeneral",e.target.value)} placeholder="Propuesta general de solución…"/></div>
+                              </div>
+                              {/* Propuesta de Solución + Repositorios */}
+                              <div style={{...rowS,borderBottom:"none"}}>
+                                <div style={lblS}>Propuesta de solución</div>
+                                <div style={valS}>
+                                  <textarea style={{...ta,minHeight:100,fontSize:11}} value={ov.solucion||""} onChange={e=>setVulnF(type,"solucion",e.target.value)} placeholder="Pasos detallados de remediación…"/>
+                                  {repoUrls.length>0&&(
+                                    <div style={{marginTop:8,padding:"8px 10px",background:"#0A1020",borderRadius:6,border:"1px solid #1A2840"}}>
+                                      <div style={{fontSize:9,color:"#3A5070",fontFamily:"monospace",marginBottom:5,letterSpacing:1}}>REPOSITORIOS</div>
+                                      {repoUrls.map((u,i)=>(
+                                        <div key={i}><a href={u} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:"#00D4FF",fontFamily:"monospace",wordBreak:"break-all"}}>{u}</a></div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div style={{marginTop:16}}>
+                        <div style={{fontSize:10,color:"#3A5070",fontFamily:"monospace",marginBottom:6}}>VISTA PREVIA DEL DOCUMENTO</div>
                         <div style={codeBox}>{genDT()}</div>
                       </div>
                     </div>
@@ -2385,6 +2465,48 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
     }
   };
 
+  const fetchAI_DT = async (type, count, typeFiles) => {
+    if (!claudeKey) { showToast("Ingresa tu API Key de Claude primero","warn"); return; }
+    setAiLoading(p=>({...p,["dt_"+type]:true}));
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": claudeKey,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true",
+        },
+        body: JSON.stringify({
+          model: "claude-opus-4-6",
+          max_tokens: 1500,
+          messages: [{
+            role: "user",
+            content: `Eres un experto en seguridad de aplicaciones (DevSecOps). Para la vulnerabilidad "${type}" detectada en el proyecto "${cfg.projectName}" (${count} issue(s) en ${typeFiles.length} archivo(s)), genera contenido para una Historia de Usuario de seguridad en español.\n\nResponde ÚNICAMENTE con un JSON válido con estas claves (sin markdown, sin explicaciones):\n{\n  "situacionEsperada": "cómo debe funcionar el sistema correctamente después de la corrección",\n  "reglaNegocio": "regla de negocio asociada a esta corrección de seguridad",\n  "depsTecnicas": "dependencias técnicas a actualizar o agregar (una por línea)",\n  "propuestaGeneral": "propuesta general de solución en una o dos oraciones"\n}`
+          }]
+        })
+      });
+      if (!res.ok) { const e=await res.json(); throw new Error(e.error?.message||`HTTP ${res.status}`); }
+      const data = await res.json();
+      const text = data.content?.[0]?.text || "";
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("Respuesta sin JSON válido");
+      const parsed = JSON.parse(jsonMatch[0]);
+      setDocData(p=>({...p, vulnOv:{...p.vulnOv, [type]:{
+        ...(p.vulnOv[type]||{}),
+        situacionEsperada: parsed.situacionEsperada||p.vulnOv[type]?.situacionEsperada||"",
+        reglaNegocio:      parsed.reglaNegocio     ||p.vulnOv[type]?.reglaNegocio||"",
+        depsTecnicas:      parsed.depsTecnicas      ||p.vulnOv[type]?.depsTecnicas||"",
+        propuestaGeneral:  parsed.propuestaGeneral  ||p.vulnOv[type]?.propuestaGeneral||"",
+      }}}));
+      showToast(`IA: Historia de Usuario generada para "${type}" ✓`);
+    } catch(err) {
+      showToast("Error IA: "+err.message,"warn");
+    } finally {
+      setAiLoading(p=>({...p,["dt_"+type]:false}));
+    }
+  };
+
   const [docTab,setDocTab] = useState(0);
   const [docData,setDocData]= useState({appDesc:"",vulnOv:{},patron:"",clases:"",deps:""});
   const [toast,setToast]   = useState(null);
@@ -2406,6 +2528,12 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
         owasp:    kb.owasp,
         proceso:  kb.proceso,
         solucion: (kb.solucion||"").replace(/\$\{0\}/g, tf.length),
+        hu: "",
+        alineacion: "Chubb",
+        situacionEsperada: "",
+        reglaNegocio: "",
+        depsTecnicas: "",
+        propuestaGeneral: "",
       };
     });
     return ov;
@@ -2601,10 +2729,9 @@ APROBACIONES
   };
 
   const genDT = ()=>{
-    const xssFiles=[...new Set(issues.filter(i=>i.issueType.includes("Cross Site")).map(i=>"  • "+i.filePath))];
-    const ossFiles=issues.filter(i=>i.issueType.includes("Open Source")).map(i=>"  • "+i.filePath);
-    return `╔═══════════════════════════════════════════════════════════════════╗
-║         DISEÑO TÉCNICO — CORRECCIÓN DE VULNERABILIDADES           ║
+    const uniqueTypes=[...new Set(issues.map(i=>i.issueType).filter(Boolean))];
+    const header=`╔═══════════════════════════════════════════════════════════════════╗
+║         DISEÑO TÉCNICO — HISTORIAS DE USUARIO DE SEGURIDAD        ║
 ╚═══════════════════════════════════════════════════════════════════╝
 
 INFORMACIÓN
@@ -2613,50 +2740,40 @@ INFORMACIÓN
   Fecha    : ${TODAY_D}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-1. ARCHIVOS XSS REFLEJADO (${issues.filter(i=>i.issueType.includes("Cross Site")).length} issues)
-${[...new Set(xssFiles)].join("\n")||"  [Sin archivos]"}
-
-2. ARCHIVOS OSS VULNERABLE
-${ossFiles.join("\n")||"  • ACE.BasicBook.UI/packages.config"}
-
-3. PATRÓN DE SOLUCIÓN XSS
-${docData.patron||`  PROBLEMA: Uso de .html() / innerHTML / document.write() sin sanitización.
-  SOLUCIÓN:
-    a) Actualizar jquery-validation ≥ 1.19.3 (corrige ReDoS CVE)
-    b) Reemplazar asignaciones inseguras:
-       ANTES:  element.innerHTML = userInput  /  $(el).html(data)
-       DESPUÉS: element.innerHTML = DOMPurify.sanitize(userInput)
-    c) Para texto plano: element.textContent  /  $(el).text(data)
-    d) Agregar DOMPurify ≥ 3.0 como dependencia validada
-    e) Actualizar select2-bs3 ≥ 4.0.13 y jsoneditor ≥ 9.x`}
-
-4. COMPONENTES A MODIFICAR (top 10)
-${cipData.slice(0,10).map(c=>`  • [${c.action}] ${c.filePath}  (${c.count} issues, ${c.hrs} hrs)`).join("\n")||"  [Completar después de análisis]"}
-
-5. DEPENDENCIAS
-${docData.deps||`  • jquery-validation : <1.19.3 → ≥ 1.19.3
-  • select2-bs3       : actual  → ≥ 4.0.13
-  • jsoneditor        : actual  → ≥ 9.x
-  • DOMPurify         : AGREGAR ≥ 3.0`}
-
-6. FLUJO DE CAMBIO
-  Branch  : feature/SEC-${cfg.ticket}-xss-remediation
-  Pipeline: ${Object.values(repos)[0]?.jenkinsUrl||cfg.jenkinsBase+cfg.projectName}
-  Commit  : "fix(security): remediate XSS + update jquery-validation [${cfg.ticket}]"
-
-7. PRUEBAS REQUERIDAS
-  • Unit tests: sanitización en cada módulo JS modificado
-  • Regresión: Suscriptor, Propuesta, Producto, Emisión, Cobranza
-  • SAST post-corrección con SonarQube: Quality Gate ${Object.values(sonarData)[0]?.qg||"[Pendiente]"} | Coverage: ${Object.values(sonarData)[0]?.coverage||"?"} | Duplicaciones: ${Object.values(sonarData)[0]?.duplications||"?"}
-  • Revisión manual de módulos UI afectados
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-APROBACIONES
-  Elaborado  : ${cfg.responsable||"___________________________"}
-  Revisado   : ___________________________
-  Aprobado   : ___________________________
 `;
+    const repoUrls=Object.keys(repos).map(r=>`  ${cfg.gitBase.replace(/\/$/,"")}/${r}`).join("\n")||"  [Sin repositorios]";
+    const sections=uniqueTypes.map((type,idx)=>{
+      const ov=docData.vulnOv[type]||{};
+      const kb=getKB(type);
+      return `HU ${idx+1}: ${kb.label!==type?kb.label:type}
+${"─".repeat(66)}
+Historia de Usuario : ${ov.hu||"[Ingresar IDs de HU]"}
+Alineación          : ${ov.alineacion||"Chubb"}
+
+Proceso Actual      :
+${(ov.proceso||"[Pendiente]").split("\n").map(l=>"  "+l).join("\n")}
+
+Situación Esperada  :
+${(ov.situacionEsperada||"[Pendiente]").split("\n").map(l=>"  "+l).join("\n")}
+
+Regla de Negocio    :
+${(ov.reglaNegocio||"[Pendiente]").split("\n").map(l=>"  "+l).join("\n")}
+
+Dependencias        :
+${(ov.depsTecnicas||"[Pendiente]").split("\n").map(l=>"  "+l).join("\n")}
+
+Propuesta General   :
+${(ov.propuestaGeneral||"[Pendiente]").split("\n").map(l=>"  "+l).join("\n")}
+
+Propuesta de Solución:
+${(ov.solucion||"[Pendiente]").split("\n").map(l=>"  "+l).join("\n")}
+
+Repositorios:
+${repoUrls}
+`;
+    }).join("\n"+"═".repeat(66)+"\n\n");
+
+    return header + (sections||"[Importa el Excel para generar las Historias de Usuario]");
   };
 
   const genCK = ()=>{
@@ -2771,7 +2888,7 @@ APROBACIONES
           {phase===1&&<DiagnosticoPhase cfg={cfg} issues={issues} repos={repos} stats={stats} sonarData={sonarData} setSonarF={setSonarF} fetchSonar={fetchSonar} mcpUrl={mcpUrl} setMcpUrl={setMcpUrl} mcpStatus={mcpStatus} checkMcpStatus={checkMcpStatus} getSonarUrl={getSonarUrl} checkRepo={checkRepo} checkAll={checkAll} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} card={card} inp={inp} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} btnA={btnA} dot={dot} methBadge={methBadge} sevBadge={sevBadge}/>}
 
           {/* ── FASE 2: DOCUMENTOS ── */}
-          {phase===2&&<DocumentosPhase cfg={cfg} issues={issues} cipData={cipData} docData={docData} docTab={docTab} setDocTab={setDocTab} setVulnF={setVulnF} stats={stats} sonarData={sonarData} genDG={genDG} genDT={genDT} genCK={genCK} genCIP={genCIP} dl1={dl1} dlAll={dlAll} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} TODAY={TODAY} card={card} inp={inp} ta={ta} infoBox={infoBox} warnBox={warnBox} codeBox={codeBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} sevBadge={sevBadge} claudeKey={claudeKey} setClaudeKey={setClaudeKey} fetchAI={fetchAI} aiLoading={aiLoading}/>}
+          {phase===2&&<DocumentosPhase cfg={cfg} issues={issues} cipData={cipData} docData={docData} docTab={docTab} setDocTab={setDocTab} setVulnF={setVulnF} stats={stats} sonarData={sonarData} genDG={genDG} genDT={genDT} genCK={genCK} genCIP={genCIP} dl1={dl1} dlAll={dlAll} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} TODAY={TODAY} card={card} inp={inp} ta={ta} infoBox={infoBox} warnBox={warnBox} codeBox={codeBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} sevBadge={sevBadge} claudeKey={claudeKey} setClaudeKey={setClaudeKey} fetchAI={fetchAI} aiLoading={aiLoading} fetchAI_DT={fetchAI_DT} repos={repos}/>}
 
           {/* ── FASES 3-5 ── */}
           {phase>=3&&<GenericPhase phase={phase} cfg={cfg} cipData={cipData} TODAY={TODAY} dlAll={dlAll} completePhase={completePhase} card={card} infoBox={infoBox} btnP={btnP} btnS={btnS}/>}

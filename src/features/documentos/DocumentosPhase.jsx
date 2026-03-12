@@ -1,6 +1,6 @@
 // ── DocumentosPhase ─────────────────────────────────────────────────────────────────
 // Props destructured from App state
-function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, setVulnF, stats, sonarData, genDG, genDT, genCK, genCIP, dl1, dlAll, completePhase, showSources, setShowSources, getSourcesDisplay, TODAY, card, inp, ta, infoBox, warnBox, codeBox, lbl, btnP, btnS, btnG, sevBadge, claudeKey, setClaudeKey, fetchAI, aiLoading }) {
+function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, setVulnF, stats, sonarData, genDG, genDT, genCK, genCIP, dl1, dlAll, completePhase, showSources, setShowSources, getSourcesDisplay, TODAY, card, inp, ta, infoBox, warnBox, codeBox, lbl, btnP, btnS, btnG, sevBadge, claudeKey, setClaudeKey, fetchAI, aiLoading, fetchAI_DT, repos }) {
   return (
             <div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24,paddingBottom:18,borderBottom:"1px solid #1A2840"}}>
@@ -155,16 +155,96 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                       <div style={{display:"flex",gap:8,marginBottom:14}}>
                         <button style={btnG} onClick={()=>dl1("dt")}>⬇ Exportar TXT</button>
                       </div>
-                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-                        {[
-                          {k:"patron",l:"Patrón de Solución XSS",ph:"Reemplazar innerHTML → DOMPurify.sanitize()…"},
-                          {k:"deps",  l:"Dependencias a Actualizar",ph:"jquery-validation → ≥1.19.3\nselect2-bs3 → ≥4.0.13…"},
-                        ].map(({k,l,ph})=>(
-                          <div key={k}><label style={lbl}>{l}</label><textarea style={ta} value={docData[k]} onChange={e=>setDocData(p=>({...p,[k]:e.target.value}))} placeholder={ph}/></div>
-                        ))}
-                      </div>
-                      <div style={{marginTop:12}}>
-                        <div style={{fontSize:10,color:"#3A5070",fontFamily:"monospace",marginBottom:6}}>VISTA PREVIA</div>
+                      {stats.byType.length===0&&<div style={warnBox}>⚠ Importa el Excel para ver las Historias de Usuario.</div>}
+                      {stats.byType.map(({type,count})=>{
+                        const kb=getKB(type), ov=docData.vulnOv[type]||{};
+                        const typeFiles=[...new Set(issues.filter(i=>i.issueType===type).map(i=>i.filePath).filter(Boolean))];
+                        const repoUrls=Object.keys(repos||{}).map(r=>`${cfg.gitBase.replace(/\/$/,"")}/${r}`);
+                        const hasLittleContent=!ov.situacionEsperada&&!ov.reglaNegocio&&!ov.propuestaGeneral;
+                        const rowS={display:"grid",gridTemplateColumns:"180px 1fr",borderBottom:"1px solid #1A2840"};
+                        const lblS={padding:"10px 14px",background:"#0A1828",color:"#8AACCC",fontSize:11,fontWeight:700,display:"flex",alignItems:"flex-start",paddingTop:12};
+                        const valS={padding:"8px 12px",background:"#060B14"};
+                        return (
+                          <div key={type} style={{marginBottom:24,border:"1px solid #1E3050",borderRadius:8,overflow:"hidden"}}>
+                            {/* Card header */}
+                            <div style={{padding:"10px 16px",background:"#0D1F35",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid #1A2840"}}>
+                              <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                                <span style={{fontSize:20}}>{kb.icon}</span>
+                                <div>
+                                  <div style={{fontWeight:700,color:"#E0EDFF",fontSize:13}}>{kb.label!==type?kb.label:type}</div>
+                                  <div style={{fontSize:10,color:"#3A5070",fontFamily:"monospace"}}>{count} issues · {typeFiles.length} archivos</div>
+                                </div>
+                              </div>
+                              {(hasLittleContent||kb._isDefault)&&(
+                                <button
+                                  disabled={!!aiLoading["dt_"+type]}
+                                  onClick={()=>fetchAI_DT(type,count,typeFiles)}
+                                  style={{...btnG,fontSize:10,padding:"4px 10px",color:"#A78BFA",borderColor:"#7C3AED40",background:"#7C3AED08",opacity:aiLoading["dt_"+type]?0.6:1,cursor:aiLoading["dt_"+type]?"not-allowed":"pointer"}}
+                                >{aiLoading["dt_"+type]?"⟳ Generando…":"🤖 Extender con IA"}</button>
+                              )}
+                            </div>
+                            {/* Table rows */}
+                            <div>
+                              {/* HU + Alineación */}
+                              <div style={rowS}>
+                                <div style={lblS}>Historia de Usuario</div>
+                                <div style={{...valS,display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+                                  <input style={{...inp,flex:2,minWidth:180,fontSize:11}} value={ov.hu||""} onChange={e=>setVulnF(type,"hu",e.target.value)} placeholder="VTR329-1343, VTR329-1348"/>
+                                  <span style={{color:"#3A5070",fontSize:11,whiteSpace:"nowrap"}}>Alineación:</span>
+                                  <input style={{...inp,width:110,fontSize:11}} value={ov.alineacion!==undefined?ov.alineacion:"Chubb"} onChange={e=>setVulnF(type,"alineacion",e.target.value)} placeholder="Chubb"/>
+                                </div>
+                              </div>
+                              {/* Vuln name row */}
+                              <div style={rowS}>
+                                <div style={{...lblS,color:"#00D4FF"}}>{kb.label!==type?kb.label:type}</div>
+                                <div style={{...valS,color:"#8AACCC",fontSize:11,display:"flex",alignItems:"center"}}>{type}</div>
+                              </div>
+                              {/* Proceso Actual */}
+                              <div style={rowS}>
+                                <div style={lblS}>Proceso Actual</div>
+                                <div style={valS}><textarea style={{...ta,minHeight:80,fontSize:11}} value={ov.proceso||""} onChange={e=>setVulnF(type,"proceso",e.target.value)} placeholder="Proceso actual y deficiencias identificadas…"/></div>
+                              </div>
+                              {/* Situación Esperada */}
+                              <div style={rowS}>
+                                <div style={lblS}>Situación Esperada</div>
+                                <div style={valS}><textarea style={{...ta,minHeight:80,fontSize:11}} value={ov.situacionEsperada||""} onChange={e=>setVulnF(type,"situacionEsperada",e.target.value)} placeholder="Cómo debe funcionar correctamente el sistema…"/></div>
+                              </div>
+                              {/* Regla de Negocio */}
+                              <div style={rowS}>
+                                <div style={lblS}>Regla de Negocio</div>
+                                <div style={valS}><textarea style={{...ta,minHeight:70,fontSize:11}} value={ov.reglaNegocio||""} onChange={e=>setVulnF(type,"reglaNegocio",e.target.value)} placeholder="Regla de negocio asociada a esta corrección…"/></div>
+                              </div>
+                              {/* Dependencias */}
+                              <div style={rowS}>
+                                <div style={lblS}>Dependencias</div>
+                                <div style={valS}><textarea style={{...ta,minHeight:70,fontSize:11}} value={ov.depsTecnicas||""} onChange={e=>setVulnF(type,"depsTecnicas",e.target.value)} placeholder="Dependencias técnicas a actualizar o agregar…"/></div>
+                              </div>
+                              {/* Propuesta General */}
+                              <div style={rowS}>
+                                <div style={lblS}>Propuesta general</div>
+                                <div style={valS}><textarea style={{...ta,minHeight:80,fontSize:11}} value={ov.propuestaGeneral||""} onChange={e=>setVulnF(type,"propuestaGeneral",e.target.value)} placeholder="Propuesta general de solución…"/></div>
+                              </div>
+                              {/* Propuesta de Solución + Repositorios */}
+                              <div style={{...rowS,borderBottom:"none"}}>
+                                <div style={lblS}>Propuesta de solución</div>
+                                <div style={valS}>
+                                  <textarea style={{...ta,minHeight:100,fontSize:11}} value={ov.solucion||""} onChange={e=>setVulnF(type,"solucion",e.target.value)} placeholder="Pasos detallados de remediación…"/>
+                                  {repoUrls.length>0&&(
+                                    <div style={{marginTop:8,padding:"8px 10px",background:"#0A1020",borderRadius:6,border:"1px solid #1A2840"}}>
+                                      <div style={{fontSize:9,color:"#3A5070",fontFamily:"monospace",marginBottom:5,letterSpacing:1}}>REPOSITORIOS</div>
+                                      {repoUrls.map((u,i)=>(
+                                        <div key={i}><a href={u} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:"#00D4FF",fontFamily:"monospace",wordBreak:"break-all"}}>{u}</a></div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div style={{marginTop:16}}>
+                        <div style={{fontSize:10,color:"#3A5070",fontFamily:"monospace",marginBottom:6}}>VISTA PREVIA DEL DOCUMENTO</div>
                         <div style={codeBox}>{genDT()}</div>
                       </div>
                     </div>

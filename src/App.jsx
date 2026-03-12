@@ -116,6 +116,48 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
     }
   };
 
+  const fetchAI_DT = async (type, count, typeFiles) => {
+    if (!claudeKey) { showToast("Ingresa tu API Key de Claude primero","warn"); return; }
+    setAiLoading(p=>({...p,["dt_"+type]:true}));
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": claudeKey,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true",
+        },
+        body: JSON.stringify({
+          model: "claude-opus-4-6",
+          max_tokens: 1500,
+          messages: [{
+            role: "user",
+            content: `Eres un experto en seguridad de aplicaciones (DevSecOps). Para la vulnerabilidad "${type}" detectada en el proyecto "${cfg.projectName}" (${count} issue(s) en ${typeFiles.length} archivo(s)), genera contenido para una Historia de Usuario de seguridad en español.\n\nResponde ÚNICAMENTE con un JSON válido con estas claves (sin markdown, sin explicaciones):\n{\n  "situacionEsperada": "cómo debe funcionar el sistema correctamente después de la corrección",\n  "reglaNegocio": "regla de negocio asociada a esta corrección de seguridad",\n  "depsTecnicas": "dependencias técnicas a actualizar o agregar (una por línea)",\n  "propuestaGeneral": "propuesta general de solución en una o dos oraciones"\n}`
+          }]
+        })
+      });
+      if (!res.ok) { const e=await res.json(); throw new Error(e.error?.message||`HTTP ${res.status}`); }
+      const data = await res.json();
+      const text = data.content?.[0]?.text || "";
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("Respuesta sin JSON válido");
+      const parsed = JSON.parse(jsonMatch[0]);
+      setDocData(p=>({...p, vulnOv:{...p.vulnOv, [type]:{
+        ...(p.vulnOv[type]||{}),
+        situacionEsperada: parsed.situacionEsperada||p.vulnOv[type]?.situacionEsperada||"",
+        reglaNegocio:      parsed.reglaNegocio     ||p.vulnOv[type]?.reglaNegocio||"",
+        depsTecnicas:      parsed.depsTecnicas      ||p.vulnOv[type]?.depsTecnicas||"",
+        propuestaGeneral:  parsed.propuestaGeneral  ||p.vulnOv[type]?.propuestaGeneral||"",
+      }}}));
+      showToast(`IA: Historia de Usuario generada para "${type}" ✓`);
+    } catch(err) {
+      showToast("Error IA: "+err.message,"warn");
+    } finally {
+      setAiLoading(p=>({...p,["dt_"+type]:false}));
+    }
+  };
+
   const [docTab,setDocTab] = useState(0);
   const [docData,setDocData]= useState({appDesc:"",vulnOv:{},patron:"",clases:"",deps:""});
   const [toast,setToast]   = useState(null);
@@ -137,6 +179,12 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
         owasp:    kb.owasp,
         proceso:  kb.proceso,
         solucion: (kb.solucion||"").replace(/\$\{0\}/g, tf.length),
+        hu: "",
+        alineacion: "Chubb",
+        situacionEsperada: "",
+        reglaNegocio: "",
+        depsTecnicas: "",
+        propuestaGeneral: "",
       };
     });
     return ov;
@@ -332,10 +380,9 @@ APROBACIONES
   };
 
   const genDT = ()=>{
-    const xssFiles=[...new Set(issues.filter(i=>i.issueType.includes("Cross Site")).map(i=>"  • "+i.filePath))];
-    const ossFiles=issues.filter(i=>i.issueType.includes("Open Source")).map(i=>"  • "+i.filePath);
-    return `╔═══════════════════════════════════════════════════════════════════╗
-║         DISEÑO TÉCNICO — CORRECCIÓN DE VULNERABILIDADES           ║
+    const uniqueTypes=[...new Set(issues.map(i=>i.issueType).filter(Boolean))];
+    const header=`╔═══════════════════════════════════════════════════════════════════╗
+║         DISEÑO TÉCNICO — HISTORIAS DE USUARIO DE SEGURIDAD        ║
 ╚═══════════════════════════════════════════════════════════════════╝
 
 INFORMACIÓN
@@ -344,50 +391,40 @@ INFORMACIÓN
   Fecha    : ${TODAY_D}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-1. ARCHIVOS XSS REFLEJADO (${issues.filter(i=>i.issueType.includes("Cross Site")).length} issues)
-${[...new Set(xssFiles)].join("\n")||"  [Sin archivos]"}
-
-2. ARCHIVOS OSS VULNERABLE
-${ossFiles.join("\n")||"  • ACE.BasicBook.UI/packages.config"}
-
-3. PATRÓN DE SOLUCIÓN XSS
-${docData.patron||`  PROBLEMA: Uso de .html() / innerHTML / document.write() sin sanitización.
-  SOLUCIÓN:
-    a) Actualizar jquery-validation ≥ 1.19.3 (corrige ReDoS CVE)
-    b) Reemplazar asignaciones inseguras:
-       ANTES:  element.innerHTML = userInput  /  $(el).html(data)
-       DESPUÉS: element.innerHTML = DOMPurify.sanitize(userInput)
-    c) Para texto plano: element.textContent  /  $(el).text(data)
-    d) Agregar DOMPurify ≥ 3.0 como dependencia validada
-    e) Actualizar select2-bs3 ≥ 4.0.13 y jsoneditor ≥ 9.x`}
-
-4. COMPONENTES A MODIFICAR (top 10)
-${cipData.slice(0,10).map(c=>`  • [${c.action}] ${c.filePath}  (${c.count} issues, ${c.hrs} hrs)`).join("\n")||"  [Completar después de análisis]"}
-
-5. DEPENDENCIAS
-${docData.deps||`  • jquery-validation : <1.19.3 → ≥ 1.19.3
-  • select2-bs3       : actual  → ≥ 4.0.13
-  • jsoneditor        : actual  → ≥ 9.x
-  • DOMPurify         : AGREGAR ≥ 3.0`}
-
-6. FLUJO DE CAMBIO
-  Branch  : feature/SEC-${cfg.ticket}-xss-remediation
-  Pipeline: ${Object.values(repos)[0]?.jenkinsUrl||cfg.jenkinsBase+cfg.projectName}
-  Commit  : "fix(security): remediate XSS + update jquery-validation [${cfg.ticket}]"
-
-7. PRUEBAS REQUERIDAS
-  • Unit tests: sanitización en cada módulo JS modificado
-  • Regresión: Suscriptor, Propuesta, Producto, Emisión, Cobranza
-  • SAST post-corrección con SonarQube: Quality Gate ${Object.values(sonarData)[0]?.qg||"[Pendiente]"} | Coverage: ${Object.values(sonarData)[0]?.coverage||"?"} | Duplicaciones: ${Object.values(sonarData)[0]?.duplications||"?"}
-  • Revisión manual de módulos UI afectados
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-APROBACIONES
-  Elaborado  : ${cfg.responsable||"___________________________"}
-  Revisado   : ___________________________
-  Aprobado   : ___________________________
 `;
+    const repoUrls=Object.keys(repos).map(r=>`  ${cfg.gitBase.replace(/\/$/,"")}/${r}`).join("\n")||"  [Sin repositorios]";
+    const sections=uniqueTypes.map((type,idx)=>{
+      const ov=docData.vulnOv[type]||{};
+      const kb=getKB(type);
+      return `HU ${idx+1}: ${kb.label!==type?kb.label:type}
+${"─".repeat(66)}
+Historia de Usuario : ${ov.hu||"[Ingresar IDs de HU]"}
+Alineación          : ${ov.alineacion||"Chubb"}
+
+Proceso Actual      :
+${(ov.proceso||"[Pendiente]").split("\n").map(l=>"  "+l).join("\n")}
+
+Situación Esperada  :
+${(ov.situacionEsperada||"[Pendiente]").split("\n").map(l=>"  "+l).join("\n")}
+
+Regla de Negocio    :
+${(ov.reglaNegocio||"[Pendiente]").split("\n").map(l=>"  "+l).join("\n")}
+
+Dependencias        :
+${(ov.depsTecnicas||"[Pendiente]").split("\n").map(l=>"  "+l).join("\n")}
+
+Propuesta General   :
+${(ov.propuestaGeneral||"[Pendiente]").split("\n").map(l=>"  "+l).join("\n")}
+
+Propuesta de Solución:
+${(ov.solucion||"[Pendiente]").split("\n").map(l=>"  "+l).join("\n")}
+
+Repositorios:
+${repoUrls}
+`;
+    }).join("\n"+"═".repeat(66)+"\n\n");
+
+    return header + (sections||"[Importa el Excel para generar las Historias de Usuario]");
   };
 
   const genCK = ()=>{
@@ -502,7 +539,7 @@ APROBACIONES
           {phase===1&&<DiagnosticoPhase cfg={cfg} issues={issues} repos={repos} stats={stats} sonarData={sonarData} setSonarF={setSonarF} fetchSonar={fetchSonar} mcpUrl={mcpUrl} setMcpUrl={setMcpUrl} mcpStatus={mcpStatus} checkMcpStatus={checkMcpStatus} getSonarUrl={getSonarUrl} checkRepo={checkRepo} checkAll={checkAll} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} card={card} inp={inp} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} btnA={btnA} dot={dot} methBadge={methBadge} sevBadge={sevBadge}/>}
 
           {/* ── FASE 2: DOCUMENTOS ── */}
-          {phase===2&&<DocumentosPhase cfg={cfg} issues={issues} cipData={cipData} docData={docData} docTab={docTab} setDocTab={setDocTab} setVulnF={setVulnF} stats={stats} sonarData={sonarData} genDG={genDG} genDT={genDT} genCK={genCK} genCIP={genCIP} dl1={dl1} dlAll={dlAll} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} TODAY={TODAY} card={card} inp={inp} ta={ta} infoBox={infoBox} warnBox={warnBox} codeBox={codeBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} sevBadge={sevBadge} claudeKey={claudeKey} setClaudeKey={setClaudeKey} fetchAI={fetchAI} aiLoading={aiLoading}/>}
+          {phase===2&&<DocumentosPhase cfg={cfg} issues={issues} cipData={cipData} docData={docData} docTab={docTab} setDocTab={setDocTab} setVulnF={setVulnF} stats={stats} sonarData={sonarData} genDG={genDG} genDT={genDT} genCK={genCK} genCIP={genCIP} dl1={dl1} dlAll={dlAll} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} TODAY={TODAY} card={card} inp={inp} ta={ta} infoBox={infoBox} warnBox={warnBox} codeBox={codeBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} sevBadge={sevBadge} claudeKey={claudeKey} setClaudeKey={setClaudeKey} fetchAI={fetchAI} aiLoading={aiLoading} fetchAI_DT={fetchAI_DT} repos={repos}/>}
 
           {/* ── FASES 3-5 ── */}
           {phase>=3&&<GenericPhase phase={phase} cfg={cfg} cipData={cipData} TODAY={TODAY} dlAll={dlAll} completePhase={completePhase} card={card} infoBox={infoBox} btnP={btnP} btnS={btnS}/>}
