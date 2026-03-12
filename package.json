@@ -5,7 +5,8 @@
   "scripts": {
     "build": "node build.js",
     "watch": "node build.js --watch",
-    "sonar-mcp": "node sonar-mcp-server.js"
+    "sonar-mcp": "node sonar-mcp-server.js",
+    "jenkins-mcp": "node jenkins-mcp-server.js"
   },
   "engines": {
     "node": ">=16"

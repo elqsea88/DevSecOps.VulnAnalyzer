@@ -22,6 +22,10 @@ function App(){
   const [mcpUrl,setMcpUrl]     = useState(MCP_DEFAULT);
   const [mcpStatus,setMcpStatus] = useState(null); // null | "ok" | "error" | "checking"
 
+  const JENKINS_MCP_DEFAULT = "http://127.0.0.1:3748";
+  const [jenkinsMcpUrl,setJenkinsMcpUrl]         = useState(JENKINS_MCP_DEFAULT);
+  const [jenkinsMcpStatus,setJenkinsMcpStatus]   = useState(null); // null | "ok" | "error" | "checking"
+
   const checkMcpStatus = async (baseUrl) => {
     const url = (baseUrl||mcpUrl).replace(/\/$/,"");
     setMcpStatus("checking");
@@ -34,6 +38,21 @@ function App(){
     } catch {
       setMcpStatus("error");
       showToast("MCP Server no disponible — ejecuta: node sonar-mcp-server.js","warn");
+    }
+  };
+
+  const checkJenkinsMcpStatus = async (baseUrl) => {
+    const url = (baseUrl||jenkinsMcpUrl).replace(/\/$/,"");
+    setJenkinsMcpStatus("checking");
+    try {
+      const r = await fetch(`${url}/health`, { signal: AbortSignal.timeout(4000) });
+      const d = await r.json();
+      setJenkinsMcpStatus(d.status==="ok"?"ok":"error");
+      if (d.status==="ok") showToast("Jenkins MCP conectado ✓");
+      else showToast("Jenkins MCP respondió con error","warn");
+    } catch {
+      setJenkinsMcpStatus("error");
+      showToast("Jenkins MCP no disponible — ejecuta: node jenkins-mcp-server.js","warn");
     }
   };
 
@@ -243,30 +262,32 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
     reader.readAsBinaryString(file);
   },[]);
 
-  // ── PIPELINE DUAL CHECK ─────────────────────────────────────────────────────
-  const checkRepo = useCallback(repoName=>{
+  // ── PIPELINE DUAL CHECK (Jenkins MCP) ───────────────────────────────────────
+  const checkRepo = useCallback(async repoName=>{
     const gitUrl=cfg.gitBase.replace(/\/$/,"")+"/"+repoName;
     const jenkinsUrl=cfg.jenkinsBase.replace(/\/$/,"")+"/"+repoName;
-    setRepos(p=>({...p,[repoName]:{...p[repoName],gitCheckStatus:"checking",gitCheckMsg:"Buscando Jenkinsfile en rama master…",jenkinsCheckStatus:"pending",jenkinsCheckMsg:"En espera de Step 1…",debtStatus:"pending",method:"unknown",gitUrl,jenkinsUrl}}));
-
-    setTimeout(()=>{
-      const hasJF=true; // production: fetch HEAD /raw/master/Jenkinsfile → 200
-      setRepos(p=>({...p,[repoName]:{...p[repoName],gitCheckStatus:hasJF?"ok":"error",gitCheckMsg:hasJF?"Jenkinsfile ✓ encontrado en rama master":"Jenkinsfile ✗ no encontrado — despliegue Manual",jenkinsCheckStatus:hasJF?"checking":"skipped",jenkinsCheckMsg:hasJF?"Verificando job activo en Jenkins…":"Omitido (sin Jenkinsfile)",hasJF}}));
-      setTimeout(()=>{
-        const jobOk=true; // production: fetch /api/json?tree=lastBuild → lastBuild exists
-        const lastBuild="#"+(Math.floor(Math.random()*80)+20);
-        const lastStatus=Math.random()>0.2?"SUCCESS":"FAILURE";
-        const both=hasJF&&jobOk;
-        setRepos(p=>({...p,[repoName]:{...p[repoName],jenkinsCheckStatus:jobOk?"ok":"error",jenkinsCheckMsg:jobOk?`Job activo ✓ — Último build: ${lastBuild} (${lastStatus})`:"Job ✗ no encontrado",lastBuild,lastBuildStatus:lastStatus,method:both?"pipeline":"manual",debtStatus:"checking"}}));
-        setTimeout(()=>{
-          const dd=Math.floor(Math.random()*22)+1, db=Math.floor(Math.random()*12);
-          const qg=dd>15||db>8?"FAILED":"PASSED";
-          setRepos(p=>({...p,[repoName]:{...p[repoName],debtStatus:"ok",debtDays:dd,debtBugs:db,debtHotspots:p[repoName].issues.length,sonarQG:qg,codeSmells:Math.floor(Math.random()*30)}}));
-          showToast(`✓ ${repoName} — ${both?"Pipeline CI/CD":"Manual"} | QG: ${qg}`);
-        },700);
-      },900);
-    },800);
-  },[cfg]);
+    setRepos(p=>({...p,[repoName]:{...p[repoName],gitCheckStatus:"skipped",gitCheckMsg:"No aplica — verificación solo vía Jenkins MCP",jenkinsCheckStatus:"checking",jenkinsCheckMsg:"Verificando job en Jenkins…",debtStatus:"pending",method:"unknown",gitUrl,jenkinsUrl}}));
+    try {
+      const base=jenkinsMcpUrl.replace(/\/$/,"");
+      const res=await fetch(`${base}/api/jenkins-data?repo=${encodeURIComponent(repoName)}`,{signal:AbortSignal.timeout(20000)});
+      const j=await res.json();
+      if(!j.ok) throw new Error(j.error||`HTTP ${res.status}`);
+      const {jobExists,lastBuild,lastBuildStatus,buildUrl,method}=j.data;
+      setRepos(p=>({...p,[repoName]:{...p[repoName],
+        jenkinsCheckStatus:jobExists?"ok":"error",
+        jenkinsCheckMsg:jobExists?`Job activo ✓ — Último build: ${lastBuild} (${lastBuildStatus})`:"Job ✗ no encontrado en Jenkins",
+        hasJF:jobExists,jobOk:jobExists,lastBuild,lastBuildStatus,buildUrl,method,debtStatus:"pending",
+      }}));
+      showToast(`✓ ${repoName} — ${method==="pipeline"?"Pipeline CI/CD":"Manual"}`);
+    } catch(err){
+      setRepos(p=>({...p,[repoName]:{...p[repoName],
+        gitCheckStatus:"error",gitCheckMsg:`Error Jenkins MCP: ${err.message}`,
+        jenkinsCheckStatus:"error",jenkinsCheckMsg:"No se pudo conectar al Jenkins MCP",
+        method:"unknown",debtStatus:"pending",
+      }}));
+      showToast(`✗ ${repoName}: ${err.message}`,"warn");
+    }
+  },[cfg,jenkinsMcpUrl]);
 
   const checkAll = ()=>Object.keys(repos).forEach((r,i)=>setTimeout(()=>checkRepo(r),i*900));
 
@@ -541,7 +562,7 @@ ${repoUrls}
           {phase===0&&<ImportacionPhase cfg={cfg} setCfg={setCfg} issues={issues} stats={stats} fileRef={fileRef} handleFile={handleFile} lbl={lbl} inp={inp} card={card} infoBox={infoBox} warnBox={warnBox} btnP={btnP} completePhase={completePhase} sevBadge={sevBadge} methBadge={methBadge}/>}
 
           {/* ── FASE 1: DIAGNÓSTICO ── */}
-          {phase===1&&<DiagnosticoPhase cfg={cfg} issues={issues} repos={repos} stats={stats} sonarData={sonarData} setSonarF={setSonarF} fetchSonar={fetchSonar} mcpUrl={mcpUrl} setMcpUrl={setMcpUrl} mcpStatus={mcpStatus} checkMcpStatus={checkMcpStatus} getSonarUrl={getSonarUrl} checkRepo={checkRepo} checkAll={checkAll} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} card={card} inp={inp} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} btnA={btnA} dot={dot} methBadge={methBadge} sevBadge={sevBadge}/>}
+          {phase===1&&<DiagnosticoPhase cfg={cfg} issues={issues} repos={repos} stats={stats} sonarData={sonarData} setSonarF={setSonarF} fetchSonar={fetchSonar} mcpUrl={mcpUrl} setMcpUrl={setMcpUrl} mcpStatus={mcpStatus} checkMcpStatus={checkMcpStatus} jenkinsMcpUrl={jenkinsMcpUrl} setJenkinsMcpUrl={setJenkinsMcpUrl} jenkinsMcpStatus={jenkinsMcpStatus} checkJenkinsMcpStatus={checkJenkinsMcpStatus} getSonarUrl={getSonarUrl} checkRepo={checkRepo} checkAll={checkAll} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} card={card} inp={inp} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} btnA={btnA} dot={dot} methBadge={methBadge} sevBadge={sevBadge}/>}
 
           {/* ── FASE 2: DOCUMENTOS ── */}
           {phase===2&&<DocumentosPhase cfg={cfg} issues={issues} cipData={cipData} docData={docData} docTab={docTab} setDocTab={setDocTab} setVulnF={setVulnF} stats={stats} sonarData={sonarData} genDG={genDG} genDT={genDT} genCK={genCK} genCIP={genCIP} dl1={dl1} dlAll={dlAll} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} TODAY={TODAY} card={card} inp={inp} ta={ta} infoBox={infoBox} warnBox={warnBox} codeBox={codeBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} sevBadge={sevBadge} claudeKey={claudeKey} setClaudeKey={setClaudeKey} fetchAI={fetchAI} aiLoading={aiLoading} fetchAI_DT={fetchAI_DT} repos={repos}/>}

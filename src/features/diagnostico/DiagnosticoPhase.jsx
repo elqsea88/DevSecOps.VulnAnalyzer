@@ -1,6 +1,6 @@
 // ── DiagnosticoPhase ─────────────────────────────────────────────────────────────────
 // Props destructured from App state
-function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fetchSonar, mcpUrl, setMcpUrl, mcpStatus, checkMcpStatus, getSonarUrl, checkRepo, checkAll, completePhase, showSources, setShowSources, getSourcesDisplay, card, inp, infoBox, warnBox, lbl, btnP, btnS, btnG, btnA, dot, methBadge, sevBadge }) {
+function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fetchSonar, mcpUrl, setMcpUrl, mcpStatus, checkMcpStatus, jenkinsMcpUrl, setJenkinsMcpUrl, jenkinsMcpStatus, checkJenkinsMcpStatus, getSonarUrl, checkRepo, checkAll, completePhase, showSources, setShowSources, getSourcesDisplay, card, inp, infoBox, warnBox, lbl, btnP, btnS, btnG, btnA, dot, methBadge, sevBadge }) {
   return (
             <div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24,paddingBottom:18,borderBottom:"1px solid #1A2840"}}>
@@ -17,20 +17,38 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fet
 
               {issues.length===0&&<div style={warnBox}>⚠ Sin issues. Regresa a Fase 0 para importar el Excel.</div>}
 
-              {/* SonarQube MCP Server */}
-              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,padding:"10px 14px",background:"#060B14",border:`1px solid ${mcpStatus==="ok"?"#00E67630":mcpStatus==="error"?"#FF456030":"#1A2840"}`,borderRadius:8}}>
-                <span style={{fontSize:10,color:"#00D4FF",fontFamily:"monospace",whiteSpace:"nowrap"}}>⚡ SONAR MCP</span>
-                <input style={{...inp,flex:1,fontSize:11}} value={mcpUrl} onChange={e=>setMcpUrl(e.target.value)} placeholder="http://127.0.0.1:3747"/>
-                <button
-                  onClick={()=>checkMcpStatus(mcpUrl)}
-                  disabled={mcpStatus==="checking"}
-                  style={{padding:"6px 12px",borderRadius:6,border:"1px solid #00D4FF40",background:"#00D4FF10",color:"#00D4FF",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"monospace",whiteSpace:"nowrap",opacity:mcpStatus==="checking"?0.6:1}}>
-                  {mcpStatus==="checking"?"⟳…":"Conectar"}
-                </button>
-                <span style={{fontSize:10,fontFamily:"monospace",whiteSpace:"nowrap",color:mcpStatus==="ok"?"#00E676":mcpStatus==="error"?"#FF4560":"#2A4060"}}>
-                  {mcpStatus==="ok"?"● Conectado":mcpStatus==="error"?"● Sin conexión":mcpStatus==="checking"?"● Verificando…":"● Sin verificar"}
-                </span>
-                <span style={{fontSize:9,color:"#2A4060",fontFamily:"monospace",whiteSpace:"nowrap"}}>node sonar-mcp-server.js</span>
+              {/* MCP Servers row */}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+                {/* SonarQube MCP */}
+                <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#060B14",border:`1px solid ${mcpStatus==="ok"?"#00E67630":mcpStatus==="error"?"#FF456030":"#1A2840"}`,borderRadius:8}}>
+                  <span style={{fontSize:10,color:"#00D4FF",fontFamily:"monospace",whiteSpace:"nowrap"}}>📊 SONAR MCP</span>
+                  <input style={{...inp,flex:1,fontSize:11}} value={mcpUrl} onChange={e=>setMcpUrl(e.target.value)} placeholder="http://127.0.0.1:3747"/>
+                  <button
+                    onClick={()=>checkMcpStatus(mcpUrl)}
+                    disabled={mcpStatus==="checking"}
+                    style={{padding:"6px 12px",borderRadius:6,border:"1px solid #00D4FF40",background:"#00D4FF10",color:"#00D4FF",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"monospace",whiteSpace:"nowrap",opacity:mcpStatus==="checking"?0.6:1}}>
+                    {mcpStatus==="checking"?"⟳…":"Conectar"}
+                  </button>
+                  <span style={{fontSize:10,fontFamily:"monospace",whiteSpace:"nowrap",color:mcpStatus==="ok"?"#00E676":mcpStatus==="error"?"#FF4560":"#2A4060"}}>
+                    {mcpStatus==="ok"?"● Conectado":mcpStatus==="error"?"● Sin conexión":mcpStatus==="checking"?"● Verificando…":"● Sin verificar"}
+                  </span>
+                  <span style={{fontSize:9,color:"#2A4060",fontFamily:"monospace",whiteSpace:"nowrap"}}>node sonar-mcp-server.js</span>
+                </div>
+                {/* Jenkins MCP */}
+                <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#060B14",border:`1px solid ${jenkinsMcpStatus==="ok"?"#FFB80030":jenkinsMcpStatus==="error"?"#FF456030":"#1A2840"}`,borderRadius:8}}>
+                  <span style={{fontSize:10,color:"#FFB800",fontFamily:"monospace",whiteSpace:"nowrap"}}>⚙ JENKINS MCP</span>
+                  <input style={{...inp,flex:1,fontSize:11}} value={jenkinsMcpUrl} onChange={e=>setJenkinsMcpUrl(e.target.value)} placeholder="http://127.0.0.1:3748"/>
+                  <button
+                    onClick={()=>checkJenkinsMcpStatus(jenkinsMcpUrl)}
+                    disabled={jenkinsMcpStatus==="checking"}
+                    style={{padding:"6px 12px",borderRadius:6,border:"1px solid #FFB80040",background:"#FFB80010",color:"#FFB800",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"monospace",whiteSpace:"nowrap",opacity:jenkinsMcpStatus==="checking"?0.6:1}}>
+                    {jenkinsMcpStatus==="checking"?"⟳…":"Conectar"}
+                  </button>
+                  <span style={{fontSize:10,fontFamily:"monospace",whiteSpace:"nowrap",color:jenkinsMcpStatus==="ok"?"#00E676":jenkinsMcpStatus==="error"?"#FF4560":"#2A4060"}}>
+                    {jenkinsMcpStatus==="ok"?"● Conectado":jenkinsMcpStatus==="error"?"● Sin conexión":jenkinsMcpStatus==="checking"?"● Verificando…":"● Sin verificar"}
+                  </span>
+                  <span style={{fontSize:9,color:"#2A4060",fontFamily:"monospace",whiteSpace:"nowrap"}}>node jenkins-mcp-server.js</span>
+                </div>
               </div>
 
               {/* Distribución por tipo */}

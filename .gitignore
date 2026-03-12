@@ -1,5 +1,6 @@
-# SonarQube MCP config — contains real token, never commit
+# MCP config files — contain real credentials, never commit
 sonar-mcp.config.json
+jenkins-mcp.config.json
 
 # Node
 node_modules/
