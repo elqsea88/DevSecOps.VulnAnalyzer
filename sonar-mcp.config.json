@@ -1,0 +1,6 @@
+{
+  "sonarUrl":   "https://sonar.chubb.com",
+  "sonarToken": "squ_f161a38d3edc0b6caaf4c71138c71c4d4d1c46e8",
+  "projectKey": "NAGH-APM0001304-mexico-it-chubbnet-ACE.BasicBook",
+  "port":       3747
+}

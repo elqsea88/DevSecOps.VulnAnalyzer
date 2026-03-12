@@ -1,0 +1,13 @@
+{
+  "name": "devsecops-vuln-analyzer",
+  "version": "1.0.0",
+  "description": "DevSecOps Vulnerability Analyzer — Standalone HTML Generator",
+  "scripts": {
+    "build": "node build.js",
+    "watch": "node build.js --watch",
+    "sonar-mcp": "node sonar-mcp-server.js"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
