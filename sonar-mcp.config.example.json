@@ -1,0 +1,6 @@
+{
+  "sonarUrl":   "https://your-sonarqube-server.com",
+  "sonarToken": "squ_YOUR_TOKEN_HERE",
+  "projectKey": "YOUR-PROJECT-KEY",
+  "port":       3747
+}
