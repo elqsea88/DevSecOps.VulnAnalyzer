@@ -30,10 +30,10 @@ function ImportacionPhase({ cfg, setCfg, issues, stats, fileRef, handleFile, lbl
                     <input style={inp} value={cfg.sonarBase} onChange={e=>setCfg(p=>({...p,sonarBase:e.target.value}))} placeholder="https://sonar.chubb.com"/>
                   </div>
                   <div>
-                    <label style={lbl}>SonarQube Project Key</label>
-                    <input style={inp} value={cfg.sonarProjectKey} onChange={e=>setCfg(p=>({...p,sonarProjectKey:e.target.value}))} placeholder="NAGH-APM0001304-mexico-it-chubbnet-ACE.BasicBook"/>
+                    <label style={lbl}>SonarQube Project Key <span style={{color:"#FFB800",fontWeight:400}}>(solo prefijo)</span></label>
+                    <input style={inp} value={cfg.sonarProjectKey} onChange={e=>setCfg(p=>({...p,sonarProjectKey:e.target.value}))} placeholder="NAGH-APM0001304-mexico-it-chubbnet-"/>
                     <div style={{fontSize:9,color:"#2A4060",fontFamily:"monospace",marginTop:4}}>
-                      Patrón: NAGH-APM0001304-mexico-it-chubbnet-<span style={{color:"#FFB800"}}>[{cfg.projectName||"NombreRepo"}]</span>
+                      Key completo: {cfg.sonarProjectKey||"NAGH-APM0001304-mexico-it-chubbnet-"}<span style={{color:"#FFB800"}}>[NombreRepo]</span>
                     </div>
                   </div>
                 </div>
