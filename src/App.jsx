@@ -12,7 +12,7 @@ function App(){
     jenkinsBase:"https://jenkins.empresa.com/job/",
     gitBase:"https://nausp-aapp0001.aceins.com/mexico-it-chubbnet/",
     sonarBase:"https://sonar.chubb.com",
-    sonarProjectKey:"NAGH-APM0001304-mexico-it-chubbnet-ACE.BasicBook",
+    sonarProjectKey:"NAGH-APM0001304-mexico-it-chubbnet-",
     projectName:"ACE.BasicBook", responsable:"", ticket:"SEC-"+TODAY,
   });
   const [sonarData,setSonarData] = useState({});  // { repoName: { qg, secIssues, secRating, relIssues, relRating, maintIssues, maintRating, coverage, duplications, hotspots, hotspotsStatus, loc, version, branch } }
@@ -43,7 +43,7 @@ function App(){
     setSonarF(repoName,"_fetching",true);
     setSonarF(repoName,"_fetchError",null);
     try {
-      const params = new URLSearchParams({ branch: br, projectKey: cfg.sonarProjectKey });
+      const params = new URLSearchParams({ branch: br, projectKey: cfg.sonarProjectKey + repoName });
       const res = await fetch(`${url}/api/sonar-data?${params}`, { signal: AbortSignal.timeout(20000) });
       const json = await res.json();
       if (!json.ok) throw new Error(json.error || `HTTP ${res.status}`);
@@ -56,9 +56,9 @@ function App(){
     }
   };
 
-  const getSonarUrl = (branch) => {
+  const getSonarUrl = (repoName, branch) => {
     const base = cfg.sonarBase.replace(/\/$/,"");
-    const key  = cfg.sonarProjectKey;
+    const key  = cfg.sonarProjectKey + repoName;
     const br   = branch || cfg.ticket || "";
     return `${base}/dashboard?branch=${encodeURIComponent(br)}&id=${encodeURIComponent(key)}&codeScope=overall`;
   };

@@ -112,7 +112,7 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fet
                         const sd = sonarData[repoName] || {};
                         const qgOk = sd.qg==="Passed";
                         const qgSet = !!sd.qg;
-                        const sonarUrl = getSonarUrl(sd.branch || cfg.ticket);
+                        const sonarUrl = getSonarUrl(repoName, sd.branch || cfg.ticket);
                         const ratingColor = r => ({A:"#00E676",B:"#69F0AE",C:"#FFB800",D:"#FF7043",E:"#FF4560"}[r]||"#3A5070");
                         return (
                           <div style={{background:"#060B14",borderRadius:8,padding:14,border:`1px solid ${qgSet?(qgOk?"#00E67640":"#FF456040"):"#1A2840"}`}}>

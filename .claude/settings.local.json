@@ -3,7 +3,8 @@
     "allow": [
       "Bash(grep -n \"^\\\\s*{phase===\\\\|^\\\\s*{\\\\/\\\\* ═══\\\\|^\\\\s*\\)}$\\\\|^  return \\(\" c:/DevSecOps.VulnAnalyzer/DevSecOps.VulnAnalyzer/src/features/diagnostico/DiagnosticoPhase.jsx)",
       "Skill(claude-api)",
-      "Skill(claude-api:*)"
+      "Skill(claude-api:*)",
+      "Bash(node build.js)"
     ]
   }
 }
