@@ -4,7 +4,10 @@
       "Bash(grep -n \"^\\\\s*{phase===\\\\|^\\\\s*{\\\\/\\\\* ═══\\\\|^\\\\s*\\)}$\\\\|^  return \\(\" c:/DevSecOps.VulnAnalyzer/DevSecOps.VulnAnalyzer/src/features/diagnostico/DiagnosticoPhase.jsx)",
       "Skill(claude-api)",
       "Skill(claude-api:*)",
-      "Bash(node build.js)"
+      "Bash(node build.js)",
+      "Bash(node c:/DevSecOps.VulnAnalyzer/DevSecOps.VulnAnalyzer/replace_genDT.js)",
+      "Bash(node -e \":*)",
+      "Bash(del c:/DevSecOps.VulnAnalyzer/DevSecOps.VulnAnalyzer/replace_genDT.js)"
     ]
   }
 }
