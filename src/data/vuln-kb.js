@@ -22,6 +22,10 @@ const VULN_KB = {
 3. Establecer política de versiones mínimas en NuGet.Config con allowedVersions.
 4. Ejecutar escaneo SCA post-actualización para verificar dependencias transitivas.
 5. Documentar en el CIP todos los archivos packages.config modificados con hash anterior y nuevo.`,
+    situacionEsperada: "El sistema debe utilizar únicamente componentes de terceros sin vulnerabilidades conocidas (CVE), con versiones actualizadas y verificadas contra el catálogo de componentes aprobados.",
+    reglaNegocio: "Ningún componente de código abierto con severidad Alta o Crítica (CVSS ≥ 7.0) puede estar presente en ambientes productivos; se requiere actualización o sustitución.",
+    depsTecnicas: "• Auditoría con OWASP Dependency-Check o Snyk\n• Actualizar dependencias según reporte de vulnerabilidades\n• Agregar escaneo SCA al pipeline CI/CD\n• Mantener Software Bill of Materials (SBOM)",
+    propuestaGeneral: "Actualizar todos los componentes de terceros con vulnerabilidades conocidas a versiones parcheadas e integrar un proceso de análisis de composición de software (SCA) en el pipeline.",
   },
   "Reflected Cross Site Scripting":{
     label:"Cross-Site Scripting Reflejado (XSS)", icon:"💉",
@@ -63,6 +67,10 @@ const VULN_KB = {
 4. Validar y codificar en servidor: cualquier dato que vuelva al cliente debe ser codificado en origen.
 
 5. Revisar cada archivo del CIP marcado como XSS y aplicar el fix correspondiente antes del despliegue.`,
+    situacionEsperada: "El sistema debe sanitizar y codificar toda salida dinámica hacia el navegador, garantizando que ningún input del usuario se renderice como HTML o JavaScript ejecutable.",
+    reglaNegocio: "Todo dato proveniente de fuentes externas (parámetros URL, formularios, cabeceras HTTP) debe ser tratado como no confiable y codificado antes de incluirse en la respuesta HTML.",
+    depsTecnicas: "• DOMPurify ≥ 3.0 (sanitización client-side)\n• Encoding de salida server-side (HtmlEncode/AntiXSS)\n• Content-Security-Policy header en todas las respuestas\n• jquery-validation ≥ 1.19.3",
+    propuestaGeneral: "Implementar codificación de salida consistente en todos los puntos donde se renderiza input del usuario, complementado con una política CSP restrictiva.",
   },
   "Stored Cross Site Scripting":{
     label:"Cross-Site Scripting Almacenado (XSS)", icon:"🗄️",
@@ -79,6 +87,10 @@ const VULN_KB = {
 2. Sanitizar TAMBIÉN al momento de renderizar (defensa en profundidad).
 3. Implementar validación estricta de tipos y longitud en todos los campos del modelo.
 4. Revisar stored procedures y ORM queries para evitar inyección secundaria.`,
+    situacionEsperada: "El sistema debe sanitizar todo contenido persistido antes de almacenarlo en base de datos y antes de renderizarlo, eliminando cualquier script o HTML malicioso.",
+    reglaNegocio: "Todo contenido generado por usuarios que se almacene y posteriormente se muestre a otros usuarios debe pasar por un proceso de sanitización validado.",
+    depsTecnicas: "• DOMPurify ≥ 3.0 (sanitización antes de persistir)\n• HtmlEncode en capa de presentación\n• Content-Security-Policy header\n• Validación de entrada en capa de servicio",
+    propuestaGeneral: "Aplicar sanitización en el punto de entrada (guardado) y codificación en el punto de salida (renderizado) para toda información almacenada en base de datos.",
   },
   // ── 4. DOM-BASED XSS ────────────────────────────────────────────────────────
   "DOM Cross Site Scripting":{
@@ -108,6 +120,10 @@ Fuente: OWASP DOM-based XSS Prevention Cheat Sheet (cheatsheetseries.owasp.org)
 4. Agregar CSP: require-trusted-types-for 'script'
 5. Usar encodeURIComponent() para datos en URLs.
 Referencia: OWASP DOM XSS Prevention Cheat Sheet — cheatsheetseries.owasp.org`,
+    situacionEsperada: "El sistema debe evitar el uso de APIs DOM inseguras (innerHTML, document.write, eval) y reemplazarlas por alternativas seguras que no interpreten HTML.",
+    reglaNegocio: "La manipulación del DOM en el cliente debe realizarse exclusivamente mediante APIs seguras; está prohibido asignar contenido no sanitizado a propiedades que interpreten HTML.",
+    depsTecnicas: "• DOMPurify ≥ 3.0\n• Reemplazar innerHTML → textContent / DOMPurify.sanitize()\n• Reemplazar document.write → métodos DOM seguros\n• Content-Security-Policy con script-src restrictivo",
+    propuestaGeneral: "Refactorizar el código JavaScript para eliminar el uso de APIs DOM inseguras, sustituyéndolas por métodos seguros y añadiendo sanitización donde sea inevitable.",
   },
 
   // ── 5. SQL INJECTION ────────────────────────────────────────────────────────
@@ -139,6 +155,10 @@ Fuente: OWASP SQL Injection Prevention Cheat Sheet (cheatsheetseries.owasp.org)
 5. Implementar WAF con reglas de detección de SQLi.
 6. Escanear con SQLMap o OWASP ZAP en el pipeline CI/CD.
 Referencia: OWASP SQL Injection Prevention Cheat Sheet`,
+    situacionEsperada: "El sistema debe utilizar exclusivamente consultas parametrizadas o procedimientos almacenados para interactuar con la base de datos, eliminando toda concatenación directa de input en sentencias SQL.",
+    reglaNegocio: "Está prohibida la construcción de sentencias SQL mediante concatenación de strings con datos de entrada del usuario; toda consulta debe usar parámetros ligados.",
+    depsTecnicas: "• Prepared Statements / Parameterized Queries en todas las consultas\n• ORM con consultas tipadas (Entity Framework, Dapper)\n• Validación y sanitización de inputs en capa de servicio\n• Principio de mínimo privilegio en cuentas de BD",
+    propuestaGeneral: "Refactorizar todas las consultas SQL que usen concatenación de strings para utilizar consultas parametrizadas, aplicando el principio de mínimo privilegio en las cuentas de base de datos.",
   },
 
   // ── 6. BROKEN AUTHENTICATION ────────────────────────────────────────────────
@@ -167,6 +187,10 @@ Fuente: OWASP Authentication Cheat Sheet (cheatsheetseries.owasp.org)
 5. Forzar HTTPS con HSTS: Strict-Transport-Security: max-age=31536000; includeSubDomains
 6. Validar contraseñas contra Have I Been Pwned API o lista de contraseñas comunes.
 Referencia: OWASP Authentication Cheat Sheet`,
+    situacionEsperada: "El sistema debe implementar mecanismos de autenticación robustos con gestión segura de sesiones, bloqueo por intentos fallidos y tokens con tiempo de expiración adecuado.",
+    reglaNegocio: "Todo acceso a recursos protegidos requiere autenticación válida y vigente; las sesiones deben invalidarse al cerrar sesión y expirar por inactividad según política corporativa.",
+    depsTecnicas: "• Implementar MFA (Multi-Factor Authentication)\n• Tokens JWT con expiración y rotación\n• Bloqueo de cuenta tras N intentos fallidos\n• HTTPS obligatorio para todas las rutas de autenticación\n• Almacenamiento seguro de contraseñas (bcrypt/Argon2)",
+    propuestaGeneral: "Fortalecer el mecanismo de autenticación implementando MFA, gestión segura de sesiones con expiración y políticas de bloqueo ante intentos fallidos.",
   },
 
   // ── 7. SECURITY MISCONFIGURATION ────────────────────────────────────────────
@@ -198,6 +222,10 @@ Fuente: OWASP Security Headers Project, OWASP Top 10 A05
 4. Deshabilitar directory listing en IIS.
 5. Crear checklist de hardening y ejecutarlo en cada despliegue.
 Referencia: OWASP Security Misconfiguration (A05:2021)`,
+    situacionEsperada: "El sistema debe operar con configuraciones de seguridad endurecidas, sin valores por defecto inseguros, con headers HTTP de seguridad habilitados y servicios/puertos innecesarios deshabilitados.",
+    reglaNegocio: "Toda configuración de infraestructura y aplicación debe seguir el principio de mínimo privilegio y mínima superficie de ataque; los valores por defecto de frameworks deben ser revisados y reforzados.",
+    depsTecnicas: "• Configurar HTTP Security Headers (HSTS, X-Frame-Options, X-Content-Type, CSP)\n• Deshabilitar endpoints de diagnóstico en producción\n• Revisar permisos de archivos y directorios\n• Configurar CORS restrictivo\n• Eliminar versiones y banners de servidor",
+    propuestaGeneral: "Aplicar un hardening de configuración en la aplicación e infraestructura, habilitando headers de seguridad HTTP, deshabilitando funcionalidades innecesarias y eliminando configuraciones por defecto inseguras.",
   },
 
   // ── 8. SENSITIVE DATA EXPOSURE ──────────────────────────────────────────────
@@ -225,6 +253,10 @@ Fuente: OWASP Cryptographic Storage Cheat Sheet (cheatsheetseries.owasp.org)
 5. Revisar logs y eliminar cualquier dato personal, token o contraseña.
 6. Clasificar datos por nivel de sensibilidad y aplicar controles proporcionales.
 Referencia: OWASP Cryptographic Storage Cheat Sheet`,
+    situacionEsperada: "El sistema debe proteger todos los datos sensibles en tránsito y en reposo mediante cifrado robusto, evitando su exposición en logs, URLs o respuestas no autorizadas.",
+    reglaNegocio: "Los datos personales, financieros o de autenticación deben cifrarse en reposo y en tránsito; su almacenamiento en texto claro está prohibido por política de seguridad corporativa.",
+    depsTecnicas: "• Forzar TLS 1.2/1.3 en todas las comunicaciones\n• bcrypt/Argon2 para hashing de contraseñas\n• AES-256-GCM para cifrado en reposo\n• Flags Secure, HttpOnly, SameSite en cookies de sesión",
+    propuestaGeneral: "Implementar cifrado de extremo a extremo para datos sensibles, forzar HTTPS con HSTS y asegurar que ningún dato sensible se almacene o transmita en texto claro.",
   },
 
   // ── 9. XXE ──────────────────────────────────────────────────────────────────
@@ -250,6 +282,10 @@ Fuente: OWASP XXE Prevention Cheat Sheet (cheatsheetseries.owasp.org)
 3. Validar el XML contra un schema (XSD) antes de procesarlo.
 4. Actualizar librerías XML a versiones que deshabiliten XXE por defecto.
 Referencia: OWASP XXE Prevention Cheat Sheet`,
+    situacionEsperada: "El sistema debe procesar XML con parsers configurados para rechazar entidades externas y DTDs, previniendo el acceso a recursos locales o de red desde el procesamiento XML.",
+    reglaNegocio: "Todo procesamiento de XML proveniente de fuentes externas debe realizarse con DTD deshabilitado y entidades externas bloqueadas; ningún parser XML debe resolver entidades de red.",
+    depsTecnicas: "• XmlReaderSettings con DtdProcessing.Prohibit y XmlResolver=null\n• Migrar a XDocument (LINQ to XML) donde sea posible\n• Validación XSD de documentos XML entrantes\n• Actualizar librerías XML a versiones seguras",
+    propuestaGeneral: "Configurar todos los parsers XML para deshabilitar el procesamiento de DTD y entidades externas, validando los documentos XML contra un schema antes de procesarlos.",
   },
 
   // ── 10. INSECURE DESERIALIZATION ────────────────────────────────────────────
@@ -272,6 +308,10 @@ Fuente: OWASP Deserialization Cheat Sheet (cheatsheetseries.owasp.org)
 4. Firmar los datos serializados con HMAC-SHA256 y validar la firma antes de deserializar.
 5. Ejecutar el proceso de deserialización con mínimos privilegios.
 Referencia: OWASP Deserialization Cheat Sheet`,
+    situacionEsperada: "El sistema debe deserializar únicamente objetos de tipos conocidos y validados, con verificación de integridad previa, eliminando el uso de formatos de serialización que permitan instanciar tipos arbitrarios.",
+    reglaNegocio: "Está prohibido el uso de BinaryFormatter y TypeNameHandling irrestricto para datos provenientes de fuentes externas; toda deserialización debe emplear allowlists de tipos permitidos.",
+    depsTecnicas: "• Reemplazar BinaryFormatter por System.Text.Json con TypeInfoResolver restrictivo\n• Firma HMAC-SHA256 de datos serializados\n• Allowlist de tipos permitidos para deserialización\n• Ejecutar deserialización con mínimos privilegios",
+    propuestaGeneral: "Eliminar el uso de formatos de serialización inseguros, implementar verificación de integridad con HMAC antes de deserializar y restringir los tipos instanciables mediante allowlists.",
   },
 
   // ── 11. CSRF ────────────────────────────────────────────────────────────────
@@ -296,6 +336,10 @@ Fuente: OWASP CSRF Prevention Cheat Sheet (cheatsheetseries.owasp.org)
 3. Para APIs AJAX, incluir el token CSRF en el header X-CSRF-Token.
 4. Verificar Origin header en endpoints críticos de API.
 Referencia: OWASP CSRF Prevention Cheat Sheet`,
+    situacionEsperada: "El sistema debe validar tokens anti-CSRF en todas las solicitudes que modifiquen estado, asegurando que solo solicitudes originadas desde el propio dominio puedan ejecutar acciones protegidas.",
+    reglaNegocio: "Toda operación de modificación de datos (POST/PUT/DELETE) debe incluir y validar un token anti-CSRF único por sesión; las cookies de sesión deben tener el atributo SameSite configurado.",
+    depsTecnicas: "• AntiForgeryToken en todos los formularios ASP.NET MVC\n• [ValidateAntiForgeryToken] en action methods de modificación\n• SameSite=Strict en cookies de sesión\n• Validación de Origin header en APIs AJAX",
+    propuestaGeneral: "Implementar protección CSRF mediante tokens anti-forgery en todos los formularios y endpoints de modificación de estado, complementado con el atributo SameSite en las cookies de sesión.",
   },
 
   // ── 12. IDOR ────────────────────────────────────────────────────────────────
@@ -319,6 +363,10 @@ Fuente: OWASP Insecure Direct Object Reference Prevention Cheat Sheet
 3. Implementar Row-Level Security en la base de datos como capa adicional.
 4. Registrar y alertar sobre accesos denegados para detectar intentos de explotación.
 Referencia: OWASP Broken Access Control (A01:2021)`,
+    situacionEsperada: "El sistema debe verificar en cada solicitud que el recurso accedido pertenece al usuario autenticado, denegando acceso a recursos de otros usuarios independientemente del identificador proporcionado.",
+    reglaNegocio: "Todo endpoint que acceda a recursos por identificador debe validar que dicho recurso pertenece al usuario de la sesión activa; el acceso a recursos ajenos debe retornar 403 Forbidden.",
+    depsTecnicas: "• Verificación de ownership en cada consulta a BD (filtro por usuarioId)\n• GUIDs/ULIDs en lugar de IDs secuenciales\n• Row-Level Security en base de datos\n• Logging de accesos denegados para auditoría",
+    propuestaGeneral: "Implementar verificación de propiedad de recursos en todos los endpoints, asegurando que cada consulta filtre por el usuario autenticado y registrando los intentos de acceso no autorizado.",
   },
 
   // ── 13. SSRF ────────────────────────────────────────────────────────────────
@@ -342,6 +390,10 @@ Fuente: OWASP SSRF Prevention Cheat Sheet (cheatsheetseries.owasp.org)
 4. Usar un proxy de salida que filtre solicitudes a destinos no permitidos.
 5. Migrar a AWS IMDSv2 (requiere token de sesión) si se usa AWS.
 Referencia: OWASP SSRF Prevention Cheat Sheet`,
+    situacionEsperada: "El sistema debe validar y restringir todas las URLs destino de solicitudes salientes del servidor, bloqueando el acceso a redes internas, metadatos cloud y servicios no autorizados.",
+    reglaNegocio: "Las solicitudes HTTP salientes iniciadas desde el servidor solo pueden dirigirse a dominios incluidos en la allowlist corporativa; el acceso a IPs privadas y endpoints de metadatos cloud está prohibido.",
+    depsTecnicas: "• Allowlist de dominios permitidos para solicitudes externas\n• Validación de IP destino (bloquear rangos privados y loopback)\n• Deshabilitar seguimiento automático de redirecciones HTTP\n• Proxy de salida con filtrado de destinos",
+    propuestaGeneral: "Implementar una allowlist estricta de destinos para solicitudes HTTP salientes, bloqueando el acceso a redes internas y endpoints de metadatos mediante validación en el cliente HTTP del servidor.",
   },
 
   // ── 14. COMMAND INJECTION ───────────────────────────────────────────────────
@@ -366,6 +418,10 @@ Fuente: OWASP OS Command Injection Defense Cheat Sheet (cheatsheetseries.owasp.o
 4. Ejecutar la aplicación con el mínimo de privilegios necesarios (principio de mínimo privilegio).
 5. Usar contenedores/sandboxing para limitar el impacto de una ejecución exitosa.
 Referencia: OWASP OS Command Injection Defense Cheat Sheet`,
+    situacionEsperada: "El sistema debe eliminar toda ejecución de comandos del sistema construidos con datos del usuario, reemplazando estas operaciones por APIs nativas seguras del lenguaje o del framework.",
+    reglaNegocio: "Está prohibida la construcción de comandos del sistema operativo mediante concatenación de inputs del usuario; cualquier interacción con el OS debe usar APIs nativas con parámetros validados por allowlist.",
+    depsTecnicas: "• Reemplazar Process.Start con string por API con array de argumentos\n• Allowlist estricta de valores permitidos para parámetros de comandos\n• Principio de mínimo privilegio para el proceso de la aplicación\n• Sandboxing/contenedores para limitar superficie de impacto",
+    propuestaGeneral: "Eliminar la construcción de comandos del sistema con datos del usuario, reemplazando estas operaciones por APIs nativas seguras y aplicando el principio de mínimo privilegio al proceso de la aplicación.",
   },
 
   // ── 15. PATH TRAVERSAL ──────────────────────────────────────────────────────
@@ -389,6 +445,10 @@ Fuente: OWASP Path Traversal (cheatsheetseries.owasp.org)
 3. Generar nombres de archivo internos (GUID) en lugar de usar el nombre proporcionado por el usuario.
 4. Nunca servir archivos de rutas absolutas proporcionadas por el usuario.
 Referencia: OWASP Path Traversal Prevention`,
+    situacionEsperada: "El sistema debe normalizar y validar todas las rutas de archivo derivadas de inputs del usuario, asegurando que permanezcan dentro del directorio base autorizado.",
+    reglaNegocio: "Ninguna operación de lectura o escritura de archivos puede usar rutas construidas directamente con datos del usuario sin normalización y verificación de pertenencia al directorio base permitido.",
+    depsTecnicas: "• Path.GetFullPath() con verificación de directorio base\n• Allowlist de extensiones de archivo permitidas\n• Generación de nombres de archivo internos (GUID)\n• Prohibición de servir archivos desde rutas absolutas del usuario",
+    propuestaGeneral: "Normalizar todas las rutas de archivo con Path.GetFullPath() y verificar que permanezcan dentro del directorio base autorizado, usando GUIDs internos para nombres de archivo en lugar de los proporcionados por el usuario.",
   },
 
   // ── 16. CLICKJACKING ────────────────────────────────────────────────────────
@@ -411,6 +471,10 @@ Fuente: OWASP Clickjacking Defense Cheat Sheet (cheatsheetseries.owasp.org)
    Content-Security-Policy: frame-ancestors 'self' https://trusted.empresa.com
 4. Implementar framebusting como defensa adicional en JavaScript (no como única medida).
 Referencia: OWASP Clickjacking Defense Cheat Sheet`,
+    situacionEsperada: "El sistema debe enviar en todas las respuestas HTTP los headers que impidan su embedding en iframes desde dominios no autorizados, previniendo ataques de UI redressing.",
+    reglaNegocio: "La aplicación no debe poder ser embebida en iframes desde dominios externos; se requiere la configuración de X-Frame-Options o CSP frame-ancestors en todas las respuestas HTTP.",
+    depsTecnicas: "• Header X-Frame-Options: SAMEORIGIN en web.config\n• CSP frame-ancestors 'self' como complemento moderno\n• Revisión de todos los endpoints que devuelven HTML",
+    propuestaGeneral: "Agregar los headers X-Frame-Options y CSP frame-ancestors en todas las respuestas HTTP para prevenir que la aplicación sea embebida en iframes desde dominios no autorizados.",
   },
 
   // ── 17. OPEN REDIRECT ───────────────────────────────────────────────────────
@@ -431,6 +495,10 @@ Fuente: OWASP Unvalidated Redirects and Forwards Cheat Sheet
 2. Si se necesita redirigir a dominios externos, mantener una allowlist explícita.
 3. Nunca incluir la URL de destino directamente en parámetros visibles del usuario.
 Referencia: OWASP Unvalidated Redirects and Forwards Cheat Sheet`,
+    situacionEsperada: "El sistema debe validar todas las URLs de redirección para asegurarse de que apuntan a recursos locales o dominios autorizados, rechazando cualquier redirección a sitios externos no controlados.",
+    reglaNegocio: "Las redirecciones a URLs externas solo se permiten hacia dominios incluidos en la allowlist corporativa; toda URL de redirección proveniente de parámetros del usuario debe validarse antes de ejecutarse.",
+    depsTecnicas: "• Url.IsLocalUrl() para validar returnUrl en ASP.NET MVC\n• Allowlist explícita de dominios externos permitidos\n• Eliminación de parámetros de URL de destino en respuestas visibles",
+    propuestaGeneral: "Validar todas las URLs de redirección mediante Url.IsLocalUrl() o una allowlist de dominios autorizados, rechazando cualquier intento de redirigir a destinos externos no controlados.",
   },
 
   // ── 18. HARDCODED CREDENTIALS ───────────────────────────────────────────────
@@ -454,6 +522,10 @@ Fuente: GitHub Advisory Database, OWASP
 4. Rotar INMEDIATAMENTE cualquier credencial que haya sido expuesta en el historial de Git.
 5. Usar git-filter-repo para eliminar secretos del historial del repositorio.
 Referencia: OWASP Secrets Management Cheat Sheet`,
+    situacionEsperada: "El sistema debe obtener todas las credenciales desde gestores de secretos externos o variables de entorno, sin que ninguna credencial esté embebida en el código fuente o en archivos versionados.",
+    reglaNegocio: "Está prohibido almacenar credenciales, API keys o connection strings en el código fuente o en archivos de configuración versionados; toda credencial debe gestionarse mediante un vault corporativo aprobado.",
+    depsTecnicas: "• Azure Key Vault / AWS Secrets Manager para gestión de credenciales\n• Variables de entorno del servidor para configuración sensible\n• git-secrets o truffleHog en pre-commit hook y pipeline CI/CD\n• Rotación inmediata de credenciales expuestas",
+    propuestaGeneral: "Migrar todas las credenciales hardcodeadas a un gestor de secretos corporativo, implementar escaneo automático de secretos en el pipeline CI/CD y rotar las credenciales que hayan podido ser expuestas.",
   },
 
   // ── 19. IMPROPER ERROR HANDLING ─────────────────────────────────────────────
@@ -479,6 +551,10 @@ Fuente: OWASP Error Handling Cheat Sheet (cheatsheetseries.owasp.org)
 4. Mostrar al usuario solo mensajes genéricos amigables, sin detalles técnicos.
 5. Deshabilitar los headers que revelan versión: <httpRuntime enableVersionHeader="false"/>
 Referencia: OWASP Error Handling Cheat Sheet`,
+    situacionEsperada: "El sistema debe mostrar al usuario mensajes de error genéricos sin detalles técnicos, registrando internamente el detalle completo del error mediante un sistema de logging centralizado.",
+    reglaNegocio: "En producción, ningún error debe exponer stack traces, rutas de servidor, versiones de componentes ni consultas SQL al usuario final; el detalle técnico debe registrarse exclusivamente en el sistema de logging interno.",
+    depsTecnicas: "• customErrors mode='On' en web.config de producción\n• HandleErrorAttribute global en FilterConfig\n• NLog/Serilog para logging interno de errores\n• Páginas de error genéricas sin información técnica",
+    propuestaGeneral: "Configurar manejo de errores centralizado en producción que muestre mensajes genéricos al usuario y registre el detalle técnico en el sistema de logging interno, sin exponer información del stack tecnológico.",
   },
 
   // ── 20. DIRECTORY LISTING ───────────────────────────────────────────────────
@@ -498,6 +574,10 @@ Referencia: OWASP Error Handling Cheat Sheet`,
 3. Asegurar que todos los directorios accesibles tienen un archivo index por defecto.
 4. Revisar y restringir los permisos de acceso a directorios de archivos estáticos.
 Referencia: OWASP Security Misconfiguration (A05:2021)`,
+    situacionEsperada: "El sistema debe tener el listado de directorios deshabilitado en todos los entornos, impidiendo que el servidor web exponga la estructura de archivos a usuarios no autorizados.",
+    reglaNegocio: "El Directory Browsing debe estar deshabilitado en todos los servidores web de producción y staging; ningún directorio de la aplicación puede ser accesible para listado sin autenticación.",
+    depsTecnicas: "• directoryBrowse enabled='false' en web.config\n• Deshabilitar Directory Browsing en IIS Manager\n• Archivo index por defecto en cada directorio accesible\n• Checklist de hardening en cada despliegue",
+    propuestaGeneral: "Deshabilitar el Directory Browsing en IIS y verificar la configuración en web.config, asegurando que ningún directorio de la aplicación exponga su contenido mediante listado automático.",
   },
 
   // ── 21. FILE UPLOAD ─────────────────────────────────────────────────────────
@@ -522,6 +602,10 @@ Fuente: OWASP File Upload Cheat Sheet (cheatsheetseries.owasp.org)
 5. Escanear archivos con antivirus/antimalware antes de procesarlos.
 6. Servir archivos como attachment con Content-Disposition: attachment.
 Referencia: OWASP File Upload Cheat Sheet`,
+    situacionEsperada: "El sistema debe validar los archivos subidos por contenido real (magic bytes), almacenarlos fuera del webroot con nombres internos y servirlos con Content-Disposition: attachment.",
+    reglaNegocio: "Los archivos cargados deben validarse por firma de contenido, almacenarse fuera del webroot y renombrarse con identificadores internos; solo se permiten extensiones autorizadas por política.",
+    depsTecnicas: "• Validación por magic bytes (primeros bytes del archivo)\n• Almacenamiento fuera del webroot\n• Renombrado con GUID + extensión de allowlist\n• Escaneo antivirus antes de procesar\n• Content-Disposition: attachment al servir",
+    propuestaGeneral: "Implementar validación de archivos por firma de contenido, almacenamiento fuera del webroot y renombrado con GUIDs, complementado con escaneo antivirus antes de procesar los archivos subidos.",
   },
 
   // ── 22. REGEX DOS (ReDoS) ───────────────────────────────────────────────────
@@ -548,6 +632,10 @@ Fuente: OSV.dev, GitHub Advisory Database, NVD/NIST
 4. Suscribirse a alertas de seguridad de GitHub Dependabot para el repositorio.
 5. Verificar en OSV.dev y NVD que no existen CVEs adicionales en otras dependencias.
 Referencias: OSV.dev, GitHub Advisory Database, NVD NIST`,
+    situacionEsperada: "El sistema debe utilizar expresiones regulares sin patrones de backtracking catastrófico y con límites de longitud en los inputs, previniendo condiciones de denegación de servicio por consumo excesivo de CPU.",
+    reglaNegocio: "Las expresiones regulares utilizadas para validación de inputs deben evaluarse para detectar complejidad exponencial; los componentes con CVEs de ReDoS deben actualizarse antes del despliegue a producción.",
+    depsTecnicas: "• Actualizar jquery-validation a ≥ 1.19.3\n• Revisar expresiones regulares custom con herramientas de análisis de complejidad\n• Límites de longitud en inputs antes de aplicar regex\n• OWASP Dependency-Check o Snyk en pipeline CI/CD",
+    propuestaGeneral: "Actualizar los componentes con CVEs de ReDoS conocidos, revisar las expresiones regulares custom para eliminar patrones de backtracking catastrófico e integrar análisis SCA en el pipeline.",
   },
 
   // ── 23. PROTOTYPE POLLUTION ─────────────────────────────────────────────────
@@ -575,6 +663,10 @@ Fuente: GitHub Advisory Database, Snyk Vulnerability DB
 3. Usar Object.freeze(Object.prototype) en el contexto de la aplicación.
 4. Validar y sanitizar todos los inputs JSON antes de operaciones de merge.
 Referencia: GitHub Advisory Database — Prototype Pollution advisories`,
+    situacionEsperada: "El sistema debe utilizar versiones actualizadas de jQuery y librerías de utilidades, con operaciones de merge de objetos que filtren claves de prototipo para prevenir contaminación del prototype chain.",
+    reglaNegocio: "Las operaciones de merge de objetos JavaScript con datos externos deben filtrar explícitamente las claves __proto__, constructor y prototype; las librerías vulnerables deben actualizarse antes del despliegue.",
+    depsTecnicas: "• jQuery ≥ 3.4.0 (fix de Prototype Pollution)\n• Validación de claves en operaciones de deep merge\n• Object.freeze(Object.prototype) en inicialización\n• Actualización de librerías de utilidades con CVEs conocidos",
+    propuestaGeneral: "Actualizar jQuery y librerías de utilidades a versiones que corrijan Prototype Pollution, implementando validación de claves en operaciones de merge para filtrar propiedades del prototipo.",
   },
 
   // ── 24. JWT VULNERABILITIES ─────────────────────────────────────────────────
@@ -602,6 +694,10 @@ Fuente: OWASP JSON Web Token Cheat Sheet (cheatsheetseries.owasp.org)
 4. Establecer expiración corta (15-60 min) con refresh tokens.
 5. Implementar revocación de tokens con jti claim y lista de tokens revocados.
 Referencia: OWASP JWT Cheat Sheet`,
+    situacionEsperada: "El sistema debe validar los JWT con un algoritmo fijo en allowlist, verificando exp, iss y aud en cada token, con secretos de alta entropía y expiración corta complementada por refresh tokens.",
+    reglaNegocio: "Los JWT deben validarse con algoritmo explícito definido por el servidor; está prohibido aceptar el algoritmo del header del token. Los secretos deben tener mínimo 256 bits y los tokens deben expirar en máximo 60 minutos.",
+    depsTecnicas: "• TokenValidationParameters con ValidAlgorithms allowlist\n• Secretos JWT ≥ 256 bits (RNGCryptoServiceProvider)\n• Validación de exp, iss, aud en cada solicitud\n• Refresh tokens con rotación\n• Lista de revocación con jti claim",
+    propuestaGeneral: "Reforzar la validación de JWT especificando el algoritmo permitido en el servidor, usando secretos de alta entropía y estableciendo expiración corta con mecanismo de refresh y revocación de tokens.",
   },
 
   // ── 25. CORS MISCONFIGURATION ───────────────────────────────────────────────
@@ -622,6 +718,10 @@ Fuente: OWASP CORS Security Cheat Sheet
 3. Validar el Origin contra la allowlist antes de incluirlo en la respuesta.
 4. Revisar todos los subdominios incluidos en la allowlist: un subdominio vulnerable puede comprometer la política CORS.
 Referencia: OWASP CORS Security Cheat Sheet`,
+    situacionEsperada: "El sistema debe configurar CORS con una allowlist explícita de orígenes autorizados, sin reflejar el Origin del request ni usar wildcards para endpoints con autenticación o datos sensibles.",
+    reglaNegocio: "La política CORS debe definir explícitamente los orígenes permitidos; está prohibido el uso de Access-Control-Allow-Origin: * para endpoints que manejen sesiones autenticadas o datos de clientes.",
+    depsTecnicas: "• Allowlist explícita de orígenes en web.config o Startup.cs\n• Validación del Origin contra la allowlist antes de incluirlo en respuesta\n• Prohibición de wildcard * en endpoints con credenciales\n• Revisión periódica de subdominios en la allowlist",
+    propuestaGeneral: "Definir una allowlist explícita de orígenes CORS autorizados, eliminar configuraciones permisivas con wildcard en endpoints sensibles y validar el Origin del request antes de incluirlo en la respuesta.",
   },
 
   // ── 26. SESSION FIXATION ────────────────────────────────────────────────────
@@ -643,6 +743,10 @@ Fuente: OWASP Session Management Cheat Sheet (cheatsheetseries.owasp.org)
 2. Nunca aceptar session IDs en parámetros de URL (GET).
 3. Configurar cookies de sesión con HttpOnly=true, Secure=true, SameSite=Strict.
 Referencia: OWASP Session Management Cheat Sheet`,
+    situacionEsperada: "El sistema debe regenerar el ID de sesión tras cada autenticación exitosa y no aceptar IDs de sesión provenientes de parámetros de URL, evitando que el atacante fije una sesión de antemano.",
+    reglaNegocio: "El ID de sesión debe regenerarse obligatoriamente tras el login exitoso; está prohibido aceptar session IDs en query strings y las cookies de sesión deben configurarse con HttpOnly, Secure y SameSite.",
+    depsTecnicas: "• Session.Abandon() + regeneración de cookie tras login\n• Prohibición de session IDs en parámetros GET\n• Cookies de sesión con HttpOnly=true, Secure=true, SameSite=Strict",
+    propuestaGeneral: "Implementar regeneración obligatoria del ID de sesión tras autenticación exitosa, prohibir IDs de sesión en URLs y configurar las cookies de sesión con los atributos de seguridad requeridos.",
   },
 
   // ── 27. INSECURE COOKIE ─────────────────────────────────────────────────────
@@ -666,6 +770,10 @@ Fuente: OWASP Session Management Cheat Sheet (cheatsheetseries.owasp.org)
    cookie.SameSite = SameSiteMode.Strict;
 3. Revisar todas las cookies que se generan y asegurar que las sensibles tengan estos flags.
 Referencia: OWASP Session Management Cheat Sheet`,
+    situacionEsperada: "El sistema debe configurar todas las cookies de sesión y autenticación con los atributos HttpOnly, Secure y SameSite=Strict para prevenir robo de cookies mediante XSS y CSRF.",
+    reglaNegocio: "Todas las cookies que almacenen tokens de sesión o autenticación deben tener los atributos HttpOnly=true, Secure=true y SameSite=Strict configurados; el incumplimiento bloquea el despliegue a producción.",
+    depsTecnicas: "• httpCookies httpOnlyCookies='true' requireSSL='true' sameSite='Strict' en web.config\n• FormsAuthentication requireSSL='true'\n• Revisión de todas las cookies custom generadas en código",
+    propuestaGeneral: "Configurar los atributos de seguridad HttpOnly, Secure y SameSite en todas las cookies de sesión y autenticación, tanto en web.config como en las cookies generadas programáticamente.",
   },
 
   // ── 28. HTTP REQUEST SMUGGLING ──────────────────────────────────────────────
@@ -685,6 +793,10 @@ Fuente: PortSwigger Web Security Academy, OWASP
 3. Configurar el servidor para rechazar solicitudes ambiguas con ambos headers (Content-Length y Transfer-Encoding).
 4. Deshabilitar la reutilización de conexiones backend en el proxy si no puede corregirse de otra forma.
 Referencia: PortSwigger HTTP Request Smuggling`,
+    situacionEsperada: "El sistema debe operar con componentes HTTP actualizados que interpreten consistentemente los headers de longitud, rechazando solicitudes ambiguas que puedan provocar desincronización en la cadena proxy-backend.",
+    reglaNegocio: "Todos los componentes de la cadena HTTP (proxies, balanceadores, CDN, servidores de aplicación) deben estar actualizados a versiones sin vulnerabilidades de Request Smuggling y configurados para rechazar solicitudes ambiguas.",
+    depsTecnicas: "• Actualizar IIS, ARR y CDN a versiones que corrijan HTTP/1.1 parsing inconsistente\n• Migrar a HTTP/2 donde sea posible\n• Configurar rechazo de solicitudes con ambos headers Content-Length y Transfer-Encoding",
+    propuestaGeneral: "Actualizar todos los componentes de la cadena HTTP a versiones que manejen correctamente el parsing de solicitudes y migrar a HTTP/2 para eliminar la ambigüedad de headers en HTTP/1.1.",
   },
 
   // ── 29. TEMPLATE INJECTION (SSTI) ───────────────────────────────────────────
@@ -705,6 +817,10 @@ Fuente: OWASP Server-Side Template Injection (cheatsheetseries.owasp.org)
 2. En Razor (ASP.NET MVC), @variable aplica HTML encoding automático — nunca usar @Html.Raw(userInput).
 3. Usar sandboxing del motor de plantillas si se permite a usuarios definir plantillas.
 Referencia: OWASP SSTI`,
+    situacionEsperada: "El sistema debe pasar los datos del usuario como variables de contexto a las plantillas, nunca concatenarlos en el string de la plantilla, previniendo la evaluación de código en el motor de renderizado.",
+    reglaNegocio: "Los datos del usuario no pueden incluirse directamente en los strings de plantillas; deben pasarse exclusivamente como variables de contexto al motor de plantillas para su renderizado seguro.",
+    depsTecnicas: "• Pasar inputs del usuario como variables de contexto (nunca concatenar en template string)\n• Prohibir @Html.Raw(userInput) en Razor\n• Sandboxing del motor de plantillas si usuarios definen plantillas",
+    propuestaGeneral: "Refactorizar el código de generación de plantillas para pasar siempre los datos del usuario como variables de contexto, eliminando toda concatenación de strings con datos externos en los templates.",
   },
 
   // ── 30. NOSQL INJECTION ─────────────────────────────────────────────────────
@@ -724,6 +840,10 @@ Fuente: OWASP NoSQL Injection (cheatsheetseries.owasp.org)
 3. Implementar validación de schema estricta para todos los documentos de entrada.
 4. Nunca pasar objetos JSON del usuario directamente como filtro de query.
 Referencia: OWASP NoSQL Injection Prevention Cheat Sheet`,
+    situacionEsperada: "El sistema debe sanitizar todos los inputs usados en queries NoSQL para eliminar operadores especiales, usando ODMs y validación de schema que impidan la manipulación de la lógica de consulta.",
+    reglaNegocio: "Ningún objeto JSON del usuario puede pasarse directamente como filtro de query NoSQL sin sanitización previa de operadores especiales; se requiere validación de schema estricta para todos los documentos de entrada.",
+    depsTecnicas: "• Sanitización de operadores NoSQL ($where, $gt, $ne, $regex) en inputs\n• ODMs (Mongoose) con queries parametrizadas\n• Validación de schema estricta para documentos de entrada\n• Prohibición de pasar JSON del usuario directamente como filtro",
+    propuestaGeneral: "Implementar sanitización de operadores NoSQL en todos los inputs de consulta, usar ODMs que parametricen las queries y aplicar validación de schema para todos los documentos recibidos del cliente.",
   },
 
   // ── 31. DEPENDENCY CONFUSION ────────────────────────────────────────────────
@@ -744,6 +864,10 @@ Fuente: GitHub Advisory Database, OSV.dev
 4. Usar Package ID Prefix Reservation en NuGet.org para los namespaces de la empresa.
 5. Auditar regularmente las dependencias con OWASP Dependency-Check.
 Referencia: GitHub Advisory Database — Dependency Confusion`,
+    situacionEsperada: "El sistema debe configurar los gestores de paquetes para priorizar los feeds privados corporativos y reservar los namespaces de paquetes internos en los registros públicos para prevenir sustitución maliciosa.",
+    reglaNegocio: "Los paquetes internos deben tener sus namespaces reservados en registros públicos y los feeds privados deben configurarse con prioridad sobre los públicos en el NuGet.Config corporativo.",
+    depsTecnicas: "• Reserva de namespaces en NuGet.org (Package ID Prefix Reservation)\n• NuGet.Config con prioridad de feed privado\n• Registro de paquetes internos en registros públicos (aunque vacíos)\n• OWASP Dependency-Check en pipeline CI/CD",
+    propuestaGeneral: "Reservar los namespaces de paquetes internos en registros públicos, configurar la prioridad correcta de feeds en NuGet.Config e integrar análisis de composición de software en el pipeline para detectar sustituciones.",
   },
 
   // ── 32. WEAK CRYPTOGRAPHY ───────────────────────────────────────────────────
@@ -767,6 +891,10 @@ Fuente: OWASP Cryptographic Storage Cheat Sheet (cheatsheetseries.owasp.org)
 4. Generar IVs/nonces aleatorios con RNGCryptoServiceProvider para cada operación de cifrado.
 5. Revisar todo el código criptográfico y migrar de APIs obsoletas.
 Referencia: OWASP Cryptographic Storage Cheat Sheet`,
+    situacionEsperada: "El sistema debe utilizar exclusivamente algoritmos criptográficos modernos aprobados por NIST (AES-256, SHA-256, bcrypt/Argon2), eliminando el uso de MD5, SHA1, DES, 3DES y RC4.",
+    reglaNegocio: "Está prohibido el uso de algoritmos criptográficos deprecados (MD5, SHA1, DES, 3DES, RC4) en cualquier función de seguridad; todo código criptográfico debe cumplir los estándares NIST SP 800-131A.",
+    depsTecnicas: "• BCrypt.Net o Argon2 para hashing de contraseñas\n• AES-256-GCM para cifrado simétrico\n• SHA-256 o SHA-3 para hashing de integridad\n• IVs/nonces aleatorios con RNGCryptoServiceProvider\n• Migración de APIs obsoletas (.NET)",
+    propuestaGeneral: "Reemplazar todos los algoritmos criptográficos obsoletos por alternativas modernas aprobadas por NIST, incluyendo bcrypt/Argon2 para contraseñas y AES-256-GCM para cifrado de datos.",
   },
 
   // ── 33. INSECURE LOGGING / MONITORING ──────────────────────────────────────
@@ -790,6 +918,10 @@ Fuente: OWASP Logging Cheat Sheet (cheatsheetseries.owasp.org)
 4. Centralizar logs en un SIEM (Splunk, ELK Stack, Azure Sentinel).
 5. Configurar alertas para patrones de ataque: múltiples fallos de login, accesos a horas inusuales.
 Referencia: OWASP Logging Cheat Sheet`,
+    situacionEsperada: "El sistema debe registrar todos los eventos de seguridad relevantes (autenticación, acceso, errores de autorización) con contexto suficiente para permitir investigación forense y detección de ataques en tiempo real.",
+    reglaNegocio: "Los eventos de seguridad críticos deben registrarse con timestamp, IP, usuarioId y resultado; los logs deben centralizarse en el SIEM corporativo y configurar alertas para patrones de ataque definidos.",
+    depsTecnicas: "• Serilog o NLog con logging estructurado (timestamp, IP, usuarioId, acción, resultado)\n• Registro obligatorio de eventos de autenticación y autorización\n• Centralización en SIEM (Splunk, ELK, Azure Sentinel)\n• Alertas para patrones de ataque en tiempo real",
+    propuestaGeneral: "Implementar una estrategia de logging de seguridad estructurado que capture todos los eventos relevantes con contexto completo, centralice los logs en el SIEM corporativo y configure alertas automáticas.",
   },
 
   // ── 34. MASS ASSIGNMENT ─────────────────────────────────────────────────────
@@ -814,6 +946,10 @@ Fuente: OWASP Mass Assignment Cheat Sheet (cheatsheetseries.owasp.org)
 3. Usar [BindNever] en propiedades que nunca deben venir del cliente.
 4. Revisar TODOS los action methods que reciben modelos del cliente.
 Referencia: OWASP Mass Assignment Cheat Sheet`,
+    situacionEsperada: "El sistema debe utilizar ViewModels/DTOs con solo los campos editables por el cliente, evitando que el model binding exponga propiedades sensibles de las entidades de dominio a modificación externa.",
+    reglaNegocio: "Los action methods de ASP.NET MVC no deben recibir entidades de dominio directamente del cliente; se requiere el uso de ViewModels o DTOs con allowlist explícita de campos editables.",
+    depsTecnicas: "• ViewModels/DTOs separados de entidades de dominio\n• [Bind(Include='...')] en action methods con whitelist explícita\n• [BindNever] en propiedades sensibles del modelo\n• Revisión de todos los action methods que reciben objetos del cliente",
+    propuestaGeneral: "Refactorizar los action methods que reciben entidades de dominio directamente para usar ViewModels con allowlist explícita de campos editables, aplicando [BindNever] en propiedades sensibles.",
   },
 
   // ── 35. LDAP INJECTION ──────────────────────────────────────────────────────
@@ -834,6 +970,10 @@ Fuente: OWASP LDAP Injection Prevention Cheat Sheet (cheatsheetseries.owasp.org)
 3. Implementar allowlist estricta de caracteres permitidos en el username (alfanumérico + @._-).
 4. Principio de mínimo privilegio para la cuenta de servicio LDAP.
 Referencia: OWASP LDAP Injection Prevention Cheat Sheet`,
+    situacionEsperada: "El sistema debe escapar todos los caracteres especiales LDAP en los inputs del usuario antes de incluirlos en filtros de búsqueda, previniendo la manipulación de queries del directorio.",
+    reglaNegocio: "Los inputs del usuario usados en filtros LDAP deben escaparse con la función de escape del framework antes de su uso; está prohibida la concatenación directa de inputs sin escape en filtros LDAP.",
+    depsTecnicas: "• Escape de caracteres especiales LDAP (\\, *, (, ), NUL) en todos los inputs\n• Frameworks que parametrizan queries LDAP automáticamente\n• Allowlist de caracteres permitidos en campos de búsqueda LDAP\n• Cuenta de servicio LDAP con mínimo privilegio",
+    propuestaGeneral: "Implementar escape de caracteres especiales LDAP en todos los inputs usados en filtros de directorio y aplicar una allowlist estricta de caracteres permitidos, con cuenta de servicio de mínimo privilegio.",
   },
 
   // ── 36. XML INJECTION ───────────────────────────────────────────────────────
@@ -851,6 +991,10 @@ Referencia: OWASP LDAP Injection Prevention Cheat Sheet`,
 3. Nunca construir XML por concatenación de strings con datos del usuario.
 4. Validar todos los documentos XML recibidos contra un XSD antes de procesarlos.
 Referencia: OWASP XML Security Cheat Sheet`,
+    situacionEsperada: "El sistema debe construir documentos XML mediante APIs que escapen automáticamente los caracteres especiales, previniendo que datos del usuario sean interpretados como markup XML.",
+    reglaNegocio: "Está prohibida la construcción de documentos XML por concatenación de strings con datos del usuario; debe usarse XmlWriter, XDocument o SecurityElement.Escape() para garantizar el escape correcto.",
+    depsTecnicas: "• SecurityElement.Escape() para datos insertados en XML\n• XmlWriter o XDocument para construcción programática de XML\n• Validación XSD de documentos XML recibidos\n• Prohibición de concatenación de strings con datos del usuario en XML",
+    propuestaGeneral: "Reemplazar la construcción de XML por concatenación de strings con el uso de APIs de construcción XML que apliquen escape automático, validando los documentos recibidos contra un schema XSD.",
   },
 
   // ── 37. HTTP HEADER INJECTION ───────────────────────────────────────────────
@@ -869,6 +1013,10 @@ Fuente: OWASP HTTP Response Splitting Cheat Sheet
 3. Usar Url.IsLocalUrl() para validar URLs de redirect.
 4. .NET moderno (Core) rechaza automáticamente CRLF en headers — migrar desde .NET Framework legacy si es posible.
 Referencia: OWASP HTTP Response Splitting`,
+    situacionEsperada: "El sistema debe filtrar los caracteres CRLF (\\r\\n) de todos los datos del usuario que se incluyan en headers de respuesta HTTP, previniendo la inyección de headers adicionales.",
+    reglaNegocio: "Los datos del usuario no deben incluirse directamente en headers de respuesta HTTP sin sanitización de caracteres CRLF; los inputs con \\r, \\n, %0d o %0a deben rechazarse o sanitizarse.",
+    depsTecnicas: "• Filtrado de caracteres CRLF (\\r, \\n, %0d, %0a) en inputs usados en headers\n• Url.IsLocalUrl() para URLs en Location header\n• Migración a .NET Core/moderno que rechaza CRLF automáticamente en headers",
+    propuestaGeneral: "Implementar filtrado de caracteres CRLF en todos los inputs que se incluyan en headers de respuesta y migrar a versiones modernas de .NET que rechacen automáticamente estas secuencias.",
   },
 
   // ── 38. OAUTH MISCONFIGURATION ──────────────────────────────────────────────
@@ -891,6 +1039,10 @@ Fuente: OWASP OAuth 2.0 Security Best Practices (RFC 9700)
 4. Aplicar principio de mínimo privilegio en los scopes solicitados.
 5. Validar el token de acceso en cada llamada a la API (signature + exp + iss + aud).
 Referencia: RFC 9700 — OAuth 2.0 Security Best Current Practice`,
+    situacionEsperada: "El sistema debe configurar OAuth 2.0 con redirect URIs exactas registradas, parámetro state validado en cada flujo y PKCE implementado, siguiendo las mejores prácticas del RFC 9700.",
+    reglaNegocio: "Las redirect URIs OAuth deben registrarse exactas sin wildcards; el parámetro state es obligatorio y debe validarse en el callback; los scopes solicitados deben limitarse al mínimo necesario.",
+    depsTecnicas: "• Registro exacto de redirect URIs (sin wildcards)\n• Validación del parámetro state en cada flujo OAuth\n• PKCE (code_challenge/code_verifier) en flujos de código\n• Scopes de mínimo privilegio\n• Validación de signature+exp+iss+aud en tokens de acceso",
+    propuestaGeneral: "Corregir la configuración OAuth 2.0 registrando redirect URIs exactas, implementando y validando el parámetro state, habilitando PKCE y aplicando mínimo privilegio en los scopes solicitados.",
   },
 
   // ── 39. BUSINESS LOGIC VULNERABILITY ────────────────────────────────────────
@@ -913,6 +1065,10 @@ Fuente: OWASP Business Logic Vulnerability Testing Guide
 4. Realizar pruebas de lógica de negocio específicas en el QA (no solo pruebas de seguridad técnicas).
 5. Registrar todas las transacciones de negocio para auditoría y detección de anomalías.
 Referencia: OWASP Testing Guide — Business Logic Testing`,
+    situacionEsperada: "El sistema debe recalcular en el servidor todos los valores de negocio críticos (precios, descuentos, montos) sin confiar en valores enviados por el cliente, con validación de estado en flujos multi-paso.",
+    reglaNegocio: "Los valores de negocio críticos no pueden provenir del cliente sin re-validación server-side; los flujos multi-paso deben validar la secuencia correcta de pasos mediante máquina de estados en el servidor.",
+    depsTecnicas: "• Recálculo server-side de valores de negocio críticos\n• Máquina de estados server-side para flujos multi-paso\n• Validación de reglas de negocio independiente de validación client-side\n• Logging de transacciones para auditoría y detección de anomalías",
+    propuestaGeneral: "Implementar recálculo server-side de todos los valores de negocio críticos y una máquina de estados para flujos multi-paso, eliminando la dependencia de valores de negocio enviados desde el cliente.",
   },
 
   // ── 40. RACE CONDITION ──────────────────────────────────────────────────────
@@ -931,6 +1087,10 @@ Fuente: OWASP Race Condition Prevention
 3. Usar optimistic concurrency con RowVersion/Timestamp en Entity Framework.
 4. Implementar idempotency keys para operaciones críticas que no deben ejecutarse dos veces.
 Referencia: OWASP Race Condition Prevention`,
+    situacionEsperada: "El sistema debe ejecutar las operaciones check-then-act de forma atómica mediante transacciones con el nivel de aislamiento apropiado, previniendo condiciones de carrera en operaciones financieras o de estado.",
+    reglaNegocio: "Las operaciones que implican verificación y modificación de estado deben ser atómicas mediante transacciones de BD; está prohibido realizar SELECT + UPDATE sin garantías de atomicidad en recursos compartidos.",
+    depsTecnicas: "• Transacciones con nivel de aislamiento Serializable para operaciones críticas\n• SELECT WITH (UPDLOCK, HOLDLOCK) en SQL Server\n• Optimistic concurrency con RowVersion/Timestamp en Entity Framework\n• Idempotency keys para operaciones críticas",
+    propuestaGeneral: "Implementar transacciones atómicas con el nivel de aislamiento apropiado para operaciones check-then-act críticas, usando bloqueo de filas en SQL Server e idempotency keys para prevenir ejecución duplicada.",
   },
 
   // ── 41. SUPPLY CHAIN ATTACK ─────────────────────────────────────────────────
@@ -953,6 +1113,10 @@ Fuente: OWASP Software Supply Chain Security, GitHub Advisory Database, CISA KEV
 4. Generar y mantener un SBOM (Software Bill of Materials) con cada release.
 5. Monitorear dependencias con GitHub Dependabot, Snyk o OWASP Dependency-Check.
 Referencias: CISA KEV, GitHub Advisory Database, OSV.dev`,
+    situacionEsperada: "El sistema debe descargar dependencias desde un mirror interno verificado con lock files y hashes, manteniendo un SBOM actualizado y monitoreando cambios en dependencias críticas.",
+    reglaNegocio: "El proceso de build debe usar lock files con hashes verificados para todas las dependencias; está prohibida la descarga de paquetes en tiempo real sin verificación de integridad en el pipeline de producción.",
+    depsTecnicas: "• Lock files (packages.lock.json) con hashes de paquetes\n• Mirror/proxy interno (Azure Artifacts, Nexus) con paquetes pre-verificados\n• SBOM generado y mantenido en cada release\n• GitHub Dependabot o Snyk para monitoreo continuo",
+    propuestaGeneral: "Implementar lock files con verificación de hashes, un mirror interno de paquetes pre-verificados y generación automática de SBOM en cada release, con monitoreo continuo de dependencias.",
   },
 
   // ── 42. SUBDOMAIN TAKEOVER ──────────────────────────────────────────────────
@@ -971,6 +1135,10 @@ Fuente: OWASP Testing for Subdomain Takeover (WSTG-CONF-10)
 3. Reclamar explícitamente los subdominios en los servicios cloud (GitHub Pages, Azure Static Web Apps).
 4. Usar herramientas de monitoreo continuo de DNS como can-i-take-over-xyz.
 Referencia: OWASP WSTG-CONF-10`,
+    situacionEsperada: "El sistema debe tener todos los registros DNS CNAME apuntando a servicios activos y controlados por la organización, con un proceso de eliminación de registros DNS al desactivar servicios cloud.",
+    reglaNegocio: "Antes de desactivar cualquier servicio cloud con subdominio corporativo, el registro DNS correspondiente debe eliminarse; se requiere auditoría periódica de registros CNAME para verificar que los destinos son válidos.",
+    depsTecnicas: "• Auditoría periódica de registros DNS CNAME\n• Proceso de offboarding de servicios cloud con eliminación de DNS\n• Reclamación explícita de subdominios en servicios cloud\n• Monitoreo continuo con can-i-take-over-xyz o similar",
+    propuestaGeneral: "Auditar todos los registros DNS CNAME, eliminar los que apunten a servicios ya desactivados e implementar un proceso de gestión de DNS en el offboarding de servicios cloud.",
   },
 
   // ── 43. INSECURE DIRECT DESERIALIZATION (PICKLE/JAVA) ─────────────────────
@@ -991,6 +1159,10 @@ Fuente: OWASP Deserialization Cheat Sheet (cheatsheetseries.owasp.org)
 3. Implementar firma HMAC-SHA256 de los datos serializados y validar antes de deserializar.
 4. Nunca deserializar datos de fuentes no confiables con tipos arbitrarios.
 Referencia: OWASP Deserialization Cheat Sheet`,
+    situacionEsperada: "El sistema debe eliminar el uso de BinaryFormatter y otros serializadores inseguros, usando alternativas modernas con allowlists de tipos y verificación de integridad antes de deserializar.",
+    reglaNegocio: "Está prohibido el uso de BinaryFormatter, NetDataContractSerializer o LosFormatter para datos externos; toda deserialización debe emplear allowlists de tipos y firma HMAC para verificación de integridad.",
+    depsTecnicas: "• Eliminar BinaryFormatter (System.Text.Json con TypeInfoResolver restrictivo)\n• Firma HMAC-SHA256 de datos serializados antes de deserializar\n• Allowlist de tipos permitidos para deserialización\n• Nunca deserializar datos de fuentes no confiables con tipos arbitrarios",
+    propuestaGeneral: "Migrar de BinaryFormatter y serializadores inseguros a System.Text.Json con restricciones de tipo, implementando firma HMAC para verificación de integridad previa a la deserialización.",
   },
 
   // ── 44. INFORMATION DISCLOSURE ──────────────────────────────────────────────
@@ -1015,6 +1187,10 @@ Fuente: OWASP Testing Guide — Information Gathering
 4. Implementar customErrors con páginas de error genéricas.
 5. Revisar que los mensajes de error expuestos al usuario no contengan datos técnicos.
 Referencia: OWASP Testing for Information Leakage`,
+    situacionEsperada: "El sistema debe eliminar de las respuestas HTTP toda información sobre el stack tecnológico (versiones, rutas, headers informativos) y deshabilitar endpoints de diagnóstico en producción.",
+    reglaNegocio: "En producción, los headers HTTP no deben revelar versiones de servidor ni framework; los endpoints de diagnóstico (/elmah, /trace.axd) deben estar deshabilitados o protegidos por autenticación.",
+    depsTecnicas: "• Eliminar headers informativos (Server, X-Powered-By, X-AspNet-Version)\n• Deshabilitar trace.axd y endpoints de diagnóstico en producción\n• customErrors con páginas genéricas\n• httpRuntime enableVersionHeader='false'",
+    propuestaGeneral: "Eliminar todos los headers informativos del servidor, deshabilitar los endpoints de diagnóstico en producción e implementar páginas de error genéricas para prevenir la divulgación de información del stack tecnológico.",
   },
 
   // ── 45. CACHE POISONING ─────────────────────────────────────────────────────
@@ -1034,6 +1210,10 @@ Fuente: PortSwigger Web Security — Web Cache Poisoning
 4. Usar Cache-Control: no-store para páginas con datos personalizados.
 5. Revisar la configuración del CDN/proxy para que no cachee headers peligrosos.
 Referencia: PortSwigger Web Cache Poisoning Research`,
+    situacionEsperada: "El sistema debe configurar correctamente las políticas de caché para excluir respuestas con datos del usuario y validar los headers Host y X-Forwarded-Host antes de usarlos en respuestas cacheables.",
+    reglaNegocio: "Las respuestas que incluyan datos del usuario o personalizados deben tener Cache-Control: no-store; los headers Host y X-Forwarded-Host deben validarse antes de incluirse en URLs de respuestas cacheadas.",
+    depsTecnicas: "• Headers Vary correctamente configurados\n• Cache-Control: no-store para respuestas con datos del usuario\n• Validación de Host y X-Forwarded-Host antes de usarlos\n• Configuración de CDN/proxy para excluir headers peligrosos del caché",
+    propuestaGeneral: "Configurar las políticas de caché para prevenir almacenamiento de respuestas con datos del usuario, validar los headers de host utilizados en URLs y revisar la configuración del CDN para excluir inputs peligrosos.",
   },
 
   // ── 46. CRYPTOGRAPHIC KEY MANAGEMENT ────────────────────────────────────────
@@ -1054,6 +1234,10 @@ Fuente: OWASP Key Management Cheat Sheet (cheatsheetseries.owasp.org)
 4. Separar almacenamiento de claves del almacenamiento de datos cifrados.
 5. Usar HSM (Hardware Security Module) para claves de alto valor.
 Referencia: OWASP Key Management Cheat Sheet`,
+    situacionEsperada: "El sistema debe gestionar todas las claves criptográficas mediante un vault corporativo (Azure Key Vault, AWS KMS) con rotación periódica, separando el almacenamiento de claves de los datos cifrados.",
+    reglaNegocio: "Las claves criptográficas no pueden almacenarse en código fuente ni en archivos de configuración versionados; deben gestionarse mediante un vault corporativo aprobado con política de rotación periódica.",
+    depsTecnicas: "• Azure Key Vault / AWS KMS para almacenamiento de claves\n• Data Protection API en .NET Core para claves de sesión\n• Rotación periódica de claves (mínimo anual)\n• Separación de almacenamiento de claves y datos cifrados\n• HSM para claves de alto valor",
+    propuestaGeneral: "Migrar todas las claves criptográficas a un vault corporativo aprobado (Azure Key Vault, AWS KMS), implementar rotación periódica y separar el almacenamiento de claves del de datos cifrados.",
   },
 
   // ── 47. BROKEN OBJECT LEVEL AUTHORIZATION ───────────────────────────────────
@@ -1075,6 +1259,10 @@ Fuente: OWASP API Security Top 10 2023 (owasp.org/API-Security)
 3. Implementar middleware de autorización que valide ownership automáticamente.
 4. Incluir pruebas de BOLA en la suite de pruebas de seguridad de la API.
 Referencia: OWASP API Security Top 10 — API1:2023`,
+    situacionEsperada: "Todos los endpoints de API deben verificar que el recurso solicitado pertenece al usuario autenticado del token, retornando 403 Forbidden ante cualquier intento de acceso a recursos ajenos.",
+    reglaNegocio: "Cada endpoint de API que acceda a un recurso por ID debe incluir validación de ownership contra el usuario del token JWT; el acceso a recursos de otros usuarios debe bloquearse con 403 y registrarse.",
+    depsTecnicas: "• Verificación de OwnerId en cada consulta de API (filter por usuario del token)\n• GUIDs/ULIDs en lugar de IDs secuenciales\n• Middleware de autorización con validación de ownership automática\n• Pruebas de BOLA en suite de seguridad de API",
+    propuestaGeneral: "Implementar verificación de ownership en todos los endpoints de API, asegurando que cada consulta a BD filtre por el usuario del token JWT, con GUIDs como identificadores para dificultar la enumeración.",
   },
 
   // ── 48. SENSITIVE DATA IN URL ────────────────────────────────────────────────
@@ -1093,6 +1281,10 @@ Fuente: OWASP Transport Layer Security Cheat Sheet
 3. Agregar header Referrer-Policy: no-referrer-when-downgrade para limitar fugas por Referer.
 4. Revisar configuración de logs del servidor para no registrar query strings con datos sensibles.
 Referencia: OWASP Transport Layer Security Cheat Sheet`,
+    situacionEsperada: "El sistema debe transmitir todos los datos sensibles (tokens, credenciales, datos PII) en el cuerpo de solicitudes POST o en headers, nunca en query strings de URLs GET.",
+    reglaNegocio: "Los tokens de autenticación, credenciales y datos PII están prohibidos en query strings de URLs; deben transmitirse en el cuerpo POST o en headers HTTP seguros para evitar exposición en logs y Referer.",
+    depsTecnicas: "• Datos sensibles en cuerpo POST, nunca en query strings\n• Tokens de reset de un solo uso con expiración corta (15 min)\n• Referrer-Policy: no-referrer-when-downgrade header\n• Revisión de logs para excluir query strings con datos sensibles",
+    propuestaGeneral: "Refactorizar los flujos que transmiten datos sensibles en query strings para usar cuerpos POST o headers seguros, implementando Referrer-Policy para limitar fugas involuntarias a través del header Referer.",
   },
 
   // ── 49. API KEY EXPOSURE ─────────────────────────────────────────────────────
@@ -1114,6 +1306,10 @@ Fuente: GitHub Advisory Database, OWASP Secrets Management Cheat Sheet
 4. Agregar git-secrets o truffleHog al pre-commit hook y al pipeline CI/CD.
 5. Revisar el historial completo de Git con truffleHog para detectar keys históricas.
 Referencia: OWASP Secrets Management Cheat Sheet, GitHub Advisory Database`,
+    situacionEsperada: "El sistema debe almacenar todas las API keys en un vault corporativo o variables de entorno del servidor, sin que aparezcan en código fuente, archivos de configuración versionados ni logs.",
+    reglaNegocio: "Las API keys de servicios externos están prohibidas en código fuente y archivos versionados; deben almacenarse en Azure Key Vault o variables de entorno con restricciones de IP, dominio y permisos mínimos.",
+    depsTecnicas: "• Azure Key Vault o variables de entorno del servidor para API keys\n• Rotación inmediata de keys expuestas en historial de Git\n• Restricciones de IP/dominio/permisos en cada API key\n• git-secrets o truffleHog en pre-commit hook y pipeline CI/CD",
+    propuestaGeneral: "Migrar todas las API keys a Azure Key Vault o variables de entorno, rotar las expuestas en el historial de Git e implementar escaneo automático de secretos en el pipeline CI/CD.",
   },
 
   // ── 50. DEFAULT ──────────────────────────────────────────────────────────────
@@ -1153,6 +1349,10 @@ Fuente: OWASP Transport Layer Security Cheat Sheet (cheatsheetseries.owasp.org)
 4. Verificar y deshabilitar TLS 1.0/1.1 a nivel de servidor IIS (registro de Windows o IIS Crypto).
 
 5. Ejecutar escaneo con SSL Labs o similar para confirmar configuración TLS post-corrección.`,
+    situacionEsperada: "El sistema debe forzar TLS 1.2/1.3 en todas las comunicaciones de red, rechazando conexiones con protocolos obsoletos (TLS 1.0/1.1, SSL 3.0) tanto en cliente como en servidor.",
+    reglaNegocio: "Todas las comunicaciones que transmitan datos sensibles deben usar TLS ≥ 1.2; los protocolos SSL, TLS 1.0 y TLS 1.1 están prohibidos en producción por incumplimiento de PCI-DSS y GDPR.",
+    depsTecnicas: "• ServicePointManager.SecurityProtocol = Tls12 | Tls13 en Application_Start\n• HttpClientHandler con SslProtocols.Tls12 | Tls13 en cada cliente HTTP\n• Deshabilitar TLS 1.0/1.1 en IIS (IIS Crypto o registro de Windows)\n• Validación con SSL Labs post-corrección",
+    propuestaGeneral: "Forzar TLS 1.2/1.3 en todas las comunicaciones del sistema mediante configuración en Global.asax.cs y en cada HttpClient, deshabilitando los protocolos obsoletos a nivel de servidor IIS.",
   },
 
   // ── ERRORHANDLING REVEALDETAILS ─────────────────────────────────────────────
@@ -1186,6 +1386,10 @@ Fuente: OWASP Error Handling Cheat Sheet (cheatsheetseries.owasp.org)
 4. Usar logging interno (log4net, NLog, Serilog) para registrar el detalle del error — nunca al cliente.
 
 5. Revisar todos los bloques catch que hagan Response.Write o return Json(ex.Message) y reemplazar con mensajes genéricos.`,
+    situacionEsperada: "El sistema debe mostrar páginas de error genéricas sin detalles técnicos al usuario, registrando el stack trace completo únicamente en el sistema de logging interno, con debug deshabilitado en producción.",
+    reglaNegocio: "En producción, customErrors debe estar en modo 'On' y debug='false'; ningún error debe exponer stack traces, rutas absolutas ni información del stack tecnológico al cliente; el detalle se registra solo internamente.",
+    depsTecnicas: "• customErrors mode='On' y compilation debug='false' en Web.config de producción\n• Manejador global de errores en Global.asax.cs\n• HandleErrorAttribute registrado globalmente en FilterConfig.cs\n• NLog/Serilog para logging interno sin exposición al cliente",
+    propuestaGeneral: "Configurar customErrors en modo 'On' con debug='false' en producción, implementar un manejador global de errores que registre internamente y muestre páginas genéricas al usuario, revisando todos los bloques catch.",
   },
 
   // ── CRYPTOGRAPHY NONSTANDARD ────────────────────────────────────────────────
@@ -1223,6 +1427,10 @@ Fuente: OWASP Cryptographic Storage Cheat Sheet (cheatsheetseries.owasp.org)
 4. Ejecutar análisis estático post-corrección con SonarQube o Checkmarx para confirmar eliminación de algoritmos débiles.
 
 5. Documentar el esquema criptográfico actualizado en el diseño técnico de seguridad.`,
+    situacionEsperada: "El sistema debe implementar RSA con claves de mínimo 2048 bits y padding OAEP, eliminando el uso de algoritmos no estándar o con longitud de clave insuficiente según NIST SP 800-131A.",
+    reglaNegocio: "La implementación criptográfica debe cumplir NIST SP 800-131A; RSA requiere mínimo 2048 bits con OaepSHA256; los algoritmos MD5, SHA-1, DES, 3DES, RC4 y RSA <2048 bits están prohibidos en producción.",
+    depsTecnicas: "• RSA.Create(2048) con RSAEncryptionPadding.OaepSHA256 (reemplazar RSACryptoServiceProvider)\n• SHA-256/SHA-512 para hashing (reemplazar MD5/SHA-1)\n• AES-256-GCM para cifrado simétrico\n• Análisis estático post-corrección con SonarQube o Checkmarx",
+    propuestaGeneral: "Migrar AsymmetricRSAEncryption.cs a RSA ≥ 2048 bits con OAEP padding, reemplazar los algoritmos hash y simétricos obsoletos por estándares NIST vigentes y validar con análisis estático post-corrección.",
   },
   "default":{
     label:"Vulnerabilidad de Seguridad", icon:"⚠️",
@@ -1244,6 +1452,10 @@ Fuentes de referencia:
 3. Consultar el Cheat Sheet específico en cheatsheetseries.owasp.org para controles detallados.
 4. Ejecutar pruebas de penetración post-corrección con OWASP ZAP o Burp Suite para confirmar remediación.
 5. Registrar la corrección en el sistema de seguimiento de vulnerabilidades con evidencia de escaneo.`,
+    situacionEsperada: "El sistema debe remediar la vulnerabilidad detectada siguiendo las mejores prácticas de seguridad aplicables al tipo de falla identificada.",
+    reglaNegocio: "La vulnerabilidad detectada debe ser corregida antes del despliegue a producción conforme a la política de gestión de vulnerabilidades vigente.",
+    depsTecnicas: "• Revisar y actualizar componentes relacionados con la vulnerabilidad\n• Aplicar parches o controles compensatorios según recomendación del proveedor\n• Verificar configuración del componente afectado",
+    propuestaGeneral: "Aplicar las medidas de remediación recomendadas para esta vulnerabilidad, validando la corrección mediante nuevo escaneo de seguridad.",
   },
 };
 

@@ -174,17 +174,18 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
     types.forEach(type => {
       const kb = getKB(type);
       const tf = [...new Set(mapped.filter(i=>i.issueType===type).map(i=>fpath(i.fileUri||"")).filter(Boolean))];
+      const deps = kb.depsTecnicas || "";
       ov[type] = {
-        impactos: kb.impactos,
-        owasp:    kb.owasp,
-        proceso:  kb.proceso,
-        solucion: (kb.solucion||"").replace(/\$\{0\}/g, tf.length),
-        hu: "",
-        alineacion: "Chubb",
-        situacionEsperada: "",
-        reglaNegocio: "",
-        depsTecnicas: "",
-        propuestaGeneral: "",
+        impactos:          kb.impactos || "",
+        owasp:             kb.owasp || "",
+        proceso:           kb.proceso || "",
+        solucion:          (kb.solucion||"").replace(/\$\{0\}/g, tf.length),
+        hu:                "",
+        alineacion:        "Chubb",
+        situacionEsperada: kb.situacionEsperada || "",
+        reglaNegocio:      kb.reglaNegocio || "",
+        depsTecnicas:      deps,
+        propuestaGeneral:  kb.propuestaGeneral || "",
       };
     });
     return ov;
@@ -194,10 +195,14 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
   // ── REFRESCAR DESDE BASE DE CONOCIMIENTO INTERNA ────────────────────────────
   const refreshFromKB = (type, typeFiles) => {
     const kb = getKB(type);
-    setVulnF(type,"impactos", kb.impactos);
-    setVulnF(type,"owasp",    kb.owasp);
-    setVulnF(type,"proceso",  kb.proceso);
-    setVulnF(type,"solucion", (kb.solucion||"").replace(/\$\{0\}/g, typeFiles.length));
+    setVulnF(type,"impactos",        kb.impactos || "");
+    setVulnF(type,"owasp",           kb.owasp || "");
+    setVulnF(type,"proceso",         kb.proceso || "");
+    setVulnF(type,"solucion",        (kb.solucion||"").replace(/\$\{0\}/g, typeFiles.length));
+    setVulnF(type,"situacionEsperada", kb.situacionEsperada || "");
+    setVulnF(type,"reglaNegocio",    kb.reglaNegocio || "");
+    setVulnF(type,"depsTecnicas",    kb.depsTecnicas || "");
+    setVulnF(type,"propuestaGeneral",kb.propuestaGeneral || "");
     showToast(`✓ Campos restaurados desde base de conocimiento — ${TYPE_MAP[type]||type}`);
   };
 
