@@ -28,10 +28,11 @@ function loadConfig() {
     catch (e) { console.warn("⚠  jenkins-mcp.config.json inválido:", e.message); }
   }
   return {
-    jenkinsUrl:   process.env.JENKINS_URL        || cfg.jenkinsUrl   || "https://jenkins.chubbdigital.com",
-    jenkinsUser:  process.env.JENKINS_USER       || cfg.jenkinsUser  || "",
-    jenkinsToken: process.env.JENKINS_TOKEN      || cfg.jenkinsToken || "",
-    port:         parseInt(process.env.MCP_JENKINS_PORT || cfg.port  || "3748", 10),
+    jenkinsUrl:    process.env.JENKINS_URL         || cfg.jenkinsUrl    || "https://jenkins.chubbdigital.com",
+    jenkinsUser:   process.env.JENKINS_USER        || cfg.jenkinsUser   || "",
+    jenkinsToken:  process.env.JENKINS_TOKEN       || cfg.jenkinsToken  || "",
+    jenkinsFolder: process.env.JENKINS_FOLDER      || cfg.jenkinsFolder || "",  // carpeta/organización en Jenkins
+    port:          parseInt(process.env.MCP_JENKINS_PORT || cfg.port   || "3748", 10),
   };
 }
 
@@ -63,7 +64,12 @@ function makeRequest(targetUrl, authHeader, method) {
 // ── JENKINS DATA FETCH ────────────────────────────────────────────────────────
 async function fetchJenkinsData(cfg, repoName) {
   const jenkinsBase = cfg.jenkinsUrl.replace(/\/$/, "");
-  const jobApiUrl   = `${jenkinsBase}/job/${encodeURIComponent(repoName)}/api/json?tree=lastBuild[number,result,url,duration,timestamp]`;
+  // Si jenkinsFolder está configurado, el job vive dentro de una carpeta:
+  // /job/{folder}/job/{repoName}/api/json
+  const jobPath = cfg.jenkinsFolder
+    ? `/job/${encodeURIComponent(cfg.jenkinsFolder)}/job/${encodeURIComponent(repoName)}`
+    : `/job/${encodeURIComponent(repoName)}`;
+  const jobApiUrl = `${jenkinsBase}${jobPath}/api/json?tree=lastBuild[number,result,url,duration,timestamp]`;
   const jenkinsAuth = cfg.jenkinsUser
     ? "Basic " + Buffer.from(`${cfg.jenkinsUser}:${cfg.jenkinsToken}`).toString("base64")
     : null;
@@ -150,6 +156,8 @@ const cfg = loadConfig();
 server.listen(cfg.port, "127.0.0.1", () => {
   console.log(`\n✓ Jenkins MCP Server  →  http://127.0.0.1:${cfg.port}`);
   console.log(`  Jenkins : ${cfg.jenkinsUrl}`);
+  console.log(`  Carpeta : ${cfg.jenkinsFolder ? cfg.jenkinsFolder : "(sin carpeta)"}`);
+  console.log(`  Job URL : ${cfg.jenkinsUrl}/job/${cfg.jenkinsFolder ? cfg.jenkinsFolder + "/job/" : ""}{repoName}/api/json`);
   console.log(`  Usuario : ${cfg.jenkinsUser ? "✓ " + cfg.jenkinsUser : "✗ falta — edita jenkins-mcp.config.json"}`);
   console.log(`  Token   : ${cfg.jenkinsToken ? "✓ configurado" : "✗ falta — edita jenkins-mcp.config.json"}`);
   console.log(`\n  Endpoints disponibles:`);

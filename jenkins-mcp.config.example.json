@@ -1,6 +1,7 @@
 {
-  "jenkinsUrl":   "https://jenkins.tu-empresa.com",
-  "jenkinsUser":  "tu-usuario-jenkins",
-  "jenkinsToken": "TU_API_TOKEN_JENKINS",
-  "port":         3748
+  "jenkinsUrl":    "https://jenkins.tu-empresa.com",
+  "jenkinsFolder": "nombre-del-folder-en-jenkins",
+  "jenkinsUser":   "tu-usuario-jenkins",
+  "jenkinsToken":  "TU_API_TOKEN_JENKINS",
+  "port":          3748
 }
