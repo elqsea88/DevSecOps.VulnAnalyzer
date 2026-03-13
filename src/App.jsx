@@ -272,13 +272,13 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
       const res=await fetch(`${base}/api/jenkins-data?repo=${encodeURIComponent(repoName)}`,{signal:AbortSignal.timeout(20000)});
       const j=await res.json();
       if(!j.ok) throw new Error(j.error||`HTTP ${res.status}`);
-      const {jobExists,lastBuild,lastBuildStatus,buildUrl,method}=j.data;
+      const {jobExists,lastBuild,lastBuildStatus,buildUrl,lastDCL,method}=j.data;
       setRepos(p=>({...p,[repoName]:{...p[repoName],
         jenkinsCheckStatus:jobExists?"ok":"error",
-        jenkinsCheckMsg:jobExists?`Job activo ✓ — Último build: ${lastBuild} (${lastBuildStatus})`:"Job ✗ no encontrado en Jenkins",
-        hasJF:jobExists,jobOk:jobExists,lastBuild,lastBuildStatus,buildUrl,method,debtStatus:"pending",
+        jenkinsCheckMsg:jobExists?`Job activo ✓ — Último build: ${lastBuild} (${lastBuildStatus})${lastDCL?" — "+lastDCL:""}`:"Job ✗ no encontrado en Jenkins",
+        hasJF:jobExists,jobOk:jobExists,lastBuild,lastBuildStatus,buildUrl,lastDCL:lastDCL||null,method,debtStatus:"pending",
       }}));
-      showToast(`✓ ${repoName} — ${method==="pipeline"?"Pipeline CI/CD":"Manual"}`);
+      showToast(`✓ ${repoName} — ${method==="pipeline"?"Pipeline CI/CD":"Manual"}${lastDCL?" | "+lastDCL:""}`);
     } catch(err){
       setRepos(p=>({...p,[repoName]:{...p[repoName],
         gitCheckStatus:"error",gitCheckMsg:`Error Jenkins MCP: ${err.message}`,

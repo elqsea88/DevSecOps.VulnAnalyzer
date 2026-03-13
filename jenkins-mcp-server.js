@@ -72,6 +72,7 @@ async function fetchJenkinsData(cfg, repoName) {
     ? `/job/${encodeURIComponent(cfg.jenkinsFolder)}/job/${encodeURIComponent(jobName)}`
     : `/job/${encodeURIComponent(jobName)}`;
   const jobApiUrl = `${jenkinsBase}${jobPath}/api/json?tree=lastBuild[number,result,url,duration,timestamp]`;
+  console.log(`  → GET ${jobApiUrl}`);
   const jenkinsAuth = cfg.jenkinsUser
     ? "Basic " + Buffer.from(`${cfg.jenkinsUser}:${cfg.jenkinsToken}`).toString("base64")
     : null;
@@ -81,19 +82,37 @@ async function fetchJenkinsData(cfg, repoName) {
     lastBuild:       null,
     lastBuildStatus: null,
     buildUrl:        null,
+    lastDCL:         null,   // ej: "DCL-946"
     method:          "manual",
   };
 
   const jRes = await makeRequest(jobApiUrl, jenkinsAuth);
 
+  console.log(`  ← HTTP ${jRes.status}`);
   if (jRes.status === 200) {
     result.jobExists = true;
     try {
       const data = JSON.parse(jRes.body);
       if (data.lastBuild) {
-        result.lastBuild       = "#" + data.lastBuild.number;
+        const buildNum = data.lastBuild.number;
+        result.lastBuild       = "#" + buildNum;
         result.lastBuildStatus = data.lastBuild.result || "IN_PROGRESS";
         result.buildUrl        = data.lastBuild.url || null;
+
+        // ── Extraer DCL del console log del último build ──────────────────
+        const consoleUrl = `${jenkinsBase}${jobPath}/${buildNum}/consoleText`;
+        console.log(`  → GET ${consoleUrl} (buscando DCL...)`);
+        try {
+          const logRes = await makeRequest(consoleUrl, jenkinsAuth);
+          if (logRes.status === 200) {
+            // Busca patrón: "DCL-NNN" o "Created DCL-NNN"
+            const match = logRes.body.match(/DCL-(\d+)/);
+            if (match) {
+              result.lastDCL = "DCL-" + match[1];
+              console.log(`  ✓ DCL encontrado: ${result.lastDCL}`);
+            }
+          }
+        } catch { /* no crítico — continúa sin DCL */ }
       }
     } catch { /* parse error — job exists but no build data */ }
   } else if (jRes.status === 404) {

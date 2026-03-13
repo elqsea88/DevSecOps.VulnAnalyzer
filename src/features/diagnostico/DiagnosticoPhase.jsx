@@ -117,9 +117,12 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fet
                           </div>  
                         </div>
                         {repo.lastBuild&&(
-                          <div style={{display:"flex",gap:6,marginTop:4}}>
+                          <div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap"}}>
                             <span style={{background:"#0A1020",borderRadius:4,padding:"3px 7px",fontSize:10,fontFamily:"monospace",color:"#8AACCC"}}>Build: <strong style={{color:"#E0EDFF"}}>{repo.lastBuild}</strong></span>
                             <span style={{background:"#0A1020",borderRadius:4,padding:"3px 7px",fontSize:10,fontFamily:"monospace",color:repo.lastBuildStatus==="SUCCESS"?"#00E676":"#FF4560",fontWeight:700}}>{repo.lastBuildStatus}</span>
+                            {repo.lastDCL&&(
+                              <span style={{background:"#FFB80015",borderRadius:4,padding:"3px 7px",fontSize:10,fontFamily:"monospace",color:"#FFB800",border:"1px solid #FFB80030",fontWeight:700}}>🎫 {repo.lastDCL}</span>
+                            )}
                           </div>
                         )}
                         <div style={{fontSize:10,color:"#2A4060",fontFamily:"monospace",wordBreak:"break-all",padding:"5px 8px",background:"#0A1020",borderRadius:4,marginTop:6}}>{(repo.jenkinsUrl||cfg.jenkinsBase+repo.name)+"/api/json"}</div>
@@ -283,9 +286,12 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fet
                             <div style={{fontSize:10,color:"#3A5070",marginTop:2}}>{method==="pipeline"?`Último build: ${repo.lastBuild} (${repo.lastBuildStatus})`:"Requiere ventana de mantenimiento y transferencia manual"}</div>
                           </div>
                         </div>
-                        <div style={{fontSize:10,fontFamily:"monospace",color:"#3A5070"}}>
-                          {sonarData[repoName]?.qg&&<span>QG: <span style={{color:sonarData[repoName]?.qg==="Passed"?"#00E676":"#FF4560",fontWeight:700}}>{sonarData[repoName]?.qg}</span></span>}
-                          {sonarData[repoName]?.hotspots&&<span style={{marginLeft:8}}>🔥 {sonarData[repoName]?.hotspots} hotspots</span>}
+                        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+                          {repo.lastDCL&&<span style={{background:"#FFB80015",borderRadius:6,padding:"4px 10px",fontSize:11,fontFamily:"monospace",color:"#FFB800",border:"1px solid #FFB80030",fontWeight:700}}>🎫 {repo.lastDCL}</span>}
+                          <div style={{fontSize:10,fontFamily:"monospace",color:"#3A5070"}}>
+                            {sonarData[repoName]?.qg&&<span>QG: <span style={{color:sonarData[repoName]?.qg==="Passed"?"#00E676":"#FF4560",fontWeight:700}}>{sonarData[repoName]?.qg}</span></span>}
+                            {sonarData[repoName]?.hotspots&&<span style={{marginLeft:8}}>🔥 {sonarData[repoName]?.hotspots} hotspots</span>}
+                          </div>
                         </div>
                       </div>
                     )}

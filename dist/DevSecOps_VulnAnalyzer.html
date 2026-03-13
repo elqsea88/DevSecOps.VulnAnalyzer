@@ -2050,9 +2050,12 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fet
                           </div>  
                         </div>
                         {repo.lastBuild&&(
-                          <div style={{display:"flex",gap:6,marginTop:4}}>
+                          <div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap"}}>
                             <span style={{background:"#0A1020",borderRadius:4,padding:"3px 7px",fontSize:10,fontFamily:"monospace",color:"#8AACCC"}}>Build: <strong style={{color:"#E0EDFF"}}>{repo.lastBuild}</strong></span>
                             <span style={{background:"#0A1020",borderRadius:4,padding:"3px 7px",fontSize:10,fontFamily:"monospace",color:repo.lastBuildStatus==="SUCCESS"?"#00E676":"#FF4560",fontWeight:700}}>{repo.lastBuildStatus}</span>
+                            {repo.lastDCL&&(
+                              <span style={{background:"#FFB80015",borderRadius:4,padding:"3px 7px",fontSize:10,fontFamily:"monospace",color:"#FFB800",border:"1px solid #FFB80030",fontWeight:700}}>🎫 {repo.lastDCL}</span>
+                            )}
                           </div>
                         )}
                         <div style={{fontSize:10,color:"#2A4060",fontFamily:"monospace",wordBreak:"break-all",padding:"5px 8px",background:"#0A1020",borderRadius:4,marginTop:6}}>{(repo.jenkinsUrl||cfg.jenkinsBase+repo.name)+"/api/json"}</div>
@@ -2216,9 +2219,12 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fet
                             <div style={{fontSize:10,color:"#3A5070",marginTop:2}}>{method==="pipeline"?`Último build: ${repo.lastBuild} (${repo.lastBuildStatus})`:"Requiere ventana de mantenimiento y transferencia manual"}</div>
                           </div>
                         </div>
-                        <div style={{fontSize:10,fontFamily:"monospace",color:"#3A5070"}}>
-                          {sonarData[repoName]?.qg&&<span>QG: <span style={{color:sonarData[repoName]?.qg==="Passed"?"#00E676":"#FF4560",fontWeight:700}}>{sonarData[repoName]?.qg}</span></span>}
-                          {sonarData[repoName]?.hotspots&&<span style={{marginLeft:8}}>🔥 {sonarData[repoName]?.hotspots} hotspots</span>}
+                        <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+                          {repo.lastDCL&&<span style={{background:"#FFB80015",borderRadius:6,padding:"4px 10px",fontSize:11,fontFamily:"monospace",color:"#FFB800",border:"1px solid #FFB80030",fontWeight:700}}>🎫 {repo.lastDCL}</span>}
+                          <div style={{fontSize:10,fontFamily:"monospace",color:"#3A5070"}}>
+                            {sonarData[repoName]?.qg&&<span>QG: <span style={{color:sonarData[repoName]?.qg==="Passed"?"#00E676":"#FF4560",fontWeight:700}}>{sonarData[repoName]?.qg}</span></span>}
+                            {sonarData[repoName]?.hotspots&&<span style={{marginLeft:8}}>🔥 {sonarData[repoName]?.hotspots} hotspots</span>}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -2588,7 +2594,7 @@ function App(){
   const [issues,setIssues] = useState([]);
   const [repos,setRepos]   = useState({});
   const [cfg,setCfg]       = useState({
-    jenkinsBase:"https://jenkins.chubbdigital.com/job/",
+    jenkinsBase:"https://jenkins.chubbdigital.com/job/mexico-it-chubbnet/job/",
     gitBase:"https://nausp-aapp0001.aceins.com/mexico-it-chubbnet/",
     sonarBase:"https://sonar.chubb.com",
     sonarProjectKey:"NAGH-APM0001304-mexico-it-chubbnet-",
@@ -2851,13 +2857,13 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
       const res=await fetch(`${base}/api/jenkins-data?repo=${encodeURIComponent(repoName)}`,{signal:AbortSignal.timeout(20000)});
       const j=await res.json();
       if(!j.ok) throw new Error(j.error||`HTTP ${res.status}`);
-      const {jobExists,lastBuild,lastBuildStatus,buildUrl,method}=j.data;
+      const {jobExists,lastBuild,lastBuildStatus,buildUrl,lastDCL,method}=j.data;
       setRepos(p=>({...p,[repoName]:{...p[repoName],
         jenkinsCheckStatus:jobExists?"ok":"error",
-        jenkinsCheckMsg:jobExists?`Job activo ✓ — Último build: ${lastBuild} (${lastBuildStatus})`:"Job ✗ no encontrado en Jenkins",
-        hasJF:jobExists,jobOk:jobExists,lastBuild,lastBuildStatus,buildUrl,method,debtStatus:"pending",
+        jenkinsCheckMsg:jobExists?`Job activo ✓ — Último build: ${lastBuild} (${lastBuildStatus})${lastDCL?" — "+lastDCL:""}`:"Job ✗ no encontrado en Jenkins",
+        hasJF:jobExists,jobOk:jobExists,lastBuild,lastBuildStatus,buildUrl,lastDCL:lastDCL||null,method,debtStatus:"pending",
       }}));
-      showToast(`✓ ${repoName} — ${method==="pipeline"?"Pipeline CI/CD":"Manual"}`);
+      showToast(`✓ ${repoName} — ${method==="pipeline"?"Pipeline CI/CD":"Manual"}${lastDCL?" | "+lastDCL:""}`);
     } catch(err){
       setRepos(p=>({...p,[repoName]:{...p[repoName],
         gitCheckStatus:"error",gitCheckMsg:`Error Jenkins MCP: ${err.message}`,
