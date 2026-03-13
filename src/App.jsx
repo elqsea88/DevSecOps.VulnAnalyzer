@@ -18,25 +18,20 @@ function App(){
   const [sonarData,setSonarData] = useState({});  // { repoName: { qg, secIssues, secRating, relIssues, relRating, maintIssues, maintRating, coverage, duplications, hotspots, hotspotsStatus, loc, version, branch } }
   const setSonarF = (repo,field,val) => setSonarData(p=>({...p,[repo]:{...(p[repo]||{}), [field]:val}}));
 
-  const [dashboardWb, setDashboardWb] = useState(null);   // Workbook Excel existente cargado por usuario
-  const [dashboardWbName, setDashboardWbName] = useState(""); // nombre del archivo cargado
+  const [dashboardBuffer, setDashboardBuffer] = useState(null); // ArrayBuffer del Excel cargado por usuario
+  const [dashboardWbName, setDashboardWbName] = useState("");   // nombre del archivo cargado
 
   const loadDashboardExcel = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      try {
-        const wb = XLSX.read(new Uint8Array(ev.target.result), { type:"array", cellStyles:true, cellDates:true });
-        setDashboardWb(wb);
-        setDashboardWbName(file.name);
-        showToast(`Excel cargado: ${file.name} ✓`);
-      } catch(err) {
-        showToast("Error leyendo Excel: "+err.message, "warn");
-      }
+      setDashboardBuffer(ev.target.result); // guardar ArrayBuffer sin parsear
+      setDashboardWbName(file.name);
+      showToast(`Excel cargado: ${file.name} ✓`);
     };
     reader.readAsArrayBuffer(file);
-    e.target.value = "";  // reset input para permitir recargar el mismo archivo
+    e.target.value = "";
   };
 
   const MCP_DEFAULT = "http://127.0.0.1:3747";
@@ -319,76 +314,56 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
   }, i * 900));
 
   // ── EXPORT PIPELINE DASHBOARD ─────────────────────────────────────────────
+  // Usa xlsx-populate para preservar 100% estilos, fórmulas y formato del template
   const exportPipelineDashboard = async () => {
     const today = new Date().toISOString().split("T")[0];
     const ratingToNivel   = r => ({A:"Baja",B:"Baja",C:"Media",D:"Alta",E:"Alta"}[r]||"Sin Deuda");
     const ratingToImpacto = r => ({A:"Bajo",B:"Bajo",C:"Medio",D:"Alto",E:"Crítico"}[r]||"Bajo");
     const impactoOrder    = ["Bajo","Medio","Alto","Crítico"];
 
-    // Encuentra la primera fila vacía en columna colIdx (0=A,1=B…) desde startRowIdx
-    const firstEmptyRow = (ws, startRowIdx, colIdx) => {
-      let r = startRowIdx;
-      while (true) {
-        const cell = ws[XLSX.utils.encode_cell({r, c:colIdx})];
-        if (!cell || cell.v === undefined || cell.v === null || cell.v === "") break;
-        r++;
-      }
-      return r;
-    };
-
-    // Escribe valores en una fila preservando el estilo (s) de las celdas existentes.
-    // Para celdas nuevas (fuera del rango del template) copia el estilo de la fila de referencia refRowIdx.
-    const writeRowPreserveStyle = (ws, rowIdx, colStart, values, refRowIdx) => {
-      // Actualizar !ref para incluir la nueva fila si es necesario
-      const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
-      values.forEach((val, i) => {
-        const c = colStart + i;
-        const addr = XLSX.utils.encode_cell({r: rowIdx, c});
-        const existing = ws[addr];
-        const cellType = (val === null || val === undefined || val === "") ? "s"
-                       : typeof val === "number" ? "n" : "s";
-        if (existing) {
-          // Preservar estilo: solo actualizar valor y tipo
-          existing.v = val ?? "";
-          existing.t = cellType;
-          if (existing.f) delete existing.f; // quitar fórmulas si las hubiera
-        } else {
-          // Celda nueva: copiar estilo de la fila de referencia si existe
-          const refAddr = XLSX.utils.encode_cell({r: refRowIdx, c});
-          const refCell = ws[refAddr];
-          ws[addr] = { v: val ?? "", t: cellType, ...(refCell?.s ? {s: refCell.s} : {}) };
-        }
-        if (c > range.e.c) range.e.c = c;
-      });
-      if (rowIdx > range.e.r) range.e.r = rowIdx;
-      ws["!ref"] = XLSX.utils.encode_range(range);
-    };
-
     try {
-      // 1. Usar workbook cargado por el usuario; si no hay, usar template embebido.
-      // structuredClone preserva estilos sin re-serializar.
-      let wb;
-      if (dashboardWb) {
-        wb = structuredClone(dashboardWb);
+      if (typeof XlsxPopulate === "undefined")
+        throw new Error("xlsx-populate no disponible — verifica conexión a internet");
+
+      // 1. Obtener buffer: archivo cargado por el usuario o template embebido en base64
+      let buffer;
+      if (dashboardBuffer) {
+        buffer = dashboardBuffer;
       } else {
         if (typeof PIPELINE_DASHBOARD_B64 === "undefined" || !PIPELINE_DASHBOARD_B64)
           throw new Error("Template no embebido — ejecuta npm run build");
-        wb = XLSX.read(PIPELINE_DASHBOARD_B64, { type:"base64", cellStyles:true, cellDates:true });
+        const bStr = atob(PIPELINE_DASHBOARD_B64);
+        const bytes = new Uint8Array(bStr.length);
+        for (let i = 0; i < bStr.length; i++) bytes[i] = bStr.charCodeAt(i);
+        buffer = bytes.buffer;
       }
 
-      // Helper: busca hoja por nombre exacto o coincidencia parcial case-insensitive
+      // 2. Cargar workbook — xlsx-populate NO toca estilos ni fórmulas al escribir celdas
+      const workbook = await XlsxPopulate.fromDataAsync(buffer);
+
+      // Helper: obtener hoja por nombre exacto o coincidencia parcial
       const getSheet = (wb, name) => {
-        if (wb.Sheets[name]) return wb.Sheets[name];
-        const key = wb.SheetNames.find(n => n.toLowerCase().includes(name.toLowerCase().slice(0,5)));
-        if (key) return wb.Sheets[key];
-        return null;
+        try { const s = wb.sheet(name); if (s) return s; } catch(_) {}
+        return wb.sheets().find(s => s.name().toLowerCase().includes(name.toLowerCase().slice(0,5)));
+      };
+
+      // Helper: primera fila vacía en columna colNum (1-indexed) desde startRow (1-indexed)
+      const firstEmptyRow = (sheet, startRow, colNum) => {
+        let r = startRow;
+        while (true) {
+          const val = sheet.row(r).cell(colNum).value();
+          if (val === undefined || val === null || val === "") break;
+          r++;
+        }
+        return r;
       };
 
       // ── Pestaña Pipeline ──────────────────────────────────────────────────
-      const wsPipe = getSheet(wb, "Pipeline");
-      if (!wsPipe) throw new Error(`Hoja "Pipeline" no encontrada. Hojas disponibles: ${wb.SheetNames.join(", ")}`);
-      // Desde B4 (índice fila 3, col 1), buscar primera fila vacía para no pisar datos existentes
-      const pipeOriginRow = firstEmptyRow(wsPipe, 3, 1);
+      const pipeSheet = getSheet(workbook, "Pipeline");
+      if (!pipeSheet) throw new Error(`Hoja "Pipeline" no encontrada. Hojas: ${workbook.sheets().map(s=>s.name()).join(", ")}`);
+
+      // Desde B4 (fila 4, col 2), encontrar primera fila vacía
+      const pipeStartRow = firstEmptyRow(pipeSheet, 4, 2);
 
       const pipeRows = Object.values(repos).map(repo => {
         const sd = sonarData[repo.name] || {};
@@ -411,15 +386,18 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
                 hasDebt?"Sí":"No", ratingToNivel(worstR), today, today,
                 repo.buildUrl||"", notas];
       });
-      pipeRows.forEach((row, i) =>
-        writeRowPreserveStyle(wsPipe, pipeOriginRow + i, 1, row, 3) // ref: fila 4 (idx 3)
-      );
+
+      pipeRows.forEach((row, i) => {
+        const r = pipeStartRow + i;
+        row.forEach((val, j) => pipeSheet.row(r).cell(2 + j).value(val ?? ""));
+      });
 
       // ── Pestaña Deuda Técnica ─────────────────────────────────────────────
-      const wsDeuda = getSheet(wb, "Deuda");
-      if (!wsDeuda) throw new Error(`Hoja "Deuda Técnica" no encontrada. Hojas disponibles: ${wb.SheetNames.join(", ")}`);
-      // Desde B5 (índice fila 4, col 1), buscar primera fila vacía
-      const deudaOriginRow = firstEmptyRow(wsDeuda, 4, 1);
+      const deudaSheet = getSheet(workbook, "Deuda");
+      if (!deudaSheet) throw new Error(`Hoja "Deuda Técnica" no encontrada. Hojas: ${workbook.sheets().map(s=>s.name()).join(", ")}`);
+
+      // Desde B5 (fila 5, col 2), encontrar primera fila vacía
+      const deudaStartRow = firstEmptyRow(deudaSheet, 5, 2);
 
       // Una sola fila por aplicativo: tipos y descripciones concatenados
       const deudaRows = [];
@@ -455,21 +433,25 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
           impactoOrder.indexOf(b) > impactoOrder.indexOf(a) ? b : a, "Bajo");
 
         deudaRows.push([
-          repo.name,
-          tipos.join("\n"),
-          descs.join("\n"),
-          maxImpacto,
-          cfg.responsable||"",
-          today, "",
-          link,
+          repo.name, tipos.join("\n"), descs.join("\n"),
+          maxImpacto, cfg.responsable||"", today, "", link,
         ]);
       });
-      deudaRows.forEach((row, i) =>
-        writeRowPreserveStyle(wsDeuda, deudaOriginRow + i, 1, row, 4) // ref: fila 5 (idx 4)
-      );
 
-      // 2. Descargar
-      XLSX.writeFile(wb, `Pipeline_Dashboard_Aplicativos_${today}.xlsx`);
+      deudaRows.forEach((row, i) => {
+        const r = deudaStartRow + i;
+        row.forEach((val, j) => deudaSheet.row(r).cell(2 + j).value(val ?? ""));
+      });
+
+      // 3. Descargar como Blob (estilos y fórmulas intactos)
+      const blob = await workbook.outputAsync();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url;
+      a.download = `Pipeline_Dashboard_Aplicativos_${today}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+
       showToast(`Dashboard exportado ✓ — ${pipeRows.length} apps · ${deudaRows.length} registros de deuda`);
     } catch(err) {
       showToast("Error exportando: "+err.message, "warn");
