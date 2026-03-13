@@ -349,8 +349,17 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
         wb = XLSX.read(PIPELINE_DASHBOARD_B64, { type:"base64", cellStyles:true, cellDates:true });
       }
 
+      // Helper: busca hoja por nombre exacto o coincidencia parcial case-insensitive
+      const getSheet = (wb, name) => {
+        if (wb.Sheets[name]) return wb.Sheets[name];
+        const key = wb.SheetNames.find(n => n.toLowerCase().includes(name.toLowerCase().slice(0,5)));
+        if (key) return wb.Sheets[key];
+        return null;
+      };
+
       // ── Pestaña Pipeline ──────────────────────────────────────────────────
-      const wsPipe = wb.Sheets["Pipeline"];
+      const wsPipe = getSheet(wb, "Pipeline");
+      if (!wsPipe) throw new Error(`Hoja "Pipeline" no encontrada. Hojas disponibles: ${wb.SheetNames.join(", ")}`);
       // Desde B4 (índice fila 3, col 1), buscar primera fila vacía para no pisar datos existentes
       const pipeOriginRow = firstEmptyRow(wsPipe, 3, 1);
 
@@ -379,7 +388,8 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
         XLSX.utils.sheet_add_aoa(wsPipe, pipeRows, { origin: XLSX.utils.encode_cell({r:pipeOriginRow, c:1}) });
 
       // ── Pestaña Deuda Técnica ─────────────────────────────────────────────
-      const wsDeuda = wb.Sheets["Deuda Técnica"];
+      const wsDeuda = getSheet(wb, "Deuda");
+      if (!wsDeuda) throw new Error(`Hoja "Deuda Técnica" no encontrada. Hojas disponibles: ${wb.SheetNames.join(", ")}`);
       // Desde B5 (índice fila 4, col 1), buscar primera fila vacía
       const deudaOriginRow = firstEmptyRow(wsDeuda, 4, 1);
 
