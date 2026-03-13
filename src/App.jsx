@@ -347,23 +347,34 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
         return wb.sheets().find(s => s.name().toLowerCase().includes(name.toLowerCase().slice(0,5)));
       };
 
-      // Helper: primera fila vacía en columna colNum (1-indexed) desde startRow (1-indexed)
+      // Helper: primera fila vacía en columna colNum (1-indexed) desde startRow
       const firstEmptyRow = (sheet, startRow, colNum) => {
+        let r = startRow;
+        while (sheet.row(r).cell(colNum).value() != null &&
+               sheet.row(r).cell(colNum).value() !== "") r++;
+        return r;
+      };
+
+      // Helper: mapa { repoName → rowIndex } de filas ya existentes en el Excel.
+      // Permite UPSERT: actualizar fila si el repo ya estaba, agregar si es nuevo.
+      const buildExistingMap = (sheet, startRow, colNum) => {
+        const map = {};
         let r = startRow;
         while (true) {
           const val = sheet.row(r).cell(colNum).value();
           if (val === undefined || val === null || val === "") break;
+          map[String(val).trim()] = r;
           r++;
         }
-        return r;
+        return map;
       };
 
       // ── Pestaña Pipeline ──────────────────────────────────────────────────
       const pipeSheet = getSheet(workbook, "Pipeline");
       if (!pipeSheet) throw new Error(`Hoja "Pipeline" no encontrada. Hojas: ${workbook.sheets().map(s=>s.name()).join(", ")}`);
 
-      // Desde B4 (fila 4, col 2), encontrar primera fila vacía
-      const pipeStartRow = firstEmptyRow(pipeSheet, 4, 2);
+      const existingPipe = buildExistingMap(pipeSheet, 4, 2); // B = col 2
+      let nextPipeRow    = firstEmptyRow(pipeSheet, 4, 2);
 
       const pipeRows = Object.values(repos).map(repo => {
         const sd = sonarData[repo.name] || {};
@@ -399,17 +410,20 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
                 repo.buildUrl||"", notas];
       });
 
-      pipeRows.forEach((row, i) => {
-        const r = pipeStartRow + i;
-        row.forEach((val, j) => pipeSheet.row(r).cell(2 + j).value(val ?? ""));
+      // UPSERT: actualizar fila existente o agregar nueva
+      pipeRows.forEach(row => {
+        const key = String(row[0]).trim();
+        const targetRow = existingPipe[key] ?? nextPipeRow++;
+        if (!(key in existingPipe)) existingPipe[key] = targetRow; // evitar doble append
+        row.forEach((val, j) => pipeSheet.row(targetRow).cell(2 + j).value(val ?? ""));
       });
 
       // ── Pestaña Deuda Técnica ─────────────────────────────────────────────
       const deudaSheet = getSheet(workbook, "Deuda");
       if (!deudaSheet) throw new Error(`Hoja "Deuda Técnica" no encontrada. Hojas: ${workbook.sheets().map(s=>s.name()).join(", ")}`);
 
-      // Desde B5 (fila 5, col 2), encontrar primera fila vacía
-      const deudaStartRow = firstEmptyRow(deudaSheet, 5, 2);
+      const existingDeuda = buildExistingMap(deudaSheet, 5, 2); // B = col 2
+      let nextDeudaRow    = firstEmptyRow(deudaSheet, 5, 2);
 
       // Una sola fila por aplicativo: tipos y descripciones concatenados
       const deudaRows = [];
@@ -450,9 +464,12 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
         ]);
       });
 
-      deudaRows.forEach((row, i) => {
-        const r = deudaStartRow + i;
-        row.forEach((val, j) => deudaSheet.row(r).cell(2 + j).value(val ?? ""));
+      // UPSERT: actualizar fila existente o agregar nueva
+      deudaRows.forEach(row => {
+        const key = String(row[0]).trim();
+        const targetRow = existingDeuda[key] ?? nextDeudaRow++;
+        if (!(key in existingDeuda)) existingDeuda[key] = targetRow;
+        row.forEach((val, j) => deudaSheet.row(targetRow).cell(2 + j).value(val ?? ""));
       });
 
       // 3. Descargar como Blob (estilos y fórmulas intactos)
