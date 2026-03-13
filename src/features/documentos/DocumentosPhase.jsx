@@ -146,6 +146,186 @@ function exportAllVulnsInOneDocx(stats, docData, cfg, TODAY) {
   }
 }
 
+// ── exportAllVulnsDTInOneDocx ─────────────────────────────────────────────────
+// Genera UN ÚNICO .docx con la tabla de Diseño Técnico para cada vulnerabilidad.
+// Tabla de 2 columnas: campo (izquierda) | contenido (derecha).
+// Campos: Historia de Usuario, Vulnerabilidad, Proceso Actual, Situación Esperada,
+//         Regla de Negocio, Dependencias, Propuesta General, Propuesta de Solución,
+//         Repositorios, Alineación.
+function exportAllVulnsDTInOneDocx(stats, docData, cfg, repos, TODAY) {
+  if (typeof DISENO_TECNICO_DOCX_B64 === "undefined" || !DISENO_TECNICO_DOCX_B64) {
+    alert("Template Diseño Técnico no disponible.\nEjecuta: npm run create-template && npm run build");
+    return;
+  }
+  if (typeof PizZip === "undefined") {
+    alert("PizZip no disponible. Verifica la conexión a internet (CDN).");
+    return;
+  }
+
+  const types = (stats.byType || []);
+  if (types.length === 0) { alert("No hay vulnerabilidades cargadas."); return; }
+
+  try {
+    // ── Párrafos de celda: una línea del valor → un <w:p> ─────────────────
+    function cellParas(value, isHeader) {
+      const lines = (value || "—").split("\n").filter(l => l.trim() !== "");
+      if (lines.length === 0) lines.push("—");
+      return lines.map(line =>
+        `<w:p><w:pPr><w:spacing w:before="0" w:after="60"/></w:pPr>` +
+        `<w:r><w:rPr>` +
+        (isHeader ? `<w:b/><w:color w:val="00D4FF"/>` : `<w:color w:val="C8D8EC"/>`) +
+        `<w:sz w:val="20"/><w:szCs w:val="20"/>` +
+        `<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>` +
+        `<w:t xml:space="preserve">${_escXml(line)}</w:t></w:r></w:p>`
+      ).join("");
+    }
+
+    // ── Fila de tabla: celda-label | celda-contenido ───────────────────────
+    function tableRow(label, value, isHeader) {
+      const LABEL_W   = "2700"; // twips
+      const CONTENT_W = "6300";
+      const LABEL_BG  = "0A1828";
+      const CONT_BG   = "060B14";
+
+      const labelPara =
+        `<w:p><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr>` +
+        `<w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/>` +
+        `<w:color w:val="8AACCC"/>` +
+        `<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>` +
+        `<w:t xml:space="preserve">${_escXml(label)}</w:t></w:r></w:p>`;
+
+      return (
+        `<w:tr>` +
+        // ── celda izquierda (label) ──────────────────────────────────────
+        `<w:tc>` +
+        `<w:tcPr>` +
+        `<w:tcW w:w="${LABEL_W}" w:type="dxa"/>` +
+        `<w:shd w:val="clear" w:color="auto" w:fill="${LABEL_BG}"/>` +
+        `<w:tcMar>` +
+        `<w:top w:w="100" w:type="dxa"/><w:left w:w="140" w:type="dxa"/>` +
+        `<w:bottom w:w="100" w:type="dxa"/><w:right w:w="140" w:type="dxa"/>` +
+        `</w:tcMar>` +
+        `</w:tcPr>` +
+        labelPara +
+        `</w:tc>` +
+        // ── celda derecha (contenido) ────────────────────────────────────
+        `<w:tc>` +
+        `<w:tcPr>` +
+        `<w:tcW w:w="${CONTENT_W}" w:type="dxa"/>` +
+        `<w:shd w:val="clear" w:color="auto" w:fill="${CONT_BG}"/>` +
+        `<w:tcMar>` +
+        `<w:top w:w="100" w:type="dxa"/><w:left w:w="140" w:type="dxa"/>` +
+        `<w:bottom w:w="100" w:type="dxa"/><w:right w:w="140" w:type="dxa"/>` +
+        `</w:tcMar>` +
+        `</w:tcPr>` +
+        cellParas(value, isHeader) +
+        `</w:tc>` +
+        `</w:tr>`
+      );
+    }
+
+    // ── Tabla completa para una vulnerabilidad ─────────────────────────────
+    function buildDTTable(rows) {
+      return (
+        `<w:tbl>` +
+        `<w:tblPr>` +
+        `<w:tblW w:w="9000" w:type="dxa"/>` +
+        `<w:tblBorders>` +
+        `<w:top    w:val="single" w:sz="4" w:space="0" w:color="1A3A5C"/>` +
+        `<w:left   w:val="single" w:sz="4" w:space="0" w:color="1A3A5C"/>` +
+        `<w:bottom w:val="single" w:sz="4" w:space="0" w:color="1A3A5C"/>` +
+        `<w:right  w:val="single" w:sz="4" w:space="0" w:color="1A3A5C"/>` +
+        `<w:insideH w:val="single" w:sz="4" w:space="0" w:color="1A3A5C"/>` +
+        `<w:insideV w:val="single" w:sz="4" w:space="0" w:color="1A3A5C"/>` +
+        `</w:tblBorders>` +
+        `</w:tblPr>` +
+        `<w:tblGrid>` +
+        `<w:gridCol w:w="2700"/>` +
+        `<w:gridCol w:w="6300"/>` +
+        `</w:tblGrid>` +
+        rows +
+        `</w:tbl>` +
+        // Párrafo vacío requerido después de una tabla en Word
+        `<w:p><w:pPr><w:spacing w:after="240"/></w:pPr></w:p>`
+      );
+    }
+
+    // ── Bloque completo por vulnerabilidad: título + tabla ─────────────────
+    function buildDTVulnBlock(type, count, ov) {
+      const kb    = getKB(type);
+      const label = (kb.label && kb.label !== type) ? kb.label : type;
+      const issuesTxt = `${count} issue${count !== 1 ? "s" : ""} detectado${count !== 1 ? "s" : ""}`;
+
+      const repoUrls = Object.keys(repos || {})
+        .map(r => `${(cfg.gitBase || "").replace(/\/$/, "")}/${r}`);
+      const repoText = repoUrls.length > 0 ? repoUrls.join("\n") : "No disponible";
+
+      const rows = [
+        tableRow("Historia de Usuario",  ov.hu            || ""),
+        tableRow("Vulnerabilidad",        label,                true),
+        tableRow("Proceso Actual",        ov.proceso       || ""),
+        tableRow("Situación Esperada",    ov.situacionEsperada || ""),
+        tableRow("Regla de Negocio",      ov.reglaNegocio  || ""),
+        tableRow("Dependencias",          ov.depsTecnicas  || ""),
+        tableRow("Propuesta General",     ov.propuestaGeneral  || ""),
+        tableRow("Propuesta de Solución", ov.solucion      || ""),
+        tableRow("Repositorios",          repoText),
+        tableRow("Alineación",            ov.alineacion !== undefined ? ov.alineacion : "Chubb"),
+      ].join("");
+
+      return (
+        _wPara("", { borderTop: true, spaceAfter: "0", spaceBefore: "320" }) +
+        _wPara(`${label}  —  ${issuesTxt}`, {
+          bold: true, sz: "26", color: "1F3864",
+          spaceBefore: "0", spaceAfter: "0",
+        }) +
+        _wPara("", { borderBot: true, spaceAfter: "120", spaceBefore: "0" }) +
+        buildDTTable(rows)
+      );
+    }
+
+    // ── Combinar todos los bloques ─────────────────────────────────────────
+    const allBlocksXml = types.map(({ type, count }) => {
+      const ov = (docData.vulnOv || {})[type] || {};
+      return buildDTVulnBlock(type, count, ov);
+    }).join("");
+
+    // ── Cargar template y reemplazar marcadores ────────────────────────────
+    const zip = new PizZip(DISENO_TECNICO_DOCX_B64, { base64: true });
+    let xml   = zip.files["word/document.xml"].asText();
+
+    xml = xml.replace(/\{PROJECT_NAME\}/g, () => _escXml(cfg.projectName || ""));
+    xml = xml.replace(/\{FECHA\}/g,         () => _escXml(TODAY || ""));
+    xml = xml.replace(/\{TOTAL_VULNS\}/g,   () => String(types.length));
+
+    xml = xml.replace(
+      /<w:p>\s*<w:r>\s*<w:t>\s*%%DT_VULNERABILIDADES%%\s*<\/w:t>\s*<\/w:r>\s*<\/w:p>/,
+      allBlocksXml
+    );
+
+    // ── Generar y descargar ────────────────────────────────────────────────
+    zip.file("word/document.xml", xml);
+    const buf  = zip.generate({ type: "arraybuffer" });
+    const blob = new Blob([buf], {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+
+    const safeProj = (cfg.projectName || "Proyecto").replace(/[\s/\\:*?"<>|]/g, "_");
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement("a");
+    a.href    = url;
+    a.download = `DT_${safeProj}_${TODAY || ""}.docx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+  } catch (err) {
+    console.error("exportAllVulnsDTInOneDocx error:", err);
+    alert("Error al generar el documento Word DT:\n" + err.message);
+  }
+}
+
 // ── DocumentosPhase ─────────────────────────────────────────────────────────────────
 // Props destructured from App state
 function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, setVulnF, stats, sonarData, genDG, genDT, genCK, genCIP, dl1, dlAll, completePhase, showSources, setShowSources, getSourcesDisplay, TODAY, card, inp, ta, infoBox, warnBox, codeBox, lbl, btnP, btnS, btnG, sevBadge, claudeKey, setClaudeKey, fetchAI, aiLoading, fetchAI_DT, repos }) {
@@ -305,8 +485,13 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                   {/* ── DISEÑO TÉCNICO ── */}
                   {docTab===1&&(
                     <div>
-                      <div style={{display:"flex",gap:8,marginBottom:14}}>
+                      <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
                         <button style={btnG} onClick={()=>dl1("dt")}>⬇ Exportar TXT</button>
+                        <button
+                          style={{...btnG, color:"#00D4FF", borderColor:"#1A3A5C"}}
+                          onClick={()=>exportAllVulnsDTInOneDocx(stats, docData, cfg, repos, TODAY)}
+                          title="Genera un único .docx con las tablas DT de todas las vulnerabilidades"
+                        >📄 Exportar Word</button>
                       </div>
                       {stats.byType.length===0&&<div style={warnBox}>⚠ Importa el Excel para ver las Historias de Usuario.</div>}
                       {stats.byType.map(({type,count})=>{

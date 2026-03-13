@@ -155,20 +155,61 @@ ${DOCUMENT_BODY}
   </w:body>
 </w:document>`;
 
-// ── Generar el ZIP (DOCX) ─────────────────────────────────────────────────────
-const zip = new PizZip();
-zip.file("[Content_Types].xml",          CONTENT_TYPES);
-zip.file("_rels/.rels",                  ROOT_RELS);
-zip.file("word/document.xml",            DOCUMENT_XML);
-zip.file("word/_rels/document.xml.rels", DOC_RELS);
+// ── Generar DG ZIP (DOCX) ─────────────────────────────────────────────────────
+function makeDocx(docXml) {
+  const z = new PizZip();
+  z.file("[Content_Types].xml",          CONTENT_TYPES);
+  z.file("_rels/.rels",                  ROOT_RELS);
+  z.file("word/document.xml",            docXml);
+  z.file("word/_rels/document.xml.rels", DOC_RELS);
+  return z.generate({ type: "nodebuffer", compression: "DEFLATE" });
+}
 
-const buf = zip.generate({ type: "nodebuffer", compression: "DEFLATE" });
-
+const bufDG = makeDocx(DOCUMENT_XML);
 fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
-fs.writeFileSync(OUT_FILE, buf);
+fs.writeFileSync(OUT_FILE, bufDG);
+console.log(`✓ DG template: ${OUT_FILE}  (${(bufDG.length/1024).toFixed(1)} KB)`);
+console.log(`  Marcadores: {PROJECT_NAME}  {FECHA}  {TOTAL_VULNS}  %%VULNERABILIDADES%%`);
 
-const sizeKb = (buf.length / 1024).toFixed(1);
-console.log(`✓ Template generado: ${OUT_FILE}  (${sizeKb} KB)`);
-console.log(`  Marcadores de encabezado : {PROJECT_NAME}  {FECHA}  {TOTAL_VULNS}`);
-console.log(`  Marcador de contenido    : %%VULNERABILIDADES%%  (se expande con todas las vulns)`);
-console.log(`\n  Ejecuta 'npm run build' para embeber el template en el HTML.`);
+// ── Template Diseño Técnico ───────────────────────────────────────────────────
+// Un único placeholder %%DT_VULNERABILIDADES%% que se expande con una tabla
+// por vulnerabilidad (10 filas × 2 columnas).
+const OUT_DT = path.join(__dirname, "dist/docs/TemplateDisenoTecnico.docx");
+
+const DT_BODY = [
+  para("DISEÑO TÉCNICO — HISTORIAS DE USUARIO", {
+    bold: true, sz: "32", color: "1F3864", align: "center",
+    spaceBefore: "0", spaceAfter: "80",
+  }),
+  para("Documento de Remediación por Vulnerabilidad", {
+    sz: "22", color: "666666", align: "center",
+    spaceBefore: "0", spaceAfter: "200",
+  }),
+  infoLine("Proyecto:", "{PROJECT_NAME}", "24"),
+  infoLine("Fecha de Generación:", "{FECHA}", "20"),
+  infoLine("Total de Vulnerabilidades:", "{TOTAL_VULNS}", "20"),
+  para("", { borderBot: true, spaceBefore: "120", spaceAfter: "240" }),
+  para("Diseño Técnico", {
+    bold: true, sz: "28", color: "1F3864",
+    spaceBefore: "0", spaceAfter: "200",
+  }),
+  placeholder("%%DT_VULNERABILIDADES%%"),
+].join("\n");
+
+const DT_DOCUMENT_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <w:body>
+${DT_BODY}
+    <w:sectPr>
+      <w:pgSz w:w="12240" w:h="15840"/>
+      <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1800"/>
+    </w:sectPr>
+  </w:body>
+</w:document>`;
+
+const bufDT = makeDocx(DT_DOCUMENT_XML);
+fs.writeFileSync(OUT_DT, bufDT);
+console.log(`✓ DT template: ${OUT_DT}  (${(bufDT.length/1024).toFixed(1)} KB)`);
+console.log(`  Marcadores: {PROJECT_NAME}  {FECHA}  {TOTAL_VULNS}  %%DT_VULNERABILIDADES%%`);
+console.log(`\n  Ejecuta 'npm run build' para embeber los templates en el HTML.`);

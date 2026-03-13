@@ -53,7 +53,8 @@ function build() {
   // Embed binary assets as base64 (avoids fetch CORS issues with file://)
   const BINARY_ASSETS = [
     { varName: "PIPELINE_DASHBOARD_B64",    file: "dist/docs/Pipeline_Dashboard_Aplicativos.xlsx" },
-    { varName: "DISENO_GENERAL_DOCX_B64",   file: "dist/docs/TemplateDisenoGeneral.docx" },
+    { varName: "DISENO_GENERAL_DOCX_B64",  file: "dist/docs/TemplateDisenoGeneral.docx" },
+    { varName: "DISENO_TECNICO_DOCX_B64",  file: "dist/docs/TemplateDisenoTecnico.docx" },
   ];
   const excelInlines = BINARY_ASSETS.map(({ varName, file }) => {
     const fullPath = path.join(__dirname, file);
