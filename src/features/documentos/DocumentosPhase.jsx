@@ -41,6 +41,17 @@ function _wPara(text, opts = {}) {
          `<w:t xml:space="preserve">${_escXml(text)}</w:t></w:r></w:p>`;
 }
 
+// Reemplaza el párrafo que contiene `marker` (aunque Word haya fragmentado el
+// texto en múltiples <w:r>) con `replacement`. Funciona escaneando el texto
+// completo de cada <w:p> concatenando todos sus <w:t> internos.
+function _replacePlaceholderPara(xml, marker, replacement) {
+  return xml.replace(/<w:p[ >][\s\S]*?<\/w:p>/g, (pBlock) => {
+    const texts = [];
+    pBlock.replace(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g, (_, t) => { texts.push(t); });
+    return texts.join("").includes(marker) ? replacement : pBlock;
+  });
+}
+
 // ── exportAllVulnsInOneDocx ───────────────────────────────────────────────────
 // Genera UN ÚNICO .docx con todas las vulnerabilidades detectadas.
 // Cada vulnerabilidad tiene su bloque con las 4 secciones etiquetadas.
@@ -118,10 +129,8 @@ function exportAllVulnsInOneDocx(stats, docData, cfg, TODAY) {
     xml = xml.replace(/\{TOTAL_VULNS\}/g,    () => String(types.length));
 
     // Reemplazar %%VULNERABILIDADES%% con el XML de todos los bloques
-    xml = xml.replace(
-      /<w:p>\s*<w:r>\s*<w:t>\s*%%VULNERABILIDADES%%\s*<\/w:t>\s*<\/w:r>\s*<\/w:p>/,
-      allBlocksXml
-    );
+    // (robusto ante la fragmentación de runs que hace Word al guardar)
+    xml = _replacePlaceholderPara(xml, "%%VULNERABILIDADES%%", allBlocksXml);
 
     // ── Generar y descargar ────────────────────────────────────────────────
     zip.file("word/document.xml", xml);
@@ -298,10 +307,9 @@ function exportAllVulnsDTInOneDocx(stats, docData, cfg, repos, TODAY) {
     xml = xml.replace(/\{FECHA\}/g,         () => _escXml(TODAY || ""));
     xml = xml.replace(/\{TOTAL_VULNS\}/g,   () => String(types.length));
 
-    xml = xml.replace(
-      /<w:p>\s*<w:r>\s*<w:t>\s*%%DT_VULNERABILIDADES%%\s*<\/w:t>\s*<\/w:r>\s*<\/w:p>/,
-      allBlocksXml
-    );
+    // Reemplazar %%DT_VULNERABILIDADES%% con el XML de todos los bloques
+    // (robusto ante la fragmentación de runs que hace Word al guardar)
+    xml = _replacePlaceholderPara(xml, "%%DT_VULNERABILIDADES%%", allBlocksXml);
 
     // ── Generar y descargar ────────────────────────────────────────────────
     zip.file("word/document.xml", xml);
