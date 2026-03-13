@@ -9,7 +9,7 @@ function App(){
   const [issues,setIssues] = useState([]);
   const [repos,setRepos]   = useState({});
   const [cfg,setCfg]       = useState({
-    jenkinsBase:"https://jenkins.empresa.com/job/",
+    jenkinsBase:"https://jenkins.chubbdigital.com/job/",
     gitBase:"https://nausp-aapp0001.aceins.com/mexico-it-chubbnet/",
     sonarBase:"https://sonar.chubb.com",
     sonarProjectKey:"NAGH-APM0001304-mexico-it-chubbnet-",
