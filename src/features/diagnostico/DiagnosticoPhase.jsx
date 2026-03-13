@@ -1,6 +1,6 @@
 // ── DiagnosticoPhase ─────────────────────────────────────────────────────────────────
 // Props destructured from App state
-function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fetchSonar, mcpUrl, setMcpUrl, mcpStatus, checkMcpStatus, jenkinsMcpUrl, setJenkinsMcpUrl, jenkinsMcpStatus, checkJenkinsMcpStatus, getSonarUrl, checkRepo, checkAll, completePhase, showSources, setShowSources, getSourcesDisplay, card, inp, infoBox, warnBox, lbl, btnP, btnS, btnG, btnA, dot, methBadge, sevBadge }) {
+function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fetchSonar, mcpUrl, setMcpUrl, mcpStatus, checkMcpStatus, jenkinsMcpUrl, setJenkinsMcpUrl, jenkinsMcpStatus, checkJenkinsMcpStatus, getSonarUrl, checkRepo, checkAll, exportPipelineDashboard, completePhase, showSources, setShowSources, getSourcesDisplay, card, inp, infoBox, warnBox, lbl, btnP, btnS, btnG, btnA, dot, methBadge, sevBadge }) {
   return (
             <div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24,paddingBottom:18,borderBottom:"1px solid #1A2840"}}>
@@ -11,6 +11,7 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fet
                 </div>
                 <div style={{display:"flex",gap:8}}>
                   <button style={btnA} onClick={checkAll}>⚡ Analizar Todos</button>
+                  <button style={{...btnS,background:"#00603010",border:"1px solid #00E67640",color:"#00E676"}} onClick={exportPipelineDashboard}>📥 Exportar Dashboard</button>
                   <button style={btnP} onClick={()=>completePhase(1)}>Continuar →</button>
                 </div>
               </div>

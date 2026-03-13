@@ -7,7 +7,10 @@
       "Bash(node build.js)",
       "Bash(node c:/DevSecOps.VulnAnalyzer/DevSecOps.VulnAnalyzer/replace_genDT.js)",
       "Bash(node -e \":*)",
-      "Bash(del c:/DevSecOps.VulnAnalyzer/DevSecOps.VulnAnalyzer/replace_genDT.js)"
+      "Bash(del c:/DevSecOps.VulnAnalyzer/DevSecOps.VulnAnalyzer/replace_genDT.js)",
+      "Bash(npm list:*)",
+      "Bash(npm install:*)",
+      "Bash(node tmp_parse_excel.js)"
     ]
   }
 }
