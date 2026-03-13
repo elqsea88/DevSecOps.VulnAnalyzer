@@ -87,23 +87,8 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fet
                       </div>
                     </div>
 
-                    {/* 3 panels */}
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
-                      {/* Git / Jenkinsfile */}
-                      <div style={{background:"#060B14",borderRadius:8,padding:14,border:`1px solid ${repo.gitCheckStatus==="ok"?"#00E67630":repo.gitCheckStatus==="error"?"#FF456030":"#1A2840"}`}}>
-                        <div style={{fontSize:10,color:"#3A5070",fontFamily:"monospace",marginBottom:10}}>📁 GIT — JENKINSFILE</div>
-                        <div style={{display:"flex",alignItems:"flex-start",gap:6,marginBottom:8}}>
-                          <span style={dot(repo.gitCheckStatus||"gray")}/>
-                          <div>
-                            <div style={{fontSize:11,fontWeight:600,color:repo.gitCheckStatus==="ok"?"#00E676":repo.gitCheckStatus==="error"?"#FF4560":repo.gitCheckStatus==="checking"?"#FFB800":"#3A5070"}}>
-                              {repo.gitCheckStatus==="ok"?"Jenkinsfile encontrado":repo.gitCheckStatus==="error"?"Jenkinsfile ausente":repo.gitCheckStatus==="checking"?"Buscando…":"Sin verificar"}
-                            </div>
-                            <div style={{fontSize:10,color:"#3A5070",marginTop:2,fontFamily:"monospace"}}>{repo.gitCheckMsg||"GET /raw/master/Jenkinsfile"}</div>
-                          </div>
-                        </div>
-                        <div style={{fontSize:10,color:"#2A4060",fontFamily:"monospace",wordBreak:"break-all",padding:"5px 8px",background:"#0A1020",borderRadius:4}}>{(repo.gitUrl||cfg.gitBase+repo.name)+"/raw/master/Jenkinsfile"}</div>
-                      </div>
-
+                    {/* 2 panels */}
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                       {/* Jenkins job */}
                       <div style={{background:"#060B14",borderRadius:8,padding:14,border:`1px solid ${repo.jenkinsCheckStatus==="ok"?"#00D4FF30":repo.jenkinsCheckStatus==="error"?"#FF456030":"#1A2840"}`}}>
                         <div style={{fontSize:10,color:"#3A5070",fontFamily:"monospace",marginBottom:10}}>⚙ JENKINS — JOB ACTIVO</div>
