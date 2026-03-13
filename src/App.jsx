@@ -336,13 +336,40 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
       return r;
     };
 
+    // Escribe valores en una fila preservando el estilo (s) de las celdas existentes.
+    // Para celdas nuevas (fuera del rango del template) copia el estilo de la fila de referencia refRowIdx.
+    const writeRowPreserveStyle = (ws, rowIdx, colStart, values, refRowIdx) => {
+      // Actualizar !ref para incluir la nueva fila si es necesario
+      const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
+      values.forEach((val, i) => {
+        const c = colStart + i;
+        const addr = XLSX.utils.encode_cell({r: rowIdx, c});
+        const existing = ws[addr];
+        const cellType = (val === null || val === undefined || val === "") ? "s"
+                       : typeof val === "number" ? "n" : "s";
+        if (existing) {
+          // Preservar estilo: solo actualizar valor y tipo
+          existing.v = val ?? "";
+          existing.t = cellType;
+          if (existing.f) delete existing.f; // quitar fórmulas si las hubiera
+        } else {
+          // Celda nueva: copiar estilo de la fila de referencia si existe
+          const refAddr = XLSX.utils.encode_cell({r: refRowIdx, c});
+          const refCell = ws[refAddr];
+          ws[addr] = { v: val ?? "", t: cellType, ...(refCell?.s ? {s: refCell.s} : {}) };
+        }
+        if (c > range.e.c) range.e.c = c;
+      });
+      if (rowIdx > range.e.r) range.e.r = rowIdx;
+      ws["!ref"] = XLSX.utils.encode_range(range);
+    };
+
     try {
-      // 1. Usar workbook cargado por el usuario; si no hay, usar template embebido
+      // 1. Usar workbook cargado por el usuario; si no hay, usar template embebido.
+      // structuredClone preserva estilos sin re-serializar.
       let wb;
       if (dashboardWb) {
-        // Re-parsear para no mutar el estado original
-        const bytes = XLSX.write(dashboardWb, { type:"array", bookType:"xlsx" });
-        wb = XLSX.read(bytes, { type:"array", cellStyles:true, cellDates:true });
+        wb = structuredClone(dashboardWb);
       } else {
         if (typeof PIPELINE_DASHBOARD_B64 === "undefined" || !PIPELINE_DASHBOARD_B64)
           throw new Error("Template no embebido — ejecuta npm run build");
@@ -384,8 +411,9 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
                 hasDebt?"Sí":"No", ratingToNivel(worstR), today, today,
                 repo.buildUrl||"", notas];
       });
-      if (pipeRows.length)
-        XLSX.utils.sheet_add_aoa(wsPipe, pipeRows, { origin: XLSX.utils.encode_cell({r:pipeOriginRow, c:1}) });
+      pipeRows.forEach((row, i) =>
+        writeRowPreserveStyle(wsPipe, pipeOriginRow + i, 1, row, 3) // ref: fila 4 (idx 3)
+      );
 
       // ── Pestaña Deuda Técnica ─────────────────────────────────────────────
       const wsDeuda = getSheet(wb, "Deuda");
@@ -436,8 +464,9 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
           link,
         ]);
       });
-      if (deudaRows.length)
-        XLSX.utils.sheet_add_aoa(wsDeuda, deudaRows, { origin: XLSX.utils.encode_cell({r:deudaOriginRow, c:1}) });
+      deudaRows.forEach((row, i) =>
+        writeRowPreserveStyle(wsDeuda, deudaOriginRow + i, 1, row, 4) // ref: fila 5 (idx 4)
+      );
 
       // 2. Descargar
       XLSX.writeFile(wb, `Pipeline_Dashboard_Aplicativos_${today}.xlsx`);
