@@ -369,6 +369,19 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
         const sd = sonarData[repo.name] || {};
         const ratings = [sd.secRating,sd.relRating,sd.maintRating].filter(Boolean);
         const worstR  = ratings.sort((a,b)=>"EDCBA".indexOf(a)-"EDCBA".indexOf(b))[0]||"";
+
+        // Si el repo tiene DCL → completado sin deuda
+        if (repo.lastDCL) {
+          const notas=[
+            repo.lastBuild ? `Build: ${repo.lastBuild}` : "",
+            repo.lastDCL,
+            sd.qg ? `QG: ${sd.qg}` : "",
+          ].filter(Boolean).join(" · ");
+          return [repo.name, cfg.responsable||"", "Completado", 100,
+                  "No", "Sin Deuda", today, today,
+                  repo.buildUrl||"", notas];
+        }
+
         const hasDebt = ratings.length > 0;
         let estado="Pendiente", avance=0;
         if (repo.method==="pipeline") {
@@ -378,7 +391,6 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
         }
         const notas=[
           repo.lastBuild ? `Build: ${repo.lastBuild}` : "",
-          repo.lastDCL   ? repo.lastDCL               : "",
           sd.qg          ? `QG: ${sd.qg}`             : "",
           sd.hotspots    ? `Hotspots: ${sd.hotspots}` : "",
         ].filter(Boolean).join(" · ");
