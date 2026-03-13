@@ -36,6 +36,7 @@ const SOURCE_FILES = [
   "src/features/diagnostico/DiagnosticoPhase.jsx",
   "src/features/documentos/DocumentosPhase.jsx",
   "src/features/generic/GenericPhase.jsx",
+  "src/features/ejecucion/EjecucionPhase.jsx",
 
   // 5. Main App (depends on everything above)
   "src/App.jsx",

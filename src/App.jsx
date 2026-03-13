@@ -765,8 +765,11 @@ ${repoUrls}
           {/* ── FASE 2: DOCUMENTOS ── */}
           {phase===2&&<DocumentosPhase cfg={cfg} issues={issues} cipData={cipData} docData={docData} docTab={docTab} setDocTab={setDocTab} setVulnF={setVulnF} stats={stats} sonarData={sonarData} genDG={genDG} genDT={genDT} genCK={genCK} genCIP={genCIP} dl1={dl1} dlAll={dlAll} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} TODAY={TODAY} card={card} inp={inp} ta={ta} infoBox={infoBox} warnBox={warnBox} codeBox={codeBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} sevBadge={sevBadge} claudeKey={claudeKey} setClaudeKey={setClaudeKey} fetchAI={fetchAI} aiLoading={aiLoading} fetchAI_DT={fetchAI_DT} repos={repos}/>}
 
-          {/* ── FASES 3-5 ── */}
-          {phase>=3&&<GenericPhase phase={phase} cfg={cfg} cipData={cipData} TODAY={TODAY} dlAll={dlAll} completePhase={completePhase} card={card} infoBox={infoBox} btnP={btnP} btnS={btnS}/>}
+          {/* ── FASES 3 y 5 ── */}
+          {(phase===3||phase===5)&&<GenericPhase phase={phase} cfg={cfg} cipData={cipData} TODAY={TODAY} dlAll={dlAll} completePhase={completePhase} card={card} infoBox={infoBox} btnP={btnP} btnS={btnS}/>}
+
+          {/* ── FASE 4: EJECUCIÓN ── */}
+          {phase===4&&<EjecucionPhase cfg={cfg} issues={issues} claudeKey={claudeKey} setClaudeKey={setClaudeKey} TODAY={TODAY} completePhase={completePhase} showToast={showToast} card={card} infoBox={infoBox} warnBox={warnBox} btnP={btnP} btnS={btnS} codeBox={codeBox} dlAll={dlAll}/>}
         </main>
       </div>
 
