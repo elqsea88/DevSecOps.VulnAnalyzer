@@ -1,6 +1,6 @@
 // ── DiagnosticoPhase ─────────────────────────────────────────────────────────────────
 // Props destructured from App state
-function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fetchSonar, mcpUrl, setMcpUrl, mcpStatus, checkMcpStatus, jenkinsMcpUrl, setJenkinsMcpUrl, jenkinsMcpStatus, checkJenkinsMcpStatus, getSonarUrl, checkRepo, checkAll, exportPipelineDashboard, loadDashboardExcel, dashboardWbName, completePhase, showSources, setShowSources, getSourcesDisplay, card, inp, infoBox, warnBox, lbl, btnP, btnS, btnG, btnA, dot, methBadge, sevBadge }) {
+function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, setRepoF, fetchSonar, mcpUrl, setMcpUrl, mcpStatus, checkMcpStatus, jenkinsMcpUrl, setJenkinsMcpUrl, jenkinsMcpStatus, checkJenkinsMcpStatus, getSonarUrl, checkRepo, checkAll, exportPipelineDashboard, loadDashboardExcel, dashboardWbName, completePhase, showSources, setShowSources, getSourcesDisplay, card, inp, infoBox, warnBox, lbl, btnP, btnS, btnG, btnA, dot, methBadge, sevBadge }) {
   const excelInputRef = React.useRef(null);
   return (
             <div>
@@ -112,14 +112,21 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fet
                           </div>  
                         </div>
                         {repo.lastBuild&&(
-                          <div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap"}}>
+                          <div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap",alignItems:"center"}}>
                             <span style={{background:"#0A1020",borderRadius:4,padding:"3px 7px",fontSize:10,fontFamily:"monospace",color:"#8AACCC"}}>Build: <strong style={{color:"#E0EDFF"}}>{repo.lastBuild}</strong></span>
                             <span style={{background:"#0A1020",borderRadius:4,padding:"3px 7px",fontSize:10,fontFamily:"monospace",color:repo.lastBuildStatus==="SUCCESS"?"#00E676":"#FF4560",fontWeight:700}}>{repo.lastBuildStatus}</span>
-                            {repo.lastDCL&&(
-                              <span style={{background:"#FFB80015",borderRadius:4,padding:"3px 7px",fontSize:10,fontFamily:"monospace",color:"#FFB800",border:"1px solid #FFB80030",fontWeight:700}}>🎫 {repo.lastDCL}</span>
-                            )}
                           </div>
                         )}
+                        {/* DCL — editable manualmente para forzar condición en export */}
+                        <div style={{marginTop:8}}>
+                          <label style={{fontSize:9,color:"#3A5070",fontFamily:"monospace",letterSpacing:1,display:"block",marginBottom:3}}>🎫 DCL (opcional — activa: Completado / 100 / Sin Deuda)</label>
+                          <input
+                            style={{...inp,fontSize:11,width:"100%"}}
+                            value={repo.lastDCL||""}
+                            onChange={e=>setRepoF(repo.name,"lastDCL",e.target.value||null)}
+                            placeholder="DCL-946"
+                          />
+                        </div>
                         <div style={{fontSize:10,color:"#2A4060",fontFamily:"monospace",wordBreak:"break-all",padding:"5px 8px",background:"#0A1020",borderRadius:4,marginTop:6}}>{(repo.jenkinsUrl||cfg.jenkinsBase+repo.name)+"/api/json"}</div>
                       </div>
 

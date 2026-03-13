@@ -1936,7 +1936,7 @@ function ImportacionPhase({ cfg, setCfg, issues, stats, fileRef, handleFile, lbl
 // ──────────────────────────────────────────────────────────────────
 // ── DiagnosticoPhase ─────────────────────────────────────────────────────────────────
 // Props destructured from App state
-function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fetchSonar, mcpUrl, setMcpUrl, mcpStatus, checkMcpStatus, jenkinsMcpUrl, setJenkinsMcpUrl, jenkinsMcpStatus, checkJenkinsMcpStatus, getSonarUrl, checkRepo, checkAll, exportPipelineDashboard, loadDashboardExcel, dashboardWbName, completePhase, showSources, setShowSources, getSourcesDisplay, card, inp, infoBox, warnBox, lbl, btnP, btnS, btnG, btnA, dot, methBadge, sevBadge }) {
+function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, setRepoF, fetchSonar, mcpUrl, setMcpUrl, mcpStatus, checkMcpStatus, jenkinsMcpUrl, setJenkinsMcpUrl, jenkinsMcpStatus, checkJenkinsMcpStatus, getSonarUrl, checkRepo, checkAll, exportPipelineDashboard, loadDashboardExcel, dashboardWbName, completePhase, showSources, setShowSources, getSourcesDisplay, card, inp, infoBox, warnBox, lbl, btnP, btnS, btnG, btnA, dot, methBadge, sevBadge }) {
   const excelInputRef = React.useRef(null);
   return (
             <div>
@@ -2048,14 +2048,21 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fet
                           </div>  
                         </div>
                         {repo.lastBuild&&(
-                          <div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap"}}>
+                          <div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap",alignItems:"center"}}>
                             <span style={{background:"#0A1020",borderRadius:4,padding:"3px 7px",fontSize:10,fontFamily:"monospace",color:"#8AACCC"}}>Build: <strong style={{color:"#E0EDFF"}}>{repo.lastBuild}</strong></span>
                             <span style={{background:"#0A1020",borderRadius:4,padding:"3px 7px",fontSize:10,fontFamily:"monospace",color:repo.lastBuildStatus==="SUCCESS"?"#00E676":"#FF4560",fontWeight:700}}>{repo.lastBuildStatus}</span>
-                            {repo.lastDCL&&(
-                              <span style={{background:"#FFB80015",borderRadius:4,padding:"3px 7px",fontSize:10,fontFamily:"monospace",color:"#FFB800",border:"1px solid #FFB80030",fontWeight:700}}>🎫 {repo.lastDCL}</span>
-                            )}
                           </div>
                         )}
+                        {/* DCL — editable manualmente para forzar condición en export */}
+                        <div style={{marginTop:8}}>
+                          <label style={{fontSize:9,color:"#3A5070",fontFamily:"monospace",letterSpacing:1,display:"block",marginBottom:3}}>🎫 DCL (opcional — activa: Completado / 100 / Sin Deuda)</label>
+                          <input
+                            style={{...inp,fontSize:11,width:"100%"}}
+                            value={repo.lastDCL||""}
+                            onChange={e=>setRepoF(repo.name,"lastDCL",e.target.value||null)}
+                            placeholder="DCL-946"
+                          />
+                        </div>
                         <div style={{fontSize:10,color:"#2A4060",fontFamily:"monospace",wordBreak:"break-all",padding:"5px 8px",background:"#0A1020",borderRadius:4,marginTop:6}}>{(repo.jenkinsUrl||cfg.jenkinsBase+repo.name)+"/api/json"}</div>
                       </div>
 
@@ -2600,6 +2607,7 @@ function App(){
   });
   const [sonarData,setSonarData] = useState({});  // { repoName: { qg, secIssues, secRating, relIssues, relRating, maintIssues, maintRating, coverage, duplications, hotspots, hotspotsStatus, loc, version, branch } }
   const setSonarF = (repo,field,val) => setSonarData(p=>({...p,[repo]:{...(p[repo]||{}), [field]:val}}));
+  const setRepoF  = (repo,field,val) => setRepos(p=>({...p,[repo]:{...(p[repo]||{}), [field]:val}}));
 
   const [dashboardBuffer, setDashboardBuffer] = useState(null); // ArrayBuffer del Excel cargado por usuario
   const [dashboardWbName, setDashboardWbName] = useState("");   // nombre del archivo cargado
@@ -3342,7 +3350,7 @@ ${repoUrls}
           {phase===0&&<ImportacionPhase cfg={cfg} setCfg={setCfg} issues={issues} stats={stats} fileRef={fileRef} handleFile={handleFile} lbl={lbl} inp={inp} card={card} infoBox={infoBox} warnBox={warnBox} btnP={btnP} completePhase={completePhase} sevBadge={sevBadge} methBadge={methBadge}/>}
 
           {/* ── FASE 1: DIAGNÓSTICO ── */}
-          {phase===1&&<DiagnosticoPhase cfg={cfg} issues={issues} repos={repos} stats={stats} sonarData={sonarData} setSonarF={setSonarF} fetchSonar={fetchSonar} mcpUrl={mcpUrl} setMcpUrl={setMcpUrl} mcpStatus={mcpStatus} checkMcpStatus={checkMcpStatus} jenkinsMcpUrl={jenkinsMcpUrl} setJenkinsMcpUrl={setJenkinsMcpUrl} jenkinsMcpStatus={jenkinsMcpStatus} checkJenkinsMcpStatus={checkJenkinsMcpStatus} getSonarUrl={getSonarUrl} checkRepo={checkRepo} checkAll={checkAll} exportPipelineDashboard={exportPipelineDashboard} loadDashboardExcel={loadDashboardExcel} dashboardWbName={dashboardWbName} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} card={card} inp={inp} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} btnA={btnA} dot={dot} methBadge={methBadge} sevBadge={sevBadge}/>}
+          {phase===1&&<DiagnosticoPhase cfg={cfg} issues={issues} repos={repos} stats={stats} sonarData={sonarData} setSonarF={setSonarF} setRepoF={setRepoF} fetchSonar={fetchSonar} mcpUrl={mcpUrl} setMcpUrl={setMcpUrl} mcpStatus={mcpStatus} checkMcpStatus={checkMcpStatus} jenkinsMcpUrl={jenkinsMcpUrl} setJenkinsMcpUrl={setJenkinsMcpUrl} jenkinsMcpStatus={jenkinsMcpStatus} checkJenkinsMcpStatus={checkJenkinsMcpStatus} getSonarUrl={getSonarUrl} checkRepo={checkRepo} checkAll={checkAll} exportPipelineDashboard={exportPipelineDashboard} loadDashboardExcel={loadDashboardExcel} dashboardWbName={dashboardWbName} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} card={card} inp={inp} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} btnA={btnA} dot={dot} methBadge={methBadge} sevBadge={sevBadge}/>}
 
           {/* ── FASE 2: DOCUMENTOS ── */}
           {phase===2&&<DocumentosPhase cfg={cfg} issues={issues} cipData={cipData} docData={docData} docTab={docTab} setDocTab={setDocTab} setVulnF={setVulnF} stats={stats} sonarData={sonarData} genDG={genDG} genDT={genDT} genCK={genCK} genCIP={genCIP} dl1={dl1} dlAll={dlAll} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} TODAY={TODAY} card={card} inp={inp} ta={ta} infoBox={infoBox} warnBox={warnBox} codeBox={codeBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} sevBadge={sevBadge} claudeKey={claudeKey} setClaudeKey={setClaudeKey} fetchAI={fetchAI} aiLoading={aiLoading} fetchAI_DT={fetchAI_DT} repos={repos}/>}
