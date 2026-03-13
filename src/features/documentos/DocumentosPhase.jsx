@@ -175,60 +175,73 @@ function exportAllVulnsDTInOneDocx(stats, docData, cfg, repos, TODAY) {
   if (types.length === 0) { alert("No hay vulnerabilidades cargadas."); return; }
 
   try {
-    // ── Párrafos de celda: una línea del valor → un <w:p> ─────────────────
-    function cellParas(value, isHeader) {
-      const lines = (value || "—").split("\n").filter(l => l.trim() !== "");
-      if (lines.length === 0) lines.push("—");
+    const LABEL_W   = "2700";
+    const CONTENT_W = "6300";
+    const HEADER_BG = "0A1828";
+    const CONT_BG   = "060B14";
+
+    function tcMar() {
+      return `<w:tcMar>` +
+        `<w:top w:w="100" w:type="dxa"/><w:left w:w="140" w:type="dxa"/>` +
+        `<w:bottom w:w="100" w:type="dxa"/><w:right w:w="140" w:type="dxa"/>` +
+        `</w:tcMar>`;
+    }
+
+    // Párrafos de una celda de contenido (texto multilinea)
+    function cellParas(value) {
+      const lines = (value || "").split("\n");
+      if (lines.every(l => !l.trim())) return `<w:p><w:pPr><w:spacing w:before="0" w:after="60"/></w:pPr></w:p>`;
       return lines.map(line =>
         `<w:p><w:pPr><w:spacing w:before="0" w:after="60"/></w:pPr>` +
-        `<w:r><w:rPr>` +
-        (isHeader ? `<w:b/><w:color w:val="00D4FF"/>` : `<w:color w:val="C8D8EC"/>`) +
-        `<w:sz w:val="20"/><w:szCs w:val="20"/>` +
+        `<w:r><w:rPr><w:color w:val="C8D8EC"/><w:sz w:val="20"/><w:szCs w:val="20"/>` +
         `<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>` +
         `<w:t xml:space="preserve">${_escXml(line)}</w:t></w:r></w:p>`
       ).join("");
     }
 
-    // ── Fila de tabla: celda-label | celda-contenido ───────────────────────
-    function tableRow(label, value, isHeader) {
-      const LABEL_W   = "2700"; // twips
-      const CONTENT_W = "6300";
-      const LABEL_BG  = "0A1828";
-      const CONT_BG   = "060B14";
+    // Fila de encabezado: dos columnas con fondo oscuro y texto cyan negrita
+    function tableHeaderRow(lbl1, lbl2) {
+      function hCell(text, width) {
+        return `<w:tc>` +
+          `<w:tcPr><w:tcW w:w="${width}" w:type="dxa"/>` +
+          `<w:shd w:val="clear" w:color="auto" w:fill="${HEADER_BG}"/>` +
+          tcMar() + `</w:tcPr>` +
+          `<w:p><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr>` +
+          `<w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/>` +
+          `<w:color w:val="00D4FF"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>` +
+          `<w:t xml:space="preserve">${_escXml(text)}</w:t></w:r></w:p></w:tc>`;
+      }
+      return `<w:tr>` + hCell(lbl1, LABEL_W) + hCell(lbl2, CONTENT_W) + `</w:tr>`;
+    }
 
+    // Fila de contenido doble: dos celdas de valor (HU izq. | Alineación der.)
+    function tableContentRow(val1, val2) {
+      function cCell(value, width) {
+        return `<w:tc>` +
+          `<w:tcPr><w:tcW w:w="${width}" w:type="dxa"/>` +
+          `<w:shd w:val="clear" w:color="auto" w:fill="${CONT_BG}"/>` +
+          tcMar() + `</w:tcPr>` +
+          cellParas(value) + `</w:tc>`;
+      }
+      return `<w:tr>` + cCell(val1, LABEL_W) + cCell(val2, CONTENT_W) + `</w:tr>`;
+    }
+
+    // Fila estándar: label (izq. oscuro) | valor (der.)
+    function tableRow(label, value) {
       const labelPara =
         `<w:p><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr>` +
         `<w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/>` +
-        `<w:color w:val="8AACCC"/>` +
-        `<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>` +
+        `<w:color w:val="8AACCC"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>` +
         `<w:t xml:space="preserve">${_escXml(label)}</w:t></w:r></w:p>`;
 
       return (
         `<w:tr>` +
-        // ── celda izquierda (label) ──────────────────────────────────────
-        `<w:tc>` +
-        `<w:tcPr>` +
-        `<w:tcW w:w="${LABEL_W}" w:type="dxa"/>` +
-        `<w:shd w:val="clear" w:color="auto" w:fill="${LABEL_BG}"/>` +
-        `<w:tcMar>` +
-        `<w:top w:w="100" w:type="dxa"/><w:left w:w="140" w:type="dxa"/>` +
-        `<w:bottom w:w="100" w:type="dxa"/><w:right w:w="140" w:type="dxa"/>` +
-        `</w:tcMar>` +
-        `</w:tcPr>` +
-        labelPara +
-        `</w:tc>` +
-        // ── celda derecha (contenido) ────────────────────────────────────
-        `<w:tc>` +
-        `<w:tcPr>` +
-        `<w:tcW w:w="${CONTENT_W}" w:type="dxa"/>` +
+        `<w:tc><w:tcPr><w:tcW w:w="${LABEL_W}" w:type="dxa"/>` +
+        `<w:shd w:val="clear" w:color="auto" w:fill="${HEADER_BG}"/>` +
+        tcMar() + `</w:tcPr>` + labelPara + `</w:tc>` +
+        `<w:tc><w:tcPr><w:tcW w:w="${CONTENT_W}" w:type="dxa"/>` +
         `<w:shd w:val="clear" w:color="auto" w:fill="${CONT_BG}"/>` +
-        `<w:tcMar>` +
-        `<w:top w:w="100" w:type="dxa"/><w:left w:w="140" w:type="dxa"/>` +
-        `<w:bottom w:w="100" w:type="dxa"/><w:right w:w="140" w:type="dxa"/>` +
-        `</w:tcMar>` +
-        `</w:tcPr>` +
-        cellParas(value, isHeader) +
-        `</w:tc>` +
+        tcMar() + `</w:tcPr>` + cellParas(value) + `</w:tc>` +
         `</w:tr>`
       );
     }
@@ -267,19 +280,20 @@ function exportAllVulnsDTInOneDocx(stats, docData, cfg, repos, TODAY) {
 
       const repoUrls = Object.keys(repos || {})
         .map(r => `${(cfg.gitBase || "").replace(/\/$/, "")}/${r}`);
-      const repoText = repoUrls.length > 0 ? repoUrls.join("\n") : "No disponible";
+      const solucionWithRepo = [
+        ov.solucion || "",
+        repoUrls.length > 0 ? "\nRepositorio:\n" + repoUrls.join("\n") : "",
+      ].filter(Boolean).join("");
 
       const rows = [
-        tableRow("Historia de Usuario",  ov.hu            || ""),
-        tableRow("Vulnerabilidad",        label,                true),
-        tableRow("Proceso Actual",        ov.proceso       || ""),
-        tableRow("Situación Esperada",    ov.situacionEsperada || ""),
-        tableRow("Regla de Negocio",      ov.reglaNegocio  || ""),
-        tableRow("Dependencias",          ov.depsTecnicas  || ""),
-        tableRow("Propuesta General",     ov.propuestaGeneral  || ""),
-        tableRow("Propuesta de Solución", ov.solucion      || ""),
-        tableRow("Repositorios",          repoText),
-        tableRow("Alineación",            ov.alineacion !== undefined ? ov.alineacion : "Chubb"),
+        tableHeaderRow("Historia de Usuario", "Alineación"),
+        tableContentRow(ov.hu || "", ov.alineacion !== undefined ? ov.alineacion : "Chubb"),
+        tableRow("Proceso Actual",        ov.proceso            || ""),
+        tableRow("Situación Esperada",    ov.situacionEsperada  || ""),
+        tableRow("Regla de Negocio",      ov.reglaNegocio       || ""),
+        tableRow("Dependencias",          ov.depsTecnicas       || ""),
+        tableRow("Propuesta general",     ov.propuestaGeneral   || ""),
+        tableRow("Propuesta de solución", solucionWithRepo),
       ].join("");
 
       return (
