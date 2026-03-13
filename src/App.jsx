@@ -303,10 +303,10 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
     const ratingToNivel   = r => ({A:"Baja",B:"Baja",C:"Media",D:"Alta",E:"Alta"}[r]||"Sin Deuda");
     const ratingToImpacto = r => ({A:"Bajo",B:"Bajo",C:"Medio",D:"Alto",E:"Crítico"}[r]||"Bajo");
     try {
-      // 1. Cargar template
-      const resp = await fetch("docs/Pipeline_Dashboard_Aplicativos.xlsx");
-      if (!resp.ok) throw new Error(`No se pudo cargar el template (HTTP ${resp.status})`);
-      const wb = XLSX.read(await resp.arrayBuffer(), { type:"array", cellStyles:true, cellDates:true });
+      // 1. Cargar template embebido en build (evita CORS con file://)
+      if (typeof PIPELINE_DASHBOARD_B64 === "undefined" || !PIPELINE_DASHBOARD_B64)
+        throw new Error("Template no embebido — ejecuta npm run build");
+      const wb = XLSX.read(PIPELINE_DASHBOARD_B64, { type:"base64", cellStyles:true, cellDates:true });
 
       // ── Pestaña Pipeline ──────────────────────────────────────────────────
       const wsPipe = wb.Sheets["Pipeline"];

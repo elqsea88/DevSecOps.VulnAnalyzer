@@ -49,6 +49,20 @@ function build() {
   const templatePath = path.join(__dirname, "src/index.html.template");
   const template = fs.readFileSync(templatePath, "utf8");
 
+  // Embed Excel templates as base64 (avoids fetch CORS issues with file://)
+  const EXCEL_ASSETS = [
+    { varName: "PIPELINE_DASHBOARD_B64", file: "dist/docs/Pipeline_Dashboard_Aplicativos.xlsx" },
+  ];
+  const excelInlines = EXCEL_ASSETS.map(({ varName, file }) => {
+    const fullPath = path.join(__dirname, file);
+    if (!fs.existsSync(fullPath)) {
+      console.warn(`  ⚠  Excel asset missing: ${file}`);
+      return `const ${varName} = null;`;
+    }
+    const b64 = fs.readFileSync(fullPath).toString("base64");
+    return `const ${varName} = "${b64}";`;
+  }).join("\n");
+
   // Concatenate all source files
   const bundle = SOURCE_FILES.map(relPath => {
     const fullPath = path.join(__dirname, relPath);
@@ -61,8 +75,8 @@ function build() {
     return separator + content;
   }).join("\n\n");
 
-  // Inject bundle into template
-  const html = template.replace("{{BUNDLE}}", bundle);
+  // Inject bundle + embedded assets into template
+  const html = template.replace("{{BUNDLE}}", excelInlines + "\n\n" + bundle);
 
   // Write output
   if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
