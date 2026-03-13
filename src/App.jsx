@@ -41,7 +41,11 @@ function App(){
 
   const JENKINS_MCP_DEFAULT = "http://127.0.0.1:3748";
   const [jenkinsMcpUrl,setJenkinsMcpUrl]         = useState(JENKINS_MCP_DEFAULT);
-  const [jenkinsMcpStatus,setJenkinsMcpStatus]   = useState(null); // null | "ok" | "error" | "checking"
+  const [jenkinsMcpStatus,setJenkinsMcpStatus]   = useState(null);
+
+  const CLAUDE_MCP_DEFAULT = "http://127.0.0.1:3749";
+  const [claudeMcpUrl,setClaudeMcpUrl]           = useState(CLAUDE_MCP_DEFAULT);
+  const [claudeMcpStatus,setClaudeMcpStatus]     = useState(null); // null | "ok" | "error" | "checking"
   const [jenkinsBranch,setJenkinsBranch]         = useState(""); // rama por defecto del config del MCP
 
   const checkMcpStatus = async (baseUrl) => {
@@ -73,6 +77,23 @@ function App(){
     } catch {
       setJenkinsMcpStatus("error");
       showToast("Jenkins MCP no disponible — ejecuta: node jenkins-mcp-server.js","warn");
+    }
+  };
+
+  const checkClaudeMcpStatus = async (baseUrl) => {
+    const url = (baseUrl||claudeMcpUrl).replace(/\/$/,"");
+    setClaudeMcpStatus("checking");
+    try {
+      const r = await fetch(`${url}/health`, { signal: AbortSignal.timeout(4000) });
+      const d = await r.json();
+      setClaudeMcpStatus(d.status==="ok"?"ok":"error");
+      if (d.status==="ok") {
+        if (!d.hasKey) showToast("Claude MCP conectado pero sin API key — edita claude-mcp.config.json","warn");
+        else showToast(`Claude MCP conectado ✓ (${d.model})`);
+      } else showToast("Claude MCP respondió con error","warn");
+    } catch {
+      setClaudeMcpStatus("error");
+      showToast("Claude MCP no disponible — ejecuta: node claude-mcp-server.js","warn");
     }
   };
 
@@ -769,7 +790,7 @@ ${repoUrls}
           {(phase===3||phase===5)&&<GenericPhase phase={phase} cfg={cfg} cipData={cipData} TODAY={TODAY} dlAll={dlAll} completePhase={completePhase} card={card} infoBox={infoBox} btnP={btnP} btnS={btnS}/>}
 
           {/* ── FASE 4: EJECUCIÓN ── */}
-          {phase===4&&<EjecucionPhase cfg={cfg} issues={issues} claudeKey={claudeKey} setClaudeKey={setClaudeKey} TODAY={TODAY} completePhase={completePhase} showToast={showToast} card={card} infoBox={infoBox} warnBox={warnBox} btnP={btnP} btnS={btnS} codeBox={codeBox} dlAll={dlAll}/>}
+          {phase===4&&<EjecucionPhase cfg={cfg} issues={issues} claudeMcpUrl={claudeMcpUrl} claudeMcpStatus={claudeMcpStatus} checkClaudeMcpStatus={checkClaudeMcpStatus} TODAY={TODAY} completePhase={completePhase} showToast={showToast} card={card} infoBox={infoBox} warnBox={warnBox} btnP={btnP} btnS={btnS} codeBox={codeBox} dlAll={dlAll}/>}
         </main>
       </div>
 

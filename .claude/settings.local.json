@@ -12,7 +12,13 @@
       "Bash(npm install:*)",
       "Bash(node tmp_parse_excel.js)",
       "Bash(find /c/DevSecOps.VulnAnalyzer/DevSecOps.VulnAnalyzer/src -type f \\\\\\(-name *.ts -o -name *.tsx -o -name *.js -o -name *.jsx \\\\\\))",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(claude --version)",
+      "Bash(claude -p \"hello world\" --output-format text)",
+      "Bash(npm show:*)",
+      "Bash(claude auth:*)",
+      "Bash(claude setup-token:*)",
+      "Bash(npm info:*)"
     ]
   }
 }

@@ -10,7 +10,8 @@
 //   7. Exportación enriquecida (Excel + JSON)
 
 function EjecucionPhase({
-  cfg, issues, claudeKey, setClaudeKey,
+  cfg, issues,
+  claudeMcpUrl, claudeMcpStatus, checkClaudeMcpStatus,
   TODAY, completePhase, showToast,
   card, infoBox, warnBox, btnP, btnS, codeBox,
   dlAll,
@@ -254,80 +255,41 @@ function EjecucionPhase({
     };
   };
 
-  // ── Generate Claude recommendation ────────────────────────────────────────
+  // ── Generate recommendation via Claude MCP ───────────────────────────────
   const generateRec = async (issue) => {
-    if (!claudeKey) { showToast("Ingresa tu API Key de Claude primero", "warn"); return; }
-    const m         = matches[issue.id] || {};
-    const fp        = m.file || issue.filePath;
-    const codeCtx   = getCodeContext(fp, m.line);
-    const snippet   = codeCtx
+    if (!claudeMcpUrl) { showToast("Claude MCP URL no configurada", "warn"); return; }
+    const m       = matches[issue.id] || {};
+    const fp      = m.file || issue.filePath;
+    const codeCtx = getCodeContext(fp, m.line);
+    const snippet = codeCtx
       ? codeCtx.lines.map(r => `${String(r.n).padStart(4)}: ${r.l}`).join("\n")
       : "No disponible — carga el repositorio local para obtener código";
 
     setLoadingRec(p => ({ ...p, [issue.id]: true }));
     try {
-      const prompt = `Eres un experto en seguridad de aplicaciones (AppSec / DevSecOps). Analiza esta vulnerabilidad y proporciona una solución técnica concreta y específica al lenguaje/framework detectado.
-
-## Datos del Issue
-- **Issue ID**: ${issue.id}
-- **Tipo**: ${m.vulnType || issue.issueType || "No especificado"}
-- **Severidad**: ${m.severity || issue.severity || "Alta"}
-- **Archivo**: ${fp || "No especificado"}
-- **Línea reportada**: ${m.line || "No disponible"}
-- **Método de detección**: ${issue.method || "SAST"}
-
-## Descripción del Reporte
-${m.description || issue.description || "No disponible"}
-
-## Recomendación del Reporte
-${m.fix || "No disponible"}
-
-## Código Fuente (contexto)
-\`\`\`
-${snippet}
-\`\`\`
-
-Responde con estas secciones exactas:
-
-## Análisis del Problema
-[Qué está mal y por qué es una vulnerabilidad explotable]
-
-## Código Corregido
-\`\`\`
-[Código corregido específico al lenguaje/framework detectado en el snippet]
-\`\`\`
-
-## Por Qué Mitiga la Vulnerabilidad
-[Explicación técnica de cómo la corrección elimina el riesgo]
-
-## Nivel de Confianza: [Alto/Medio/Bajo]
-[Justificación]
-
-## Observaciones
-[Discrepancias entre el reporte y el código actual, o consideraciones adicionales]`;
-
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": claudeKey,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
-        body: JSON.stringify({
-          model: "claude-opus-4-6",
-          max_tokens: 2048,
-          messages: [{ role: "user", content: prompt }],
+      const base = (claudeMcpUrl || "").replace(/\/$/, "");
+      const res  = await fetch(`${base}/api/recommend`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          issueId:     issue.id,
+          vulnType:    m.vulnType    || issue.issueType,
+          severity:    m.severity   || issue.severity,
+          file:        fp,
+          line:        m.line,
+          method:      issue.method,
+          description: m.description || issue.description,
+          fix:         m.fix,
+          codeSnippet: snippet,
+          projectName: cfg.projectName,
         }),
       });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || `HTTP ${res.status}`); }
       const data = await res.json();
-      if (data.error) throw new Error(data.error.message);
-      const text = data.content?.[0]?.text || "Sin respuesta";
-      setRecs(p => ({ ...p, [issue.id]: text }));
+      if (!data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      setRecs(p => ({ ...p, [issue.id]: data.recommendation }));
       showToast("Recomendación IA generada ✓");
     } catch (err) {
-      showToast("Error IA: " + err.message, "warn");
+      showToast("Error MCP Claude: " + err.message, "warn");
     } finally {
       setLoadingRec(p => ({ ...p, [issue.id]: false }));
     }
@@ -659,22 +621,30 @@ Responde con estas secciones exactas:
                   );
                 })()}
 
-                {/* Claude API key */}
-                <input
-                  type="password"
-                  placeholder="Claude API Key (para recomendación IA)"
-                  value={claudeKey}
-                  onChange={e => setClaudeKey(e.target.value)}
-                  style={{ width:"100%", background:"#060B14", border:"1px solid #1A2840",
-                    borderRadius:6, padding:"6px 10px", color:"#D0DCF0",
-                    fontSize:11, marginBottom:8 }}
-                />
+                {/* MCP status */}
+                <div style={{ display:"flex", alignItems:"center", gap:8,
+                  marginBottom:8, fontSize:11 }}>
+                  <span style={{ width:8, height:8, borderRadius:"50%", flexShrink:0,
+                    background: claudeMcpStatus==="ok" ? "#00E676"
+                      : claudeMcpStatus==="checking" ? "#FFB800" : "#2A4060",
+                    boxShadow: claudeMcpStatus==="ok" ? "0 0 6px #00E676"
+                      : claudeMcpStatus==="checking" ? "0 0 6px #FFB800" : "none",
+                    display:"inline-block" }} />
+                  <span style={{ color:"#4A6080" }}>
+                    Claude MCP {claudeMcpStatus==="ok" ? "conectado"
+                      : claudeMcpStatus==="checking" ? "verificando…" : "desconectado"}
+                  </span>
+                  <button style={{ ...btnS, padding:"2px 10px", fontSize:10 }}
+                    onClick={() => checkClaudeMcpStatus()}>
+                    {claudeMcpStatus==="checking" ? <span className="spin">⟳</span> : "Check"}
+                  </button>
+                </div>
                 <button
                   style={{ ...btnP, width:"100%", marginBottom:10,
                     background: loadingRec[selectedIssue.id] ? "#1A2840" : "#7C3AED",
                     color:"#fff" }}
                   onClick={() => generateRec(selectedIssue)}
-                  disabled={loadingRec[selectedIssue.id] || !claudeKey}>
+                  disabled={loadingRec[selectedIssue.id] || claudeMcpStatus !== "ok"}>
                   {loadingRec[selectedIssue.id]
                     ? <><span className="spin">⟳</span> Generando recomendación…</>
                     : "🤖 Generar Recomendación IA"}

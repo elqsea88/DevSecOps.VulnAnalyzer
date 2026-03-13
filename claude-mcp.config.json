@@ -1,0 +1,5 @@
+{
+  "model":     "claude-opus-4-6",
+  "port":      3749,
+  "timeoutMs": 90000
+}
