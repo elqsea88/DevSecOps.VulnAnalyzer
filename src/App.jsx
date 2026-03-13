@@ -376,7 +376,7 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
                 repo.buildUrl||"", notas];
       });
       if (pipeRows.length)
-        XLSX.utils.sheet_add_aoa(wsPipe, pipeRows, { origin: XLSX.utils.encode_cell({r:pipeOriginRow, c:0}) });
+        XLSX.utils.sheet_add_aoa(wsPipe, pipeRows, { origin: XLSX.utils.encode_cell({r:pipeOriginRow, c:1}) });
 
       // ── Pestaña Deuda Técnica ─────────────────────────────────────────────
       const wsDeuda = wb.Sheets["Deuda Técnica"];
@@ -427,7 +427,7 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
         ]);
       });
       if (deudaRows.length)
-        XLSX.utils.sheet_add_aoa(wsDeuda, deudaRows, { origin: XLSX.utils.encode_cell({r:deudaOriginRow, c:0}) });
+        XLSX.utils.sheet_add_aoa(wsDeuda, deudaRows, { origin: XLSX.utils.encode_cell({r:deudaOriginRow, c:1}) });
 
       // 2. Descargar
       XLSX.writeFile(wb, `Pipeline_Dashboard_Aplicativos_${today}.xlsx`);
