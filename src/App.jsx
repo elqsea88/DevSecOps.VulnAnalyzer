@@ -18,6 +18,27 @@ function App(){
   const [sonarData,setSonarData] = useState({});  // { repoName: { qg, secIssues, secRating, relIssues, relRating, maintIssues, maintRating, coverage, duplications, hotspots, hotspotsStatus, loc, version, branch } }
   const setSonarF = (repo,field,val) => setSonarData(p=>({...p,[repo]:{...(p[repo]||{}), [field]:val}}));
 
+  const [dashboardWb, setDashboardWb] = useState(null);   // Workbook Excel existente cargado por usuario
+  const [dashboardWbName, setDashboardWbName] = useState(""); // nombre del archivo cargado
+
+  const loadDashboardExcel = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const wb = XLSX.read(new Uint8Array(ev.target.result), { type:"array", cellStyles:true, cellDates:true });
+        setDashboardWb(wb);
+        setDashboardWbName(file.name);
+        showToast(`Excel cargado: ${file.name} ✓`);
+      } catch(err) {
+        showToast("Error leyendo Excel: "+err.message, "warn");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value = "";  // reset input para permitir recargar el mismo archivo
+  };
+
   const MCP_DEFAULT = "http://127.0.0.1:3747";
   const [mcpUrl,setMcpUrl]     = useState(MCP_DEFAULT);
   const [mcpStatus,setMcpStatus] = useState(null); // null | "ok" | "error" | "checking"
@@ -302,16 +323,36 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
     const today = new Date().toISOString().split("T")[0];
     const ratingToNivel   = r => ({A:"Baja",B:"Baja",C:"Media",D:"Alta",E:"Alta"}[r]||"Sin Deuda");
     const ratingToImpacto = r => ({A:"Bajo",B:"Bajo",C:"Medio",D:"Alto",E:"Crítico"}[r]||"Bajo");
+    const impactoOrder    = ["Bajo","Medio","Alto","Crítico"];
+
+    // Encuentra la primera fila vacía en columna colIdx (0=A,1=B…) desde startRowIdx
+    const firstEmptyRow = (ws, startRowIdx, colIdx) => {
+      let r = startRowIdx;
+      while (true) {
+        const cell = ws[XLSX.utils.encode_cell({r, c:colIdx})];
+        if (!cell || cell.v === undefined || cell.v === null || cell.v === "") break;
+        r++;
+      }
+      return r;
+    };
+
     try {
-      // 1. Cargar template embebido en build (evita CORS con file://)
-      if (typeof PIPELINE_DASHBOARD_B64 === "undefined" || !PIPELINE_DASHBOARD_B64)
-        throw new Error("Template no embebido — ejecuta npm run build");
-      const wb = XLSX.read(PIPELINE_DASHBOARD_B64, { type:"base64", cellStyles:true, cellDates:true });
+      // 1. Usar workbook cargado por el usuario; si no hay, usar template embebido
+      let wb;
+      if (dashboardWb) {
+        // Re-parsear para no mutar el estado original
+        const bytes = XLSX.write(dashboardWb, { type:"array", bookType:"xlsx" });
+        wb = XLSX.read(bytes, { type:"array", cellStyles:true, cellDates:true });
+      } else {
+        if (typeof PIPELINE_DASHBOARD_B64 === "undefined" || !PIPELINE_DASHBOARD_B64)
+          throw new Error("Template no embebido — ejecuta npm run build");
+        wb = XLSX.read(PIPELINE_DASHBOARD_B64, { type:"base64", cellStyles:true, cellDates:true });
+      }
 
       // ── Pestaña Pipeline ──────────────────────────────────────────────────
       const wsPipe = wb.Sheets["Pipeline"];
-      // Limpiar filas de datos (índice 3–52 = filas 4–53, cols A–J = 0–9)
-      for (let r=3; r<=52; r++) for (let c=0; c<=9; c++) delete wsPipe[XLSX.utils.encode_cell({r,c})];
+      // Desde B4 (índice fila 3, col 1), buscar primera fila vacía para no pisar datos existentes
+      const pipeOriginRow = firstEmptyRow(wsPipe, 3, 1);
 
       const pipeRows = Object.values(repos).map(repo => {
         const sd = sonarData[repo.name] || {};
@@ -320,46 +361,73 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
         const hasDebt = ratings.length > 0;
         let estado="Pendiente", avance=0;
         if (repo.method==="pipeline") {
-          if (repo.lastBuildStatus==="SUCCESS")  { estado="Completado";  avance=1;    }
-          else if (repo.lastBuildStatus==="FAILURE") { estado="Bloqueado"; avance=0.5; }
-          else                                   { estado="En Progreso"; avance=0.75; }
+          if (repo.lastBuildStatus==="SUCCESS")       { estado="Completado";  avance=1;    }
+          else if (repo.lastBuildStatus==="FAILURE")  { estado="Bloqueado";   avance=0.5;  }
+          else                                        { estado="En Progreso"; avance=0.75; }
         }
         const notas=[
-          repo.lastBuild  ? `Build: ${repo.lastBuild}` : "",
-          repo.lastDCL    ? repo.lastDCL                : "",
-          sd.qg           ? `QG: ${sd.qg}`              : "",
-          sd.hotspots     ? `Hotspots: ${sd.hotspots}`  : "",
+          repo.lastBuild ? `Build: ${repo.lastBuild}` : "",
+          repo.lastDCL   ? repo.lastDCL               : "",
+          sd.qg          ? `QG: ${sd.qg}`             : "",
+          sd.hotspots    ? `Hotspots: ${sd.hotspots}` : "",
         ].filter(Boolean).join(" · ");
         return [repo.name, cfg.responsable||"", estado, avance,
                 hasDebt?"Sí":"No", ratingToNivel(worstR), today, today,
                 repo.buildUrl||"", notas];
       });
-      XLSX.utils.sheet_add_aoa(wsPipe, pipeRows, { origin:"A4" });
+      if (pipeRows.length)
+        XLSX.utils.sheet_add_aoa(wsPipe, pipeRows, { origin: XLSX.utils.encode_cell({r:pipeOriginRow, c:0}) });
 
       // ── Pestaña Deuda Técnica ─────────────────────────────────────────────
       const wsDeuda = wb.Sheets["Deuda Técnica"];
-      // Limpiar filas de datos (índice 4–53 = filas 5–54, cols A–H = 0–7)
-      for (let r=4; r<=53; r++) for (let c=0; c<=7; c++) delete wsDeuda[XLSX.utils.encode_cell({r,c})];
+      // Desde B5 (índice fila 4, col 1), buscar primera fila vacía
+      const deudaOriginRow = firstEmptyRow(wsDeuda, 4, 1);
 
+      // Una sola fila por aplicativo: tipos y descripciones concatenados
       const deudaRows = [];
       Object.values(repos).forEach(repo => {
         const sd = sonarData[repo.name] || {};
         const link = getSonarUrl(repo.name, sd.branch||cfg.ticket);
-        const push = (tipo, issues, rating) => deudaRows.push([
-          repo.name, tipo,
-          `${issues||"?"} issues de ${tipo.toLowerCase()} — Rating ${rating||"?"}`,
-          ratingToImpacto(rating), cfg.responsable||"", today, "", link,
-        ]);
-        if (sd.secRating  ||sd.secIssues)  push("Seguridad",      sd.secIssues,  sd.secRating);
-        if (sd.relRating  ||sd.relIssues)  push("Confiabilidad",   sd.relIssues,  sd.relRating);
-        if (sd.maintRating||sd.maintIssues) push("Mantenibilidad", sd.maintIssues, sd.maintRating);
-        if (sd.hotspots) deudaRows.push([
-          repo.name, "Seguridad (Hotspots)",
-          `${sd.hotspots} hotspots${sd.hotspotsStatus?" — "+sd.hotspotsStatus:""}`,
-          "Alto", cfg.responsable||"", today, "", link,
+        const tipos = [], descs = [], impactos = [];
+
+        if (sd.secRating||sd.secIssues) {
+          tipos.push("Seguridad");
+          descs.push(`${sd.secIssues||"?"} issues de seguridad — Rating ${sd.secRating||"?"}`);
+          impactos.push(ratingToImpacto(sd.secRating));
+        }
+        if (sd.relRating||sd.relIssues) {
+          tipos.push("Confiabilidad");
+          descs.push(`${sd.relIssues||"?"} issues de confiabilidad — Rating ${sd.relRating||"?"}`);
+          impactos.push(ratingToImpacto(sd.relRating));
+        }
+        if (sd.maintRating||sd.maintIssues) {
+          tipos.push("Mantenibilidad");
+          descs.push(`${sd.maintIssues||"?"} issues de mantenibilidad — Rating ${sd.maintRating||"?"}`);
+          impactos.push(ratingToImpacto(sd.maintRating));
+        }
+        if (sd.hotspots) {
+          tipos.push("Seguridad (Hotspots)");
+          descs.push(`${sd.hotspots} hotspots${sd.hotspotsStatus?" — "+sd.hotspotsStatus:""}`);
+          impactos.push("Alto");
+        }
+
+        if (tipos.length === 0) return;
+
+        const maxImpacto = impactos.reduce((a,b) =>
+          impactoOrder.indexOf(b) > impactoOrder.indexOf(a) ? b : a, "Bajo");
+
+        deudaRows.push([
+          repo.name,
+          tipos.join("\n"),
+          descs.join("\n"),
+          maxImpacto,
+          cfg.responsable||"",
+          today, "",
+          link,
         ]);
       });
-      if (deudaRows.length) XLSX.utils.sheet_add_aoa(wsDeuda, deudaRows, { origin:"A5" });
+      if (deudaRows.length)
+        XLSX.utils.sheet_add_aoa(wsDeuda, deudaRows, { origin: XLSX.utils.encode_cell({r:deudaOriginRow, c:0}) });
 
       // 2. Descargar
       XLSX.writeFile(wb, `Pipeline_Dashboard_Aplicativos_${today}.xlsx`);
@@ -641,7 +709,7 @@ ${repoUrls}
           {phase===0&&<ImportacionPhase cfg={cfg} setCfg={setCfg} issues={issues} stats={stats} fileRef={fileRef} handleFile={handleFile} lbl={lbl} inp={inp} card={card} infoBox={infoBox} warnBox={warnBox} btnP={btnP} completePhase={completePhase} sevBadge={sevBadge} methBadge={methBadge}/>}
 
           {/* ── FASE 1: DIAGNÓSTICO ── */}
-          {phase===1&&<DiagnosticoPhase cfg={cfg} issues={issues} repos={repos} stats={stats} sonarData={sonarData} setSonarF={setSonarF} fetchSonar={fetchSonar} mcpUrl={mcpUrl} setMcpUrl={setMcpUrl} mcpStatus={mcpStatus} checkMcpStatus={checkMcpStatus} jenkinsMcpUrl={jenkinsMcpUrl} setJenkinsMcpUrl={setJenkinsMcpUrl} jenkinsMcpStatus={jenkinsMcpStatus} checkJenkinsMcpStatus={checkJenkinsMcpStatus} getSonarUrl={getSonarUrl} checkRepo={checkRepo} checkAll={checkAll} exportPipelineDashboard={exportPipelineDashboard} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} card={card} inp={inp} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} btnA={btnA} dot={dot} methBadge={methBadge} sevBadge={sevBadge}/>}
+          {phase===1&&<DiagnosticoPhase cfg={cfg} issues={issues} repos={repos} stats={stats} sonarData={sonarData} setSonarF={setSonarF} fetchSonar={fetchSonar} mcpUrl={mcpUrl} setMcpUrl={setMcpUrl} mcpStatus={mcpStatus} checkMcpStatus={checkMcpStatus} jenkinsMcpUrl={jenkinsMcpUrl} setJenkinsMcpUrl={setJenkinsMcpUrl} jenkinsMcpStatus={jenkinsMcpStatus} checkJenkinsMcpStatus={checkJenkinsMcpStatus} getSonarUrl={getSonarUrl} checkRepo={checkRepo} checkAll={checkAll} exportPipelineDashboard={exportPipelineDashboard} loadDashboardExcel={loadDashboardExcel} dashboardWbName={dashboardWbName} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} card={card} inp={inp} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} btnA={btnA} dot={dot} methBadge={methBadge} sevBadge={sevBadge}/>}
 
           {/* ── FASE 2: DOCUMENTOS ── */}
           {phase===2&&<DocumentosPhase cfg={cfg} issues={issues} cipData={cipData} docData={docData} docTab={docTab} setDocTab={setDocTab} setVulnF={setVulnF} stats={stats} sonarData={sonarData} genDG={genDG} genDT={genDT} genCK={genCK} genCIP={genCIP} dl1={dl1} dlAll={dlAll} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} TODAY={TODAY} card={card} inp={inp} ta={ta} infoBox={infoBox} warnBox={warnBox} codeBox={codeBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} sevBadge={sevBadge} claudeKey={claudeKey} setClaudeKey={setClaudeKey} fetchAI={fetchAI} aiLoading={aiLoading} fetchAI_DT={fetchAI_DT} repos={repos}/>}

@@ -1,6 +1,7 @@
 // ── DiagnosticoPhase ─────────────────────────────────────────────────────────────────
 // Props destructured from App state
-function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fetchSonar, mcpUrl, setMcpUrl, mcpStatus, checkMcpStatus, jenkinsMcpUrl, setJenkinsMcpUrl, jenkinsMcpStatus, checkJenkinsMcpStatus, getSonarUrl, checkRepo, checkAll, exportPipelineDashboard, completePhase, showSources, setShowSources, getSourcesDisplay, card, inp, infoBox, warnBox, lbl, btnP, btnS, btnG, btnA, dot, methBadge, sevBadge }) {
+function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fetchSonar, mcpUrl, setMcpUrl, mcpStatus, checkMcpStatus, jenkinsMcpUrl, setJenkinsMcpUrl, jenkinsMcpStatus, checkJenkinsMcpStatus, getSonarUrl, checkRepo, checkAll, exportPipelineDashboard, loadDashboardExcel, dashboardWbName, completePhase, showSources, setShowSources, getSourcesDisplay, card, inp, infoBox, warnBox, lbl, btnP, btnS, btnG, btnA, dot, methBadge, sevBadge }) {
+  const excelInputRef = React.useRef(null);
   return (
             <div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24,paddingBottom:18,borderBottom:"1px solid #1A2840"}}>
@@ -9,8 +10,16 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, fet
                   <div style={{fontSize:24,fontWeight:800,color:"#E0EDFF"}}>Verificación Pipeline + Deuda Técnica</div>
                   <div style={{fontSize:12,color:"#4A6080",marginTop:4}}>Verificación dual: Jenkinsfile en Git + Job activo en Jenkins + SonarQube.</div>
                 </div>
-                <div style={{display:"flex",gap:8}}>
+                <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",justifyContent:"flex-end"}}>
                   <button style={btnA} onClick={checkAll}>⚡ Analizar Todos</button>
+                  {/* Cargar Excel existente para agregar datos sin sobrescribir */}
+                  <input ref={excelInputRef} type="file" accept=".xlsx,.xls" style={{display:"none"}} onChange={loadDashboardExcel}/>
+                  <button
+                    style={{...btnS,background:"#00304010",border:"1px solid #00D4FF40",color:"#00D4FF"}}
+                    onClick={()=>excelInputRef.current&&excelInputRef.current.click()}
+                    title="Carga un Excel previo para agregar datos desde la primera fila vacía">
+                    📂 {dashboardWbName ? dashboardWbName : "Cargar Excel existente"}
+                  </button>
                   <button style={{...btnS,background:"#00603010",border:"1px solid #00E67640",color:"#00E676"}} onClick={exportPipelineDashboard}>📥 Exportar Dashboard</button>
                   <button style={btnP} onClick={()=>completePhase(1)}>Continuar →</button>
                 </div>
