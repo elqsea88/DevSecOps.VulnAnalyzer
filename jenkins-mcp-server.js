@@ -32,6 +32,7 @@ function loadConfig() {
     jenkinsUser:   process.env.JENKINS_USER        || cfg.jenkinsUser   || "",
     jenkinsToken:  process.env.JENKINS_TOKEN       || cfg.jenkinsToken  || "",
     jenkinsFolder: process.env.JENKINS_FOLDER      || cfg.jenkinsFolder || "",  // carpeta/organización en Jenkins
+    jenkinsSuffix: process.env.JENKINS_SUFFIX      || cfg.jenkinsSuffix || "",  // sufijo del job, ej: "_multi"
     port:          parseInt(process.env.MCP_JENKINS_PORT || cfg.port   || "3748", 10),
   };
 }
@@ -66,9 +67,10 @@ async function fetchJenkinsData(cfg, repoName) {
   const jenkinsBase = cfg.jenkinsUrl.replace(/\/$/, "");
   // Si jenkinsFolder está configurado, el job vive dentro de una carpeta:
   // /job/{folder}/job/{repoName}/api/json
+  const jobName = repoName + (cfg.jenkinsSuffix || "");
   const jobPath = cfg.jenkinsFolder
-    ? `/job/${encodeURIComponent(cfg.jenkinsFolder)}/job/${encodeURIComponent(repoName)}`
-    : `/job/${encodeURIComponent(repoName)}`;
+    ? `/job/${encodeURIComponent(cfg.jenkinsFolder)}/job/${encodeURIComponent(jobName)}`
+    : `/job/${encodeURIComponent(jobName)}`;
   const jobApiUrl = `${jenkinsBase}${jobPath}/api/json?tree=lastBuild[number,result,url,duration,timestamp]`;
   const jenkinsAuth = cfg.jenkinsUser
     ? "Basic " + Buffer.from(`${cfg.jenkinsUser}:${cfg.jenkinsToken}`).toString("base64")
@@ -157,7 +159,8 @@ server.listen(cfg.port, "127.0.0.1", () => {
   console.log(`\n✓ Jenkins MCP Server  →  http://127.0.0.1:${cfg.port}`);
   console.log(`  Jenkins : ${cfg.jenkinsUrl}`);
   console.log(`  Carpeta : ${cfg.jenkinsFolder ? cfg.jenkinsFolder : "(sin carpeta)"}`);
-  console.log(`  Job URL : ${cfg.jenkinsUrl}/job/${cfg.jenkinsFolder ? cfg.jenkinsFolder + "/job/" : ""}{repoName}/api/json`);
+  console.log(`  Sufijo  : ${cfg.jenkinsSuffix ? '"' + cfg.jenkinsSuffix + '"' : "(ninguno)"}`);
+  console.log(`  Job URL : ${cfg.jenkinsUrl}/job/${cfg.jenkinsFolder ? cfg.jenkinsFolder + "/job/" : ""}{repoName}${cfg.jenkinsSuffix || ""}/api/json`);
   console.log(`  Usuario : ${cfg.jenkinsUser ? "✓ " + cfg.jenkinsUser : "✗ falta — edita jenkins-mcp.config.json"}`);
   console.log(`  Token   : ${cfg.jenkinsToken ? "✓ configurado" : "✗ falta — edita jenkins-mcp.config.json"}`);
   console.log(`\n  Endpoints disponibles:`);
