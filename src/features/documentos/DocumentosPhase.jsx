@@ -1,7 +1,50 @@
-// ── exportWordDG ──────────────────────────────────────────────────────────────
-// Genera un .docx para UNA vulnerabilidad, rellenando el template base.
-// Usa PizZip (CDN global) + la constante DISENO_GENERAL_DOCX_B64 (build.js).
-function exportWordDG(type, ov, projectName, TODAY) {
+// ── Helpers XML compartidos ───────────────────────────────────────────────────
+function _escXml(text) {
+  return (text || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+// Construye párrafos de contenido: una línea → un <w:p>
+function _contentParas(text) {
+  const lines = (text || "Información no disponible").trim().split("\n");
+  return lines.map(line =>
+    `<w:p><w:pPr><w:spacing w:before="0" w:after="80"/></w:pPr>` +
+    `<w:r><w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/>` +
+    `<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>` +
+    `<w:t xml:space="preserve">${_escXml(line)}</w:t></w:r></w:p>`
+  ).join("");
+}
+
+// Párrafo con estilo inline
+function _wPara(text, opts = {}) {
+  const { bold=false, sz="22", color="000000", spaceBefore="0", spaceAfter="160",
+          borderTop=false, borderBot=false } = opts;
+  const rPr = [
+    bold ? "<w:b/>" : "",
+    `<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/>`,
+    color !== "000000" ? `<w:color w:val="${color}"/>` : "",
+    `<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/>`,
+  ].filter(Boolean).join("");
+  const borders = [
+    borderTop ? `<w:top w:val="single" w:sz="4" w:space="1" w:color="1A3A5C"/>` : "",
+    borderBot ? `<w:bottom w:val="single" w:sz="4" w:space="1" w:color="1A3A5C"/>` : "",
+  ].filter(Boolean).join("");
+  const pPrParts = [
+    `<w:spacing w:before="${spaceBefore}" w:after="${spaceAfter}"/>`,
+    borders ? `<w:pBdr>${borders}</w:pBdr>` : "",
+  ].filter(Boolean).join("");
+  return `<w:p><w:pPr>${pPrParts}</w:pPr><w:r><w:rPr>${rPr}</w:rPr>` +
+         `<w:t xml:space="preserve">${_escXml(text)}</w:t></w:r></w:p>`;
+}
+
+// ── exportAllVulnsInOneDocx ───────────────────────────────────────────────────
+// Genera UN ÚNICO .docx con todas las vulnerabilidades detectadas.
+// Cada vulnerabilidad tiene su bloque con las 4 secciones etiquetadas.
+function exportAllVulnsInOneDocx(stats, docData, cfg, TODAY) {
   if (typeof DISENO_GENERAL_DOCX_B64 === "undefined" || !DISENO_GENERAL_DOCX_B64) {
     alert("Template Word no disponible.\nEjecuta: npm run create-template && npm run build");
     return;
@@ -11,97 +54,96 @@ function exportWordDG(type, ov, projectName, TODAY) {
     return;
   }
 
+  const types = (stats.byType || []);
+  if (types.length === 0) { alert("No hay vulnerabilidades cargadas."); return; }
+
   try {
-    // ── Escapa caracteres especiales XML ───────────────────────────────────
-    function escXml(text) {
-      return (text || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&apos;");
+    // ── Construir bloque XML de una vulnerabilidad ─────────────────────────
+    function buildVulnBlock(type, count, ov) {
+      const kb    = getKB(type);
+      const label = (kb.label && kb.label !== type) ? kb.label : type;
+      const issuesTxt = `${count} issue${count !== 1 ? "s" : ""} detectado${count !== 1 ? "s" : ""}`;
+
+      return [
+        // Separador superior con nombre de la vulnerabilidad
+        _wPara("", { borderTop: true, spaceAfter: "0", spaceBefore: "320" }),
+        _wPara(`${label}  —  ${issuesTxt}`, {
+          bold: true, sz: "26", color: "1F3864",
+          spaceBefore: "0", spaceAfter: "0",
+        }),
+        _wPara("", { borderBot: true, spaceAfter: "160", spaceBefore: "0" }),
+
+        // Sub-sección: Impactos de la Vulnerabilidad
+        _wPara(`Impactos de la Vulnerabilidad: ${label}`, {
+          bold: true, sz: "22", color: "2E75B6",
+          spaceBefore: "160", spaceAfter: "60",
+        }),
+        _contentParas(ov.impactos),
+
+        // Sub-sección: Impactos Asociados a OWASP
+        _wPara(`Impactos Asociados a OWASP: ${label}`, {
+          bold: true, sz: "22", color: "2E75B6",
+          spaceBefore: "160", spaceAfter: "60",
+        }),
+        _contentParas(ov.owasp),
+
+        // Sub-sección: Proceso Actual
+        _wPara(`Proceso Actual: ${label}`, {
+          bold: true, sz: "22", color: "2E75B6",
+          spaceBefore: "160", spaceAfter: "60",
+        }),
+        _contentParas(ov.proceso),
+
+        // Sub-sección: Propuesta de Solución
+        _wPara(`Propuesta de Solución: ${label}`, {
+          bold: true, sz: "22", color: "2E75B6",
+          spaceBefore: "160", spaceAfter: "60",
+        }),
+        _contentParas(ov.solucion),
+      ].join("");
     }
 
-    // ── Reemplaza un párrafo marcador por párrafos con el contenido ────────
-    // El marcador exacto en el template es: <w:p><w:r><w:t>%%MARKER%%</w:t></w:r></w:p>
-    // Cada línea del contenido genera su propio <w:p> para un resultado limpio.
-    function replacePlaceholder(xmlStr, marker, content) {
-      const safeContent = (content || "Información no disponible").trim();
-      const lines = safeContent.split("\n");
+    // ── Combinar todos los bloques ─────────────────────────────────────────
+    const allBlocksXml = types.map(({ type, count }) => {
+      const ov = (docData.vulnOv || {})[type] || {};
+      return buildVulnBlock(type, count, ov);
+    }).join("");
 
-      const paragraphsXml = lines.map(line => {
-        const trimmed = line; // preservar espacios de indentación
-        return [
-          `<w:p>`,
-          `<w:pPr><w:spacing w:before="0" w:after="80"/></w:pPr>`,
-          `<w:r>`,
-          `<w:rPr><w:sz w:val="20"/><w:szCs w:val="20"/>`,
-          `<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>`,
-          `<w:t xml:space="preserve">${escXml(trimmed)}</w:t>`,
-          `</w:r>`,
-          `</w:p>`,
-        ].join("");
-      }).join("");
-
-      // Regex tolerante a espacios en blanco entre tags del marcador
-      const escapedMarker = marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const rx = new RegExp(
-        `<w:p>\\s*<w:r>\\s*<w:t>\\s*${escapedMarker}\\s*<\\/w:t>\\s*<\\/w:r>\\s*<\\/w:p>`
-      );
-      return xmlStr.replace(rx, paragraphsXml);
-    }
-
-    // ── Cargar template ────────────────────────────────────────────────────
+    // ── Cargar template y reemplazar marcadores ────────────────────────────
     const zip = new PizZip(DISENO_GENERAL_DOCX_B64, { base64: true });
     let xml   = zip.files["word/document.xml"].asText();
 
-    // ── Reemplazar marcadores simples (header) ─────────────────────────────
-    xml = xml.replace(/\{PROJECT_NAME\}/g, () => escXml(projectName || ""));
-    xml = xml.replace(/\{VULN_TYPE\}/g,    () => escXml(type        || ""));
-    xml = xml.replace(/\{FECHA\}/g,        () => escXml(TODAY       || ""));
+    xml = xml.replace(/\{PROJECT_NAME\}/g,  () => _escXml(cfg.projectName || ""));
+    xml = xml.replace(/\{FECHA\}/g,          () => _escXml(TODAY || ""));
+    xml = xml.replace(/\{TOTAL_VULNS\}/g,    () => String(types.length));
 
-    // ── Reemplazar marcadores de contenido (multilínea) ────────────────────
-    xml = replacePlaceholder(xml, "%%IMPACTOS%%", ov.impactos);
-    xml = replacePlaceholder(xml, "%%OWASP%%",    ov.owasp);
-    xml = replacePlaceholder(xml, "%%PROCESO%%",  ov.proceso);
-    xml = replacePlaceholder(xml, "%%SOLUCION%%", ov.solucion);
+    // Reemplazar %%VULNERABILIDADES%% con el XML de todos los bloques
+    xml = xml.replace(
+      /<w:p>\s*<w:r>\s*<w:t>\s*%%VULNERABILIDADES%%\s*<\/w:t>\s*<\/w:r>\s*<\/w:p>/,
+      allBlocksXml
+    );
 
-    // ── Guardar XML modificado y generar Blob ──────────────────────────────
+    // ── Generar y descargar ────────────────────────────────────────────────
     zip.file("word/document.xml", xml);
     const buf  = zip.generate({ type: "arraybuffer" });
     const blob = new Blob([buf], {
       type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     });
 
-    // ── Descargar ──────────────────────────────────────────────────────────
-    const safeName  = (type || "VULN").replace(/[\s/\\:*?"<>|]/g, "_");
-    const safeProj  = (projectName || "Proyecto").replace(/[\s/\\:*?"<>|]/g, "_");
-    const url       = URL.createObjectURL(blob);
-    const a         = document.createElement("a");
-    a.href          = url;
-    a.download      = `DG_${safeName}_${safeProj}_${TODAY || ""}.docx`;
+    const safeProj = (cfg.projectName || "Proyecto").replace(/[\s/\\:*?"<>|]/g, "_");
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement("a");
+    a.href    = url;
+    a.download = `DG_${safeProj}_${TODAY || ""}.docx`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
   } catch (err) {
-    console.error("exportWordDG error:", err);
+    console.error("exportAllVulnsInOneDocx error:", err);
     alert("Error al generar el documento Word:\n" + err.message);
   }
-}
-
-// ── exportAllWordDG ───────────────────────────────────────────────────────────
-// Descarga un .docx por cada tipo de vulnerabilidad (con delay para el browser).
-function exportAllWordDG(stats, docData, cfg, TODAY) {
-  const types = (stats.byType || []);
-  if (types.length === 0) { alert("No hay vulnerabilidades cargadas."); return; }
-  types.forEach(({ type }, idx) => {
-    setTimeout(() => {
-      const ov = (docData.vulnOv || {})[type] || {};
-      exportWordDG(type, ov, cfg.projectName, TODAY);
-    }, idx * 600);
-  });
 }
 
 // ── DocumentosPhase ─────────────────────────────────────────────────────────────────
@@ -144,9 +186,9 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                         <button style={btnG} onClick={()=>dl1("dg")}>⬇ Exportar TXT</button>
                         <button
                           style={{...btnG, color:"#00D4FF", borderColor:"#1A3A5C"}}
-                          onClick={()=>exportAllWordDG(stats, docData, cfg, TODAY)}
-                          title="Genera un .docx por cada tipo de vulnerabilidad"
-                        >📄 Exportar Word (todos)</button>
+                          onClick={()=>exportAllVulnsInOneDocx(stats, docData, cfg, TODAY)}
+                          title="Genera un único .docx con todas las vulnerabilidades detectadas"
+                        >📄 Exportar Word</button>
                       </div>
 
                       {/* App description */}
@@ -194,11 +236,6 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                                       style={{...btnG,fontSize:10,padding:"4px 10px",color:showSources[type]?"#00D4FF":"#4A6080",borderColor:showSources[type]?"#1A3A5C":"#1A2840"}}
                                       onClick={()=>setShowSources(p=>({...p,[type]:!p[type]}))}
                                     >{showSources[type]?"▲ Ocultar fuentes":"📚 Ver fuentes"}</button>
-                                    <button
-                                      style={{...btnG,fontSize:10,padding:"4px 10px",color:"#00D4FF",borderColor:"#1A3A5C"}}
-                                      onClick={()=>exportWordDG(type, ov, cfg.projectName, TODAY)}
-                                      title="Exportar esta vulnerabilidad como documento Word (.docx)"
-                                    >📄 Word</button>
                                   </div>
                                   <div style={{fontSize:9,color:"#2A4060",fontFamily:"monospace",textAlign:"right"}}>
                                     {kb._isDefault
