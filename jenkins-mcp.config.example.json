@@ -2,6 +2,7 @@
   "jenkinsUrl":    "https://jenkins.tu-empresa.com",
   "jenkinsFolder": "nombre-del-folder-en-jenkins",
   "jenkinsSuffix": "_multi",
+  "jenkinsBranch": "sit",
   "jenkinsUser":   "tu-usuario-jenkins",
   "jenkinsToken":  "TU_API_TOKEN_JENKINS",
   "port":          3748

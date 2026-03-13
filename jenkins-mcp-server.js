@@ -33,6 +33,7 @@ function loadConfig() {
     jenkinsToken:  process.env.JENKINS_TOKEN       || cfg.jenkinsToken  || "",
     jenkinsFolder: process.env.JENKINS_FOLDER      || cfg.jenkinsFolder || "",  // carpeta/organización en Jenkins
     jenkinsSuffix: process.env.JENKINS_SUFFIX      || cfg.jenkinsSuffix || "",  // sufijo del job, ej: "_multi"
+    jenkinsBranch: process.env.JENKINS_BRANCH      || cfg.jenkinsBranch || "sit", // rama de despliegue, ej: "sit", "dev"
     port:          parseInt(process.env.MCP_JENKINS_PORT || cfg.port   || "3748", 10),
   };
 }
@@ -71,7 +72,12 @@ async function fetchJenkinsData(cfg, repoName) {
   const jobPath = cfg.jenkinsFolder
     ? `/job/${encodeURIComponent(cfg.jenkinsFolder)}/job/${encodeURIComponent(jobName)}`
     : `/job/${encodeURIComponent(jobName)}`;
-  const jobApiUrl = `${jenkinsBase}${jobPath}/api/json?tree=lastBuild[number,result,url,duration,timestamp]`;
+  // Para Multibranch Pipeline: el job contenedor no tiene lastBuild.
+  // Los builds viven en la rama: /job/{folder}/job/{jobName}/job/{branch}/
+  const branchPath = cfg.jenkinsBranch
+    ? `${jobPath}/job/${encodeURIComponent(cfg.jenkinsBranch)}`
+    : jobPath;
+  const jobApiUrl = `${jenkinsBase}${branchPath}/api/json?tree=lastBuild[number,result,url,duration,timestamp]`;
   console.log(`  → GET ${jobApiUrl}`);
   const jenkinsAuth = cfg.jenkinsUser
     ? "Basic " + Buffer.from(`${cfg.jenkinsUser}:${cfg.jenkinsToken}`).toString("base64")
@@ -100,7 +106,7 @@ async function fetchJenkinsData(cfg, repoName) {
         result.buildUrl        = data.lastBuild.url || null;
 
         // ── Extraer DCL del console log del último build ──────────────────
-        const consoleUrl = `${jenkinsBase}${jobPath}/${buildNum}/consoleText`;
+        const consoleUrl = `${jenkinsBase}${branchPath}/${buildNum}/consoleText`;
         console.log(`  → GET ${consoleUrl} (buscando DCL...)`);
         try {
           const logRes = await makeRequest(consoleUrl, jenkinsAuth);
@@ -179,7 +185,8 @@ server.listen(cfg.port, "127.0.0.1", () => {
   console.log(`  Jenkins : ${cfg.jenkinsUrl}`);
   console.log(`  Carpeta : ${cfg.jenkinsFolder ? cfg.jenkinsFolder : "(sin carpeta)"}`);
   console.log(`  Sufijo  : ${cfg.jenkinsSuffix ? '"' + cfg.jenkinsSuffix + '"' : "(ninguno)"}`);
-  console.log(`  Job URL : ${cfg.jenkinsUrl}/job/${cfg.jenkinsFolder ? cfg.jenkinsFolder + "/job/" : ""}{repoName}${cfg.jenkinsSuffix || ""}/api/json`);
+  console.log(`  Rama    : ${cfg.jenkinsBranch || "(sin rama)"}`);
+  console.log(`  Job URL : ${cfg.jenkinsUrl}/job/${cfg.jenkinsFolder ? cfg.jenkinsFolder + "/job/" : ""}{repoName}${cfg.jenkinsSuffix || ""}${cfg.jenkinsBranch ? "/job/" + cfg.jenkinsBranch : ""}/api/json`);
   console.log(`  Usuario : ${cfg.jenkinsUser ? "✓ " + cfg.jenkinsUser : "✗ falta — edita jenkins-mcp.config.json"}`);
   console.log(`  Token   : ${cfg.jenkinsToken ? "✓ configurado" : "✗ falta — edita jenkins-mcp.config.json"}`);
   console.log(`\n  Endpoints disponibles:`);
