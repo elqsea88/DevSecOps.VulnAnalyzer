@@ -50,14 +50,15 @@ function build() {
   const templatePath = path.join(__dirname, "src/index.html.template");
   const template = fs.readFileSync(templatePath, "utf8");
 
-  // Embed Excel templates as base64 (avoids fetch CORS issues with file://)
-  const EXCEL_ASSETS = [
-    { varName: "PIPELINE_DASHBOARD_B64", file: "dist/docs/Pipeline_Dashboard_Aplicativos.xlsx" },
+  // Embed binary assets as base64 (avoids fetch CORS issues with file://)
+  const BINARY_ASSETS = [
+    { varName: "PIPELINE_DASHBOARD_B64",    file: "dist/docs/Pipeline_Dashboard_Aplicativos.xlsx" },
+    { varName: "DISENO_GENERAL_DOCX_B64",   file: "dist/docs/TemplateDisenoGeneral.docx" },
   ];
-  const excelInlines = EXCEL_ASSETS.map(({ varName, file }) => {
+  const excelInlines = BINARY_ASSETS.map(({ varName, file }) => {
     const fullPath = path.join(__dirname, file);
     if (!fs.existsSync(fullPath)) {
-      console.warn(`  ⚠  Excel asset missing: ${file}`);
+      console.warn(`  ⚠  Asset missing: ${file}`);
       return `const ${varName} = null;`;
     }
     const b64 = fs.readFileSync(fullPath).toString("base64");

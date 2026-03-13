@@ -18,7 +18,10 @@
       "Bash(npm show:*)",
       "Bash(claude auth:*)",
       "Bash(claude setup-token:*)",
-      "Bash(npm info:*)"
+      "Bash(npm info:*)",
+      "Bash(find /c/DevSecOps.VulnAnalyzer/DevSecOps.VulnAnalyzer/dist/docs -type f -name *.docx -o -name *.doc -o -name *.template)",
+      "Bash(find c:/DevSecOps.VulnAnalyzer/DevSecOps.VulnAnalyzer -name *.docx)",
+      "Bash(node create-template.js)"
     ]
   }
 }
