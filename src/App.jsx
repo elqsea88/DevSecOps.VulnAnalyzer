@@ -25,6 +25,7 @@ function App(){
   const JENKINS_MCP_DEFAULT = "http://127.0.0.1:3748";
   const [jenkinsMcpUrl,setJenkinsMcpUrl]         = useState(JENKINS_MCP_DEFAULT);
   const [jenkinsMcpStatus,setJenkinsMcpStatus]   = useState(null); // null | "ok" | "error" | "checking"
+  const [jenkinsBranch,setJenkinsBranch]         = useState(""); // rama por defecto del config del MCP
 
   const checkMcpStatus = async (baseUrl) => {
     const url = (baseUrl||mcpUrl).replace(/\/$/,"");
@@ -48,8 +49,10 @@ function App(){
       const r = await fetch(`${url}/health`, { signal: AbortSignal.timeout(4000) });
       const d = await r.json();
       setJenkinsMcpStatus(d.status==="ok"?"ok":"error");
-      if (d.status==="ok") showToast("Jenkins MCP conectado ✓");
-      else showToast("Jenkins MCP respondió con error","warn");
+      if (d.status==="ok") {
+        if (d.jenkinsBranch) setJenkinsBranch(d.jenkinsBranch);
+        showToast("Jenkins MCP conectado ✓");
+      } else showToast("Jenkins MCP respondió con error","warn");
     } catch {
       setJenkinsMcpStatus("error");
       showToast("Jenkins MCP no disponible — ejecuta: node jenkins-mcp-server.js","warn");
@@ -289,7 +292,10 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
     }
   },[cfg,jenkinsMcpUrl]);
 
-  const checkAll = ()=>Object.keys(repos).forEach((r,i)=>setTimeout(()=>checkRepo(r),i*900));
+  const checkAll = () => Object.keys(repos).forEach((r,i) => setTimeout(() => {
+    checkRepo(r);
+    fetchSonar(r, sonarData[r]?.branch || jenkinsBranch || "");
+  }, i * 900));
 
   // ── STATS ───────────────────────────────────────────────────────────────────
   const stats = useMemo(()=>({

@@ -154,10 +154,11 @@ const server = http.createServer(async (req, res) => {
   // ── GET /health ────────────────────────────────────────────────────────────
   if (pathname === "/health") {
     return json(res, 200, {
-      status:      "ok",
-      jenkinsUrl:  cfg.jenkinsUrl,
-      hasToken:    !!(cfg.jenkinsUser && cfg.jenkinsToken),
-      port:        cfg.port,
+      status:        "ok",
+      jenkinsUrl:    cfg.jenkinsUrl,
+      hasToken:      !!(cfg.jenkinsUser && cfg.jenkinsToken),
+      port:          cfg.port,
+      jenkinsBranch: cfg.jenkinsBranch || "",
     });
   }
 
