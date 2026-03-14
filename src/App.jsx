@@ -123,42 +123,19 @@ function App(){
     return `${base}/dashboard?branch=${encodeURIComponent(br)}&id=${encodeURIComponent(key)}&codeScope=overall`;
   };
   // apiKey eliminado — token movido a sonar-mcp-server.js
-  const [claudeKey,setClaudeKey] = useState("");
   const [aiLoading,setAiLoading] = useState({});
 
   const fetchAI = async (type, count, typeFiles) => {
-    if (!claudeKey) { showToast("Ingresa tu API Key de Claude primero","warn"); return; }
+    if (claudeMcpStatus !== "ok") { showToast("Claude MCP no conectado — inicia el servidor primero","warn"); return; }
     setAiLoading(p=>({...p,[type]:true}));
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": claudeKey,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
-        body: JSON.stringify({
-          model: "claude-opus-4-6",
-          max_tokens: 1500,
-          messages: [{
-            role: "user",
-            content: `Eres un experto en seguridad de aplicaciones (DevSecOps). Para la vulnerabilidad "${type}" detectada en el proyecto "${cfg.projectName}" (${count} issue(s) en ${typeFiles.length} archivo(s)), genera contenido técnico profesional en español para un documento de Diseño General de Seguridad.
-
-Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin explicaciones):
-{
-  "impactos": "descripción de impactos con bullets •",
-  "owasp": "clasificación OWASP Top 10 2021 y detalles de cumplimiento",
-  "proceso": "descripción del proceso actual y deficiencias identificadas",
-  "solucion": "pasos numerados de remediación específicos"
-}`
-          }]
-        })
+      const res = await fetch(`${claudeMcpUrl}/api/enhance-vuln`, {
+        method: "POST", headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ type, count, fileCount: typeFiles.length, projectName: cfg.projectName, mode: "dg" }),
       });
-      if (!res.ok) { const e=await res.json(); throw new Error(e.error?.message||`HTTP ${res.status}`); }
       const data = await res.json();
-      const text = data.content?.[0]?.text || "";
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      const jsonMatch = data.text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("Respuesta sin JSON válido");
       const parsed = JSON.parse(jsonMatch[0]);
       setDocData(p=>({...p, vulnOv:{...p.vulnOv, [type]:{
@@ -177,30 +154,16 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
   };
 
   const fetchAI_DT = async (type, count, typeFiles) => {
-    if (!claudeKey) { showToast("Ingresa tu API Key de Claude primero","warn"); return; }
+    if (claudeMcpStatus !== "ok") { showToast("Claude MCP no conectado — inicia el servidor primero","warn"); return; }
     setAiLoading(p=>({...p,["dt_"+type]:true}));
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": claudeKey,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
-        body: JSON.stringify({
-          model: "claude-opus-4-6",
-          max_tokens: 1500,
-          messages: [{
-            role: "user",
-            content: `Eres un experto en seguridad de aplicaciones (DevSecOps). Para la vulnerabilidad "${type}" detectada en el proyecto "${cfg.projectName}" (${count} issue(s) en ${typeFiles.length} archivo(s)), genera contenido para una Historia de Usuario de seguridad en español.\n\nResponde ÚNICAMENTE con un JSON válido con estas claves (sin markdown, sin explicaciones):\n{\n  "situacionEsperada": "cómo debe funcionar el sistema correctamente después de la corrección",\n  "reglaNegocio": "regla de negocio asociada a esta corrección de seguridad",\n  "depsTecnicas": "dependencias técnicas a actualizar o agregar (una por línea)",\n  "propuestaGeneral": "propuesta general de solución en una o dos oraciones"\n}`
-          }]
-        })
+      const res = await fetch(`${claudeMcpUrl}/api/enhance-vuln`, {
+        method: "POST", headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ type, count, fileCount: typeFiles.length, projectName: cfg.projectName, mode: "dt" }),
       });
-      if (!res.ok) { const e=await res.json(); throw new Error(e.error?.message||`HTTP ${res.status}`); }
       const data = await res.json();
-      const text = data.content?.[0]?.text || "";
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      const jsonMatch = data.text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("Respuesta sin JSON válido");
       const parsed = JSON.parse(jsonMatch[0]);
       setDocData(p=>({...p, vulnOv:{...p.vulnOv, [type]:{
@@ -215,6 +178,26 @@ Responde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin e
       showToast("Error IA: "+err.message,"warn");
     } finally {
       setAiLoading(p=>({...p,["dt_"+type]:false}));
+    }
+  };
+
+  const fetchAI_field = async (type, field, count, typeFiles, currentValue) => {
+    if (claudeMcpStatus !== "ok") { showToast("Claude MCP no conectado — inicia el servidor primero","warn"); return; }
+    const key = `${type}__${field}`;
+    setAiLoading(p=>({...p,[key]:true}));
+    try {
+      const res = await fetch(`${claudeMcpUrl}/api/enhance-field`, {
+        method: "POST", headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ type, field, count, fileCount: typeFiles.length, projectName: cfg.projectName, currentValue }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      setDocData(p=>({...p, vulnOv:{...p.vulnOv, [type]:{...(p.vulnOv[type]||{}), [field]: data.text}}}));
+      showToast(`IA: "${field}" generado ✓`);
+    } catch(err) {
+      showToast("Error IA: "+err.message,"warn");
+    } finally {
+      setAiLoading(p=>({...p,[key]:false}));
     }
   };
 
@@ -784,7 +767,7 @@ ${repoUrls}
           {phase===1&&<DiagnosticoPhase cfg={cfg} issues={issues} repos={repos} stats={stats} sonarData={sonarData} setSonarF={setSonarF} setRepoF={setRepoF} fetchSonar={fetchSonar} mcpUrl={mcpUrl} setMcpUrl={setMcpUrl} mcpStatus={mcpStatus} checkMcpStatus={checkMcpStatus} jenkinsMcpUrl={jenkinsMcpUrl} setJenkinsMcpUrl={setJenkinsMcpUrl} jenkinsMcpStatus={jenkinsMcpStatus} checkJenkinsMcpStatus={checkJenkinsMcpStatus} getSonarUrl={getSonarUrl} checkRepo={checkRepo} checkAll={checkAll} exportPipelineDashboard={exportPipelineDashboard} loadDashboardExcel={loadDashboardExcel} dashboardWbName={dashboardWbName} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} card={card} inp={inp} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} btnA={btnA} dot={dot} methBadge={methBadge} sevBadge={sevBadge}/>}
 
           {/* ── FASE 2: DOCUMENTOS ── */}
-          {phase===2&&<DocumentosPhase cfg={cfg} issues={issues} cipData={cipData} docData={docData} docTab={docTab} setDocTab={setDocTab} setVulnF={setVulnF} stats={stats} sonarData={sonarData} genDG={genDG} genDT={genDT} genCK={genCK} genCIP={genCIP} dl1={dl1} dlAll={dlAll} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} TODAY={TODAY} card={card} inp={inp} ta={ta} infoBox={infoBox} warnBox={warnBox} codeBox={codeBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} sevBadge={sevBadge} claudeKey={claudeKey} setClaudeKey={setClaudeKey} fetchAI={fetchAI} aiLoading={aiLoading} fetchAI_DT={fetchAI_DT} repos={repos}/>}
+          {phase===2&&<DocumentosPhase cfg={cfg} issues={issues} cipData={cipData} docData={docData} docTab={docTab} setDocTab={setDocTab} setVulnF={setVulnF} stats={stats} sonarData={sonarData} genDG={genDG} genDT={genDT} genCK={genCK} genCIP={genCIP} dl1={dl1} dlAll={dlAll} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} TODAY={TODAY} card={card} inp={inp} ta={ta} infoBox={infoBox} warnBox={warnBox} codeBox={codeBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} sevBadge={sevBadge} fetchAI={fetchAI} fetchAI_DT={fetchAI_DT} fetchAI_field={fetchAI_field} aiLoading={aiLoading} claudeMcpStatus={claudeMcpStatus} repos={repos}/>}
 
           {/* ── FASES 3 y 5 ── */}
           {(phase===3||phase===5)&&<GenericPhase phase={phase} cfg={cfg} cipData={cipData} TODAY={TODAY} dlAll={dlAll} completePhase={completePhase} card={card} infoBox={infoBox} btnP={btnP} btnS={btnS}/>}

@@ -215,18 +215,20 @@ function exportAllVulnsDTInOneDocx(stats, docData, cfg, repos, TODAY) {
     }
 
     // Fila de contenido doble: dos celdas de valor (HU izq. | Alineación der.)
-    function tableContentRow(val1, val2) {
-      function cCell(value, width) {
-        return `<w:tc>` +
-          `<w:tcPr><w:tcW w:w="${width}" w:type="dxa"/>` +
-          `<w:shd w:val="clear" w:color="auto" w:fill="${CONT_BG}"/>` +
-          tcMar() + `</w:tcPr>` +
-          cellParas(value) + `</w:tc>`;
-      }
-      return `<w:tr>` + cCell(val1, LABEL_W) + cCell(val2, CONTENT_W) + `</w:tr>`;
+    // Celda blanca con texto negro (usada en todas las filas excepto header)
+    function whiteCell(value, width) {
+      return `<w:tc>` +
+        `<w:tcPr><w:tcW w:w="${width}" w:type="dxa"/>` +
+        `<w:shd w:val="clear" w:color="auto" w:fill="FFFFFF"/>` +
+        tcMar() + `</w:tcPr>` +
+        cellParas(value) + `</w:tc>`;
     }
 
-    // Fila estándar: label (izq. oscuro) | valor (der.)
+    function tableContentRow(val1, val2) {
+      return `<w:tr>` + whiteCell(val1, LABEL_W) + whiteCell(val2, CONTENT_W) + `</w:tr>`;
+    }
+
+    // Fila estándar: label (izq.) | valor (der.) — ambos blanco/negro
     function tableRow(label, value) {
       const labelPara =
         `<w:p><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr>` +
@@ -237,10 +239,10 @@ function exportAllVulnsDTInOneDocx(stats, docData, cfg, repos, TODAY) {
       return (
         `<w:tr>` +
         `<w:tc><w:tcPr><w:tcW w:w="${LABEL_W}" w:type="dxa"/>` +
-        `<w:shd w:val="clear" w:color="auto" w:fill="${HEADER_BG}"/>` +
+        `<w:shd w:val="clear" w:color="auto" w:fill="FFFFFF"/>` +
         tcMar() + `</w:tcPr>` + labelPara + `</w:tc>` +
         `<w:tc><w:tcPr><w:tcW w:w="${CONTENT_W}" w:type="dxa"/>` +
-        `<w:shd w:val="clear" w:color="auto" w:fill="${CONT_BG}"/>` +
+        `<w:shd w:val="clear" w:color="auto" w:fill="FFFFFF"/>` +
         tcMar() + `</w:tcPr>` + cellParas(value) + `</w:tc>` +
         `</w:tr>`
       );
@@ -350,7 +352,7 @@ function exportAllVulnsDTInOneDocx(stats, docData, cfg, repos, TODAY) {
 
 // ── DocumentosPhase ─────────────────────────────────────────────────────────────────
 // Props destructured from App state
-function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, setVulnF, stats, sonarData, genDG, genDT, genCK, genCIP, dl1, dlAll, completePhase, showSources, setShowSources, getSourcesDisplay, TODAY, card, inp, ta, infoBox, warnBox, codeBox, lbl, btnP, btnS, btnG, sevBadge, claudeKey, setClaudeKey, fetchAI, aiLoading, fetchAI_DT, repos }) {
+function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, setVulnF, stats, sonarData, genDG, genDT, genCK, genCIP, dl1, dlAll, completePhase, showSources, setShowSources, getSourcesDisplay, TODAY, card, inp, ta, infoBox, warnBox, codeBox, lbl, btnP, btnS, btnG, sevBadge, fetchAI, fetchAI_DT, fetchAI_field, aiLoading, claudeMcpStatus, repos }) {
   return (
             <div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24,paddingBottom:18,borderBottom:"1px solid #1A2840"}}>
@@ -364,13 +366,6 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
 
               {issues.length===0&&<div style={warnBox}>⚠ Sin datos. Importa el Excel en Fase 0 primero.</div>}
               <div style={infoBox}><strong style={{color:"#00D4FF"}}>Auto-llenado:</strong> Archivos, tipos de vulnerabilidad, repos y estimaciones se extraen directamente de tu Excel.</div>
-
-              {/* Claude API Key — para vulnerabilidades sin KB interna */}
-              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,padding:"10px 14px",background:"#060B14",border:"1px solid #7C3AED30",borderRadius:8}}>
-                <span style={{fontSize:10,color:"#A78BFA",fontFamily:"monospace",whiteSpace:"nowrap"}}>🤖 CLAUDE KEY</span>
-                <input type="password" style={{...inp,flex:1,fontSize:11}} value={claudeKey} onChange={e=>setClaudeKey(e.target.value)} placeholder="API Key de Anthropic (para complementar vulnerabilidades sin KB interna)"/>
-                <span style={{fontSize:9,color:"#2A4060",fontFamily:"monospace",whiteSpace:"nowrap"}}>Solo local · no se envía</span>
-              </div>
 
               {/* Tabs */}
               <div style={card({padding:0,overflow:"hidden"})}>
@@ -467,20 +462,32 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                             {/* 4 fields — always pre-loaded */}
                             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                               {[
-                                {key:"impactos",lbl:"Impactos de la Vulnerabilidad"},
-                                {key:"owasp",   lbl:"Impactos Asociados a OWASP"},
-                                {key:"proceso", lbl:"Proceso Actual"},
-                                {key:"solucion",lbl:"Propuesta de Solución",accent:true},
-                              ].map(({key,l2,lbl:fieldLbl,accent})=>(
-                                <div key={key}>
-                                  <label style={{...lbl,color:accent?"#00D4FF":"#3A5070"}}>{fieldLbl}</label>
-                                  <textarea
-                                    style={{...ta,minHeight:130,fontSize:11,borderColor:accent?"#1A3A5C":"#1A2840",color:"#D0DCF0"}}
-                                    value={ov[key]||""}
-                                    onChange={e=>setVulnF(type,key,e.target.value)}
-                                  />
-                                </div>
-                              ))}
+                                {key:"impactos",fieldLbl:"Impactos de la Vulnerabilidad"},
+                                {key:"owasp",   fieldLbl:"Impactos Asociados a OWASP"},
+                                {key:"proceso", fieldLbl:"Proceso Actual"},
+                                {key:"solucion",fieldLbl:"Propuesta de Solución",accent:true},
+                              ].map(({key,fieldLbl,accent})=>{
+                                const fKey=`${type}__${key}`;
+                                const isLoading=!!aiLoading[fKey];
+                                return (
+                                  <div key={key}>
+                                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
+                                      <label style={{...lbl,marginBottom:0,color:accent?"#00D4FF":"#3A5070"}}>{fieldLbl}</label>
+                                      <button
+                                        disabled={isLoading||claudeMcpStatus!=="ok"}
+                                        onClick={()=>fetchAI_field(type,key,count,typeFiles,ov[key]||"")}
+                                        title={claudeMcpStatus!=="ok"?"Claude MCP no conectado":"Consultar IA para este campo"}
+                                        style={{fontSize:9,padding:"2px 8px",border:"1px solid #7C3AED40",borderRadius:4,background:isLoading?"#7C3AED10":"#7C3AED08",color:claudeMcpStatus==="ok"?"#A78BFA":"#3A4060",cursor:claudeMcpStatus==="ok"&&!isLoading?"pointer":"not-allowed",fontFamily:"monospace",whiteSpace:"nowrap",opacity:claudeMcpStatus!=="ok"?0.4:1}}
+                                      >{isLoading?"⟳ IA…":"🤖 IA"}</button>
+                                    </div>
+                                    <textarea
+                                      style={{...ta,minHeight:130,fontSize:11,borderColor:accent?"#1A3A5C":"#1A2840",color:"#D0DCF0"}}
+                                      value={ov[key]||""}
+                                      onChange={e=>setVulnF(type,key,e.target.value)}
+                                    />
+                                  </div>
+                                );
+                              })}
                             </div>
 
                             {/* Files */}

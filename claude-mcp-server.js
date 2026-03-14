@@ -153,6 +153,41 @@ function buildEnhancePrompt(data) {
   return `Eres un experto en seguridad de aplicaciones (DevSecOps). Para la vulnerabilidad "${type}" detectada en el proyecto "${projectName}" (${count} issue(s) en ${fileCount} archivo(s)), genera contenido técnico profesional en español para un documento de Diseño General de Seguridad.\n\nResponde ÚNICAMENTE con un JSON válido con estas 4 claves (sin markdown, sin explicaciones):\n{\n  "impactos": "descripción de impactos con bullets •",\n  "owasp": "clasificación OWASP Top 10 2021 y detalles de cumplimiento",\n  "proceso": "descripción del proceso actual y deficiencias identificadas",\n  "solucion": "pasos numerados de remediación específicos"\n}`;
 }
 
+/** Prompt específico por campo del Diseño General */
+function buildFieldPrompt(data) {
+  const { type, count, fileCount, projectName, field, currentValue } = data;
+  const context = `Vulnerabilidad: "${type}" | Proyecto: "${projectName}" | Issues detectados: ${count} | Archivos afectados: ${fileCount}`;
+  const current = currentValue ? `\n\nContenido actual (mejora o complementa si es útil):\n${currentValue}` : "";
+
+  const prompts = {
+    impactos: `Eres un experto AppSec/DevSecOps. ${context}${current}
+
+Escribe el apartado "Impactos de la Vulnerabilidad" para un Diseño General de Seguridad empresarial en español.
+Incluye: consecuencias técnicas (confidencialidad, integridad, disponibilidad), impacto en el negocio, riesgos de datos y cumplimiento normativo.
+Formato: bullets con •, máximo 6 puntos concretos y profesionales. Solo el contenido, sin título ni introducción.`,
+
+    owasp: `Eres un experto AppSec/DevSecOps. ${context}${current}
+
+Escribe el apartado "Impactos Asociados a OWASP" para un Diseño General de Seguridad empresarial en español.
+Incluye: categoría OWASP Top 10 2021 aplicable (con ID ej. A03:2021), descripción del riesgo según OWASP, cómo se manifiesta en este tipo de aplicación, y referencias a controles CWE/CVSS si aplica.
+Formato: bullets con •, preciso y técnico. Solo el contenido, sin título ni introducción.`,
+
+    proceso: `Eres un experto AppSec/DevSecOps. ${context}${current}
+
+Escribe el apartado "Proceso Actual" para un Diseño General de Seguridad empresarial en español.
+Describe el estado actual del código/proceso que introduce esta vulnerabilidad: qué hace el sistema actualmente, qué prácticas inseguras existen, qué controles faltan, y cuáles son los puntos de entrada explotables.
+Formato: bullets con •, orientado al diagnóstico técnico. Solo el contenido, sin título ni introducción.`,
+
+    solucion: `Eres un experto AppSec/DevSecOps. ${context}${current}
+
+Escribe el apartado "Propuesta de Solución" para un Diseño General de Seguridad empresarial en español.
+Incluye: pasos numerados de remediación específicos al tipo de vulnerabilidad, librerías/frameworks/patrones de código recomendados, configuraciones de seguridad necesarias, y criterios de validación para confirmar la corrección.
+Formato: pasos numerados (1. 2. 3.), técnico y accionable. Solo el contenido, sin título ni introducción.`,
+  };
+
+  return prompts[field] || prompts["impactos"];
+}
+
 // ── HTTP HELPERS ─────────────────────────────────────────────────────────────
 const CORS = {
   "Access-Control-Allow-Origin":  "*",
@@ -228,6 +263,25 @@ const server = http.createServer(async (req, res) => {
     try {
       const text = await askClaude(prompt, cfg.model, cfg.timeoutMs);
       console.log(`  ✓ Contenido generado (${text.length} chars)`);
+      return jsonRes(res, 200, { ok: true, text });
+    } catch (err) {
+      console.error("  ✗ Error:", err.message);
+      return jsonRes(res, 500, { ok: false, error: err.message });
+    }
+  }
+
+  // ── POST /api/enhance-field ─────────────────────────────────────────────────
+  if (req.method === "POST" && pathname === "/api/enhance-field") {
+    let body;
+    try { body = await readBody(req); }
+    catch (e) { return jsonRes(res, 400, { ok: false, error: e.message }); }
+
+    const prompt = buildFieldPrompt(body);
+    console.log(`  → /api/enhance-field | tipo: ${body.type || "N/A"} | campo: ${body.field || "N/A"}`);
+
+    try {
+      const text = await askClaude(prompt, cfg.model, cfg.timeoutMs);
+      console.log(`  ✓ Campo generado (${text.length} chars)`);
       return jsonRes(res, 200, { ok: true, text });
     } catch (err) {
       console.error("  ✗ Error:", err.message);
