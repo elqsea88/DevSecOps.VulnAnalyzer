@@ -178,7 +178,7 @@ function exportAllVulnsDTInOneDocx(stats, docData, cfg, repos, TODAY) {
     const LABEL_W   = "2700";
     const CONTENT_W = "6300";
     const HEADER_BG = "0A1828";
-    const CONT_BG   = "060B14";
+    const CONT_BG   = "FFFFFF";
 
     function tcMar() {
       return `<w:tcMar>` +
@@ -193,7 +193,7 @@ function exportAllVulnsDTInOneDocx(stats, docData, cfg, repos, TODAY) {
       if (lines.every(l => !l.trim())) return `<w:p><w:pPr><w:spacing w:before="0" w:after="60"/></w:pPr></w:p>`;
       return lines.map(line =>
         `<w:p><w:pPr><w:spacing w:before="0" w:after="60"/></w:pPr>` +
-        `<w:r><w:rPr><w:color w:val="C8D8EC"/><w:sz w:val="20"/><w:szCs w:val="20"/>` +
+        `<w:r><w:rPr><w:color w:val="000000"/><w:sz w:val="20"/><w:szCs w:val="20"/>` +
         `<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>` +
         `<w:t xml:space="preserve">${_escXml(line)}</w:t></w:r></w:p>`
       ).join("");
@@ -231,7 +231,7 @@ function exportAllVulnsDTInOneDocx(stats, docData, cfg, repos, TODAY) {
       const labelPara =
         `<w:p><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr>` +
         `<w:r><w:rPr><w:b/><w:sz w:val="20"/><w:szCs w:val="20"/>` +
-        `<w:color w:val="8AACCC"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>` +
+        `<w:color w:val="000000"/><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/></w:rPr>` +
         `<w:t xml:space="preserve">${_escXml(label)}</w:t></w:r></w:p>`;
 
       return (

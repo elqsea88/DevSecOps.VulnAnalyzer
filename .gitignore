@@ -2,6 +2,9 @@
 sonar-mcp.config.json
 jenkins-mcp.config.json
 
+# Build output
+dist/DevSecOps_VulnAnalyzer.html
+
 # Node
 node_modules/
 
