@@ -3,5 +3,6 @@
   "port":           3749,
   "timeoutMs":      90000,
   "repositoryPath": "",
-  "contextLines":   30
+  "contextLines":   30,
+  "gitToken":       ""
 }
