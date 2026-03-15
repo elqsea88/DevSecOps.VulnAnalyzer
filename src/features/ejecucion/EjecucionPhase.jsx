@@ -68,38 +68,84 @@ function EjecucionPhase({
   );
 
   // ── Parse PDF context around a found GUID ─────────────────────────────────
+  // Optimizado para el formato de tabla del reporte:
+  //   Location  ACE.BasicBook.UI/Scripts/Configuracion.js:27
+  //   Line  27
+  //   Source File  ACE.BasicBook.UI/Scripts/Configuracion.js
+  //   CWE:  79    Repository URL:  https://...
+  //   Call  <snippet de código>
   const parsePdfContext = (ctx, issue) => {
     const ex = (patterns) => {
       for (const p of patterns) {
         const m = ctx.match(p);
-        if (m && m[1]) return m[1].trim().substring(0, 300);
+        if (m && m[1]) return m[1].trim().replace(/\s+/g, " ").substring(0, 400);
       }
       return null;
     };
+
+    // Extraer línea — primero desde "Line  27" (campo explícito), luego desde "Location path:N"
+    const lineFromField = ex([
+      /\bLine\b\s+(\d+)/i,
+    ]);
+    const lineFromLocation = ex([
+      /\bLocation\b\s+[^\s:]+:(\d+)/i,
+    ]);
+    const lineVal = lineFromField || lineFromLocation;
+
+    // Extraer ruta — "Source File  path" tiene prioridad (sin número de línea),
+    // luego "Location path:N" (quitando el :N del final)
+    const fileFromSource = ex([
+      /Source\s+File\s+([\w.][^\s\t\r\n]{4,300})/i,
+    ]);
+    const fileFromLocation = (() => {
+      const m = ctx.match(/\bLocation\b\s+([\w.][^\s\t\r\n]{4,300})/i);
+      if (!m) return null;
+      // Quitar el :línea del final si existe
+      return m[1].replace(/:\d+$/, "").trim();
+    })();
+
     return {
-      file: ex([
-        /(?:File|Archivo|Path|Ruta|Location|Source)\s*[:\-]\s*([^\n\r]{4,200})/i,
-        /(?:file|path)\s*=\s*"?([^"\n]{4,200})"?/i,
-      ]) || issue.filePath,
-      line: ex([
-        /(?:Line|Línea|Linea|línea|Row)\s*[:\-]?\s*(\d+)/i,
-        /\bline\b\s+(\d+)/i,
+      file: fileFromSource || fileFromLocation || issue.filePath,
+      line: lineVal,
+      cwe: ex([
+        /\bCWE\s*[:\-]\s*(\d+)/i,
+      ]),
+      repositoryUrl: ex([
+        /Repository\s+URL\s*[:\-]\s*(\S+)/i,
+        /https?:\/\/[^\s]+\/blob\/[^\s]+/,
       ]),
       severity: ex([
-        /(?:Severity|Severidad|Priority|Prioridad|Risk)\s*[:\-]\s*(\w+)/i,
-        /\b(Critical|Critica|Crítica|High|Alta|Medium|Media|Low|Baja)\b/i,
+        /\bSeverity\s*[:\-]\s*(\w+)/i,
+        /\b(Critical|High|Medium|Low)\b/i,
       ]) || issue.severity,
       vulnType: ex([
-        /(?:Issue Type|Vulnerability Type|Type|Tipo|Category|Categoría)\s*[:\-]\s*([^\n\r]{4,150})/i,
+        /(?:Issue\s+Type|Vulnerability\s+Type|Category)\s*[:\-]\s*([^\n\r]{4,150})/i,
         /(?:Vulnerability|Vulnerabilidad)\s*[:\-]\s*([^\n\r]{4,150})/i,
       ]) || issue.issueType,
+      // Snippet de código: viene después de "Call" en la sección Details
+      codeSnippet: ex([
+        /\bCall\b\s+([^\n\r]{4,500})/i,
+        /\bDetails?\b[\s\S]{0,80}Call\s+([^\n\r]{4,500})/i,
+      ]),
       description: ex([
-        /(?:Description|Descripción|Descripcion|Summary|Resumen|Detail)\s*[:\-]\s*([^\n\r]{4,300})/i,
-        /(?:Abstract|Overview)\s*[:\-]\s*([^\n\r]{4,300})/i,
+        /(?:Description|Summary|Abstract|Overview)\s*[:\-]\s*([^\n\r]{4,300})/i,
       ]) || issue.description,
       fix: ex([
-        /(?:Recommendation|Recomendación|Fix|Solution|Solución|Mitigation|Remediation)\s*[:\-]\s*([^\n\r]{4,300})/i,
-        /(?:How to Fix|Cómo corregir|Corrección)\s*[:\-]\s*([^\n\r]{4,300})/i,
+        /(?:Recommendation|Fix|Solution|Mitigation|Remediation)\s*[:\-]\s*([^\n\r]{4,300})/i,
+        /(?:How to Fix|Corrección)\s*[:\-]\s*([^\n\r]{4,300})/i,
+      ]),
+      status: ex([
+        /\bStatus\b\s*[:\-]?\s*(\w[\w\s\-]{1,50}?)(?:\s{2,}|\n)/i,
+      ]) || issue.status,
+      fixGroupId: ex([
+        /Fix\s+Group\s+(?:ID\s*)?[:\-]?\s*(\S+)/i,
+      ]),
+      dateCreated: ex([
+        /Date\s+Created\s*[:\-]?\s*([\d\/\-: ]{6,30})/i,
+      ]),
+      lastUpdated: ex([
+        /Last\s+Updated\s*[:\-]?\s*([\d\/\-: ]{6,30})/i,
+        /Updated\s*[:\-]?\s*([\d\/\-: ]{6,30})/i,
       ]),
     };
   };
@@ -272,16 +318,22 @@ function EjecucionPhase({
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({
-          issueId:     issue.id,
-          vulnType:    m.vulnType    || issue.issueType,
-          severity:    m.severity   || issue.severity,
-          file:        fp,
-          line:        m.line,
-          method:      issue.method,
-          description: m.description || issue.description,
-          fix:         m.fix,
-          codeSnippet: snippet,
-          projectName: cfg.projectName,
+          issueId:       issue.id,
+          vulnType:      m.vulnType    || issue.issueType,
+          severity:      m.severity    || issue.severity,
+          status:        m.status      || issue.status,
+          fixGroupId:    m.fixGroupId,
+          file:          fp,
+          line:          m.line,
+          dateCreated:   m.dateCreated,
+          lastUpdated:   m.lastUpdated,
+          method:        issue.method,
+          description:   m.description || issue.description,
+          fix:           m.fix,
+          codeSnippet:   snippet,
+          cwe:           m.cwe,
+          repositoryUrl: m.repositoryUrl,
+          projectName:   cfg.projectName,
         }),
       });
       const data = await res.json();

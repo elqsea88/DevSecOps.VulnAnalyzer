@@ -1,7 +1,7 @@
 // ── APP COMPONENT ───────────────────────────────────────────────────────────
 // Assembles all phases. State, handlers, and generators defined inline.
 
-const { useState, useCallback, useMemo, useRef } = React;
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
 function App(){
   const [phase,setPhase]   = useState(0);
@@ -88,8 +88,7 @@ function App(){
       const d = await r.json();
       setClaudeMcpStatus(d.status==="ok"?"ok":"error");
       if (d.status==="ok") {
-        if (!d.hasKey) showToast("Claude MCP conectado pero sin API key — edita claude-mcp.config.json","warn");
-        else showToast(`Claude MCP conectado ✓ (${d.model})`);
+        showToast(`Claude MCP conectado ✓ (${d.authMethod||"cli"} · ${d.model})`);
       } else showToast("Claude MCP respondió con error","warn");
     } catch {
       setClaudeMcpStatus("error");
@@ -182,19 +181,29 @@ function App(){
   };
 
   const fetchAI_field = async (type, field, count, typeFiles, currentValue) => {
-    if (claudeMcpStatus !== "ok") { showToast("Claude MCP no conectado — inicia el servidor primero","warn"); return; }
+    console.log(`[fetchAI_field] llamado → type="${type}" field="${field}" mcpStatus="${claudeMcpStatus}" mcpUrl="${claudeMcpUrl}"`);
+    if (claudeMcpStatus !== "ok") {
+      console.warn("[fetchAI_field] MCP no conectado, status:", claudeMcpStatus);
+      showToast("Claude MCP no conectado — inicia el servidor primero","warn");
+      return;
+    }
     const key = `${type}__${field}`;
     setAiLoading(p=>({...p,[key]:true}));
     try {
+      const payload = { type, field, count, fileCount: typeFiles.length, projectName: cfg.projectName, currentValue };
+      console.log("[fetchAI_field] POST /api/enhance-field →", payload);
       const res = await fetch(`${claudeMcpUrl}/api/enhance-field`, {
         method: "POST", headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ type, field, count, fileCount: typeFiles.length, projectName: cfg.projectName, currentValue }),
+        body: JSON.stringify(payload),
       });
+      console.log("[fetchAI_field] HTTP status:", res.status);
       const data = await res.json();
+      console.log("[fetchAI_field] respuesta:", data);
       if (!data.ok) throw new Error(data.error || `HTTP ${res.status}`);
       setDocData(p=>({...p, vulnOv:{...p.vulnOv, [type]:{...(p.vulnOv[type]||{}), [field]: data.text}}}));
       showToast(`IA: "${field}" generado ✓`);
     } catch(err) {
+      console.error("[fetchAI_field] error:", err);
       showToast("Error IA: "+err.message,"warn");
     } finally {
       setAiLoading(p=>({...p,[key]:false}));
@@ -205,6 +214,9 @@ function App(){
   const [docData,setDocData]= useState({appDesc:"",vulnOv:{},patron:"",clases:"",deps:""});
   const [toast,setToast]   = useState(null);
   const [showSources,setShowSources] = useState({});
+  // Auto-check Claude MCP on mount
+  useEffect(() => { checkClaudeMcpStatus(); }, []);
+
   const fileRef            = useRef();
 
   const setVulnF = (t,f,v) => setDocData(p=>({...p,vulnOv:{...p.vulnOv,[t]:{...(p.vulnOv[t]||{}),[f]:v}}}));
@@ -517,144 +529,7 @@ function App(){
   },[issues]);
 
 
-  // ── GENERATORS (see src/generators/generators.js) ──────────────────────
-  // ── DOC GENERATORS ──────────────────────────────────────────────────────────
-  const genDG = ()=>{
-    const repoInfo=Object.values(repos).map(r=>`  • ${r.name}: ${r.method==="pipeline"?"Pipeline CI/CD":r.method==="manual"?"Manual":"Pendiente"} | Deuda: ${r.debtDays?r.debtDays+"d":"N/D"} | QG: ${r.sonarQG||"N/D"}`).join("\n")||"  • "+cfg.projectName+" — Pendiente de análisis (ejecutar Fase 1)";
-    const uniqueTypes=[...new Set(issues.map(i=>i.issueType).filter(Boolean))];
-    const modules=[...new Set(issues.map(i=>i.filePath?.split("/")[3]).filter(Boolean))];
-
-    const vulnSections=uniqueTypes.map((type,idx)=>{
-      const kb=getKB(type), ov=docData.vulnOv[type]||{};
-      const ti=issues.filter(i=>i.issueType===type);
-      const tf=[...new Set(ti.map(i=>i.filePath).filter(Boolean))];
-      const sol=(ov.solucion||kb.solucion).replace(/\$\{0\}/g,tf.length);
-      return `
-${"═".repeat(66)}
-VULNERABILIDAD ${idx+1}: ${kb.label.toUpperCase()}
-${"═".repeat(66)}
-  Tipo detección  : ${ti[0]?.method?.toUpperCase()||"SAST"}
-  Issues          : ${ti.length}
-  Archivos únicos : ${tf.length}
-  Severidad       : ${SEV[ti[0]?.severity]?.label||ti[0]?.severity||"Alta"}
-  Horas est.      : ${ti.reduce((a,b)=>a+(parseFloat(b.hrs)||0),0).toFixed(1)} hrs
-
-┌─ IMPACTOS DE LA VULNERABILIDAD ────────────────────────────────────────────
-${(ov.impactos||kb.impactos).split("\n").map(l=>"│ "+l).join("\n")}
-└────────────────────────────────────────────────────────────────────────────
-
-┌─ IMPACTOS ASOCIADOS A OWASP ───────────────────────────────────────────────
-${(ov.owasp||kb.owasp).split("\n").map(l=>"│ "+l).join("\n")}
-└────────────────────────────────────────────────────────────────────────────
-
-┌─ PROCESO ACTUAL ────────────────────────────────────────────────────────────
-${(ov.proceso||kb.proceso).split("\n").map(l=>"│ "+l).join("\n")}
-└────────────────────────────────────────────────────────────────────────────
-
-┌─ PROPUESTA DE SOLUCIÓN ────────────────────────────────────────────────────
-${sol.split("\n").map(l=>"│ "+l).join("\n")}
-└────────────────────────────────────────────────────────────────────────────`;
-    }).join("\n");
-
-    return `╔═══════════════════════════════════════════════════════════════════╗
-║         DISEÑO GENERAL — CORRECCIÓN DE VULNERABILIDADES           ║
-╚═══════════════════════════════════════════════════════════════════╝
-
-INFORMACIÓN DEL PROYECTO
-  Proyecto     : ${cfg.projectName}
-  Ticket       : ${cfg.ticket}
-  Responsable  : ${cfg.responsable||"[Pendiente]"}
-  Fecha        : ${TODAY_D}
-  Release      : ${issues[0]?.release||"R17"}
-  Total Issues : ${stats.total}  (Alta/Crítica: ${stats.high} | Media: ${stats.medium} | Baja: ${stats.low})
-  Esfuerzo Est.: ${stats.hrs} hrs
-  Tipos vuln.  : ${uniqueTypes.length}
-
-REPOSITORIOS IMPACTADOS
-${repoInfo}
-
-${"═".repeat(66)}
-DISEÑO DE LA APLICACIÓN
-${"═".repeat(66)}
-${docData.appDesc||`  ${cfg.projectName} es una aplicación web ASP.NET MVC que gestiona el proceso de
-  emisión de pólizas de seguros: Suscriptor, Propuesta, Producto, Emisión, Cobranza y Riesgo.
-
-  Stack tecnológico:
-  • Frontend : JavaScript / jQuery / select2 / jsoneditor
-  • Backend  : ASP.NET MVC (.NET Framework)
-  • Paquetes : NuGet (packages.config)
-  • CI/CD    : ${Object.values(repos)[0]?.method==="pipeline"?"Jenkins Pipeline (Jenkinsfile detectado)":"Despliegue manual / Pendiente verificación"}
-  • SCM      : Git — ${cfg.gitBase}${cfg.projectName}
-
-  Módulos con vulnerabilidades detectadas:
-  ${modules.map(m=>"  • "+m).join("\n  ")}`}
-${vulnSections}
-
-${"═".repeat(66)}
-CRITERIOS DE ACEPTACIÓN
-${"═".repeat(66)}
-  • Quality Gate SonarQube: ${Object.values(sonarData)[0]?.qg||"[Pendiente — completar en Fase 1]"} | Security: ${Object.values(sonarData)[0]?.secIssues||"?"} issues (${Object.values(sonarData)[0]?.secRating||"?"}) | Hotspots: ${Object.values(sonarData)[0]?.hotspots||"?"} (${Object.values(sonarData)[0]?.hotspotsStatus||"?"})
-  • Pruebas de regresión aprobadas en todos los módulos afectados
-  • Revisión de código aprobada por Tech Lead
-  • Re-escaneo DAST/SAST confirma remediación del ticket ${cfg.ticket}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-APROBACIONES
-  Elaborado  : ${cfg.responsable||"___________________________"}
-  Revisado   : ___________________________
-  Aprobado   : ___________________________
-  Fecha VO   : ___________________________
-`;
-  };
-
-  const genDT = ()=>{
-    const uniqueTypes=[...new Set(issues.map(i=>i.issueType).filter(Boolean))];
-    const header=`╔═══════════════════════════════════════════════════════════════════╗
-║         DISEÑO TÉCNICO — HISTORIAS DE USUARIO DE SEGURIDAD        ║
-╚═══════════════════════════════════════════════════════════════════╝
-
-INFORMACIÓN
-  Proyecto : ${cfg.projectName}
-  Ticket   : ${cfg.ticket}
-  Fecha    : ${TODAY_D}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-`;
-    const repoUrls=Object.keys(repos).map(r=>`  ${cfg.gitBase.replace(/\/$/,"")}/${r}`).join("\n")||"  [Sin repositorios]";
-    const sections=uniqueTypes.map((type,idx)=>{
-      const ov=docData.vulnOv[type]||{};
-      const kb=getKB(type);
-      return `HU ${idx+1}: ${kb.label!==type?kb.label:type}
-${"─".repeat(66)}
-Historia de Usuario : ${ov.hu||"[Ingresar IDs de HU]"}
-Alineación          : ${ov.alineacion||"Chubb"}
-
-Proceso Actual      :
-${(ov.proceso||"[Pendiente]").split("\n").map(l=>"  "+l).join("\n")}
-
-Situación Esperada  :
-${(ov.situacionEsperada||"[Pendiente]").split("\n").map(l=>"  "+l).join("\n")}
-
-Regla de Negocio    :
-${(ov.reglaNegocio||"[Pendiente]").split("\n").map(l=>"  "+l).join("\n")}
-
-Dependencias        :
-${(ov.depsTecnicas||"[Pendiente]").split("\n").map(l=>"  "+l).join("\n")}
-
-Propuesta General   :
-${(ov.propuestaGeneral||"[Pendiente]").split("\n").map(l=>"  "+l).join("\n")}
-
-Propuesta de Solución:
-${(ov.solucion||"[Pendiente]").split("\n").map(l=>"  "+l).join("\n")}
-
-Repositorios:
-${repoUrls}
-`;
-    }).join("\n"+"═".repeat(66)+"\n\n");
-
-    return header + (sections||"[Importa el Excel para generar las Historias de Usuario]");
-  };
-
+  // ── DOC GENERATORS ────────────────────────────────────────────────────────
   const genCK = ()=>{
     const rows=[
       ["SEC-001","Reporte recibido y registrado en ticket","Análisis","Obligatorio"],
@@ -706,14 +581,16 @@ ${repoUrls}
 
   const dlFile=(name,content)=>{ const b=new Blob([content],{type:"text/plain;charset=utf-8"}); const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=name; a.click(); };
   const dlAll=()=>{
-    dlFile(`DISEÑO_GENERAL_${cfg.projectName}_${TODAY}.txt`,genDG());
-    setTimeout(()=>dlFile(`DISEÑO_TECNICO_${cfg.projectName}_${TODAY}.txt`,genDT()),300);
-    setTimeout(()=>dlFile(`CHECKLIST_CUMPLIMIENTO_${cfg.projectName}_${TODAY}.csv`,genCK()),600);
-    setTimeout(()=>dlFile(`CIP_${cfg.projectName}_${TODAY}.csv`,genCIP()),900);
-    showToast("4 documentos descargados ✓"); setDone(p=>new Set([...p,2]));
+    // Word: DG + DT
+    exportAllVulnsInOneDocx(stats, docData, cfg, TODAY);
+    setTimeout(()=>exportAllVulnsDTInOneDocx(stats, docData, cfg, repos, TODAY), 400);
+    // CSV: Checklist + CIP
+    setTimeout(()=>dlFile(`CHECKLIST_CUMPLIMIENTO_${cfg.projectName}_${TODAY}.csv`,genCK()), 800);
+    setTimeout(()=>dlFile(`CIP_${cfg.projectName}_${TODAY}.csv`,genCIP()), 1200);
+    showToast("Documentos descargados ✓ (2 Word + 2 CSV)"); setDone(p=>new Set([...p,2]));
   };
   const dl1=(t)=>{
-    const m={dg:{n:`DISEÑO_GENERAL_${cfg.projectName}_${TODAY}.txt`,f:genDG},dt:{n:`DISEÑO_TECNICO_${cfg.projectName}_${TODAY}.txt`,f:genDT},ck:{n:`CHECKLIST_CUMPLIMIENTO_${cfg.projectName}_${TODAY}.csv`,f:genCK},cip:{n:`CIP_${cfg.projectName}_${TODAY}.csv`,f:genCIP}};
+    const m={ck:{n:`CHECKLIST_CUMPLIMIENTO_${cfg.projectName}_${TODAY}.csv`,f:genCK},cip:{n:`CIP_${cfg.projectName}_${TODAY}.csv`,f:genCIP}};
     dlFile(m[t].n,m[t].f()); showToast(m[t].n+" descargado");
   };
 
@@ -767,7 +644,7 @@ ${repoUrls}
           {phase===1&&<DiagnosticoPhase cfg={cfg} issues={issues} repos={repos} stats={stats} sonarData={sonarData} setSonarF={setSonarF} setRepoF={setRepoF} fetchSonar={fetchSonar} mcpUrl={mcpUrl} setMcpUrl={setMcpUrl} mcpStatus={mcpStatus} checkMcpStatus={checkMcpStatus} jenkinsMcpUrl={jenkinsMcpUrl} setJenkinsMcpUrl={setJenkinsMcpUrl} jenkinsMcpStatus={jenkinsMcpStatus} checkJenkinsMcpStatus={checkJenkinsMcpStatus} getSonarUrl={getSonarUrl} checkRepo={checkRepo} checkAll={checkAll} exportPipelineDashboard={exportPipelineDashboard} loadDashboardExcel={loadDashboardExcel} dashboardWbName={dashboardWbName} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} card={card} inp={inp} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} btnA={btnA} dot={dot} methBadge={methBadge} sevBadge={sevBadge}/>}
 
           {/* ── FASE 2: DOCUMENTOS ── */}
-          {phase===2&&<DocumentosPhase cfg={cfg} issues={issues} cipData={cipData} docData={docData} docTab={docTab} setDocTab={setDocTab} setVulnF={setVulnF} stats={stats} sonarData={sonarData} genDG={genDG} genDT={genDT} genCK={genCK} genCIP={genCIP} dl1={dl1} dlAll={dlAll} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} TODAY={TODAY} card={card} inp={inp} ta={ta} infoBox={infoBox} warnBox={warnBox} codeBox={codeBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} sevBadge={sevBadge} fetchAI={fetchAI} fetchAI_DT={fetchAI_DT} fetchAI_field={fetchAI_field} aiLoading={aiLoading} claudeMcpStatus={claudeMcpStatus} repos={repos}/>}
+          {phase===2&&<DocumentosPhase cfg={cfg} issues={issues} cipData={cipData} docData={docData} docTab={docTab} setDocTab={setDocTab} setVulnF={setVulnF} stats={stats} sonarData={sonarData} dl1={dl1} dlAll={dlAll} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} TODAY={TODAY} card={card} inp={inp} ta={ta} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnS={btnS} btnG={btnG} sevBadge={sevBadge} fetchAI={fetchAI} fetchAI_DT={fetchAI_DT} fetchAI_field={fetchAI_field} aiLoading={aiLoading} claudeMcpStatus={claudeMcpStatus} repos={repos}/>}
 
           {/* ── FASES 3 y 5 ── */}
           {(phase===3||phase===5)&&<GenericPhase phase={phase} cfg={cfg} cipData={cipData} TODAY={TODAY} dlAll={dlAll} completePhase={completePhase} card={card} infoBox={infoBox} btnP={btnP} btnS={btnS}/>}

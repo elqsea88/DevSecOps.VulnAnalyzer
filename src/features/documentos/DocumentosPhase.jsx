@@ -352,7 +352,7 @@ function exportAllVulnsDTInOneDocx(stats, docData, cfg, repos, TODAY) {
 
 // ── DocumentosPhase ─────────────────────────────────────────────────────────────────
 // Props destructured from App state
-function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, setVulnF, stats, sonarData, genDG, genDT, genCK, genCIP, dl1, dlAll, completePhase, showSources, setShowSources, getSourcesDisplay, TODAY, card, inp, ta, infoBox, warnBox, codeBox, lbl, btnP, btnS, btnG, sevBadge, fetchAI, fetchAI_DT, fetchAI_field, aiLoading, claudeMcpStatus, repos }) {
+function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, setVulnF, stats, sonarData, dl1, dlAll, showSources, setShowSources, getSourcesDisplay, TODAY, card, inp, ta, infoBox, warnBox, lbl, btnS, btnG, sevBadge, fetchAI, fetchAI_DT, fetchAI_field, aiLoading, claudeMcpStatus, repos }) {
   return (
             <div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24,paddingBottom:18,borderBottom:"1px solid #1A2840"}}>
@@ -380,7 +380,6 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                   {docTab===0&&(
                     <div>
                       <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
-                        <button style={btnG} onClick={()=>dl1("dg")}>⬇ Exportar TXT</button>
                         <button
                           style={{...btnG, color:"#00D4FF", borderColor:"#1A3A5C"}}
                           onClick={()=>exportAllVulnsInOneDocx(stats, docData, cfg, TODAY)}
@@ -475,7 +474,7 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                                       <label style={{...lbl,marginBottom:0,color:accent?"#00D4FF":"#3A5070"}}>{fieldLbl}</label>
                                       <button
                                         disabled={isLoading||claudeMcpStatus!=="ok"}
-                                        onClick={()=>fetchAI_field(type,key,count,typeFiles,ov[key]||"")}
+                                        onClick={()=>{ console.log(`[DG btn] click type="${type}" field="${key}" mcpStatus="${claudeMcpStatus}"`); fetchAI_field(type,key,count,typeFiles,ov[key]||""); }}
                                         title={claudeMcpStatus!=="ok"?"Claude MCP no conectado":"Consultar IA para este campo"}
                                         style={{fontSize:9,padding:"2px 8px",border:"1px solid #7C3AED40",borderRadius:4,background:isLoading?"#7C3AED10":"#7C3AED08",color:claudeMcpStatus==="ok"?"#A78BFA":"#3A4060",cursor:claudeMcpStatus==="ok"&&!isLoading?"pointer":"not-allowed",fontFamily:"monospace",whiteSpace:"nowrap",opacity:claudeMcpStatus!=="ok"?0.4:1}}
                                       >{isLoading?"⟳ IA…":"🤖 IA"}</button>
@@ -504,10 +503,6 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                         );
                       })}
 
-                      <div style={{marginTop:16}}>
-                        <div style={{fontSize:10,color:"#3A5070",fontFamily:"monospace",marginBottom:6,letterSpacing:1}}>VISTA PREVIA DEL DOCUMENTO</div>
-                        <div style={codeBox}>{genDG()}</div>
-                      </div>
                     </div>
                   )}
 
@@ -515,7 +510,6 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                   {docTab===1&&(
                     <div>
                       <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
-                        <button style={btnG} onClick={()=>dl1("dt")}>⬇ Exportar TXT</button>
                         <button
                           style={{...btnG, color:"#00D4FF", borderColor:"#1A3A5C"}}
                           onClick={()=>exportAllVulnsDTInOneDocx(stats, docData, cfg, repos, TODAY)}
@@ -610,10 +604,6 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                           </div>
                         );
                       })}
-                      <div style={{marginTop:16}}>
-                        <div style={{fontSize:10,color:"#3A5070",fontFamily:"monospace",marginBottom:6}}>VISTA PREVIA DEL DOCUMENTO</div>
-                        <div style={codeBox}>{genDT()}</div>
-                      </div>
                     </div>
                   )}
 
