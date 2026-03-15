@@ -140,8 +140,8 @@ const [cfg, setCfg] = useState({
   jenkinsBase:    "https://jenkins.chubbdigital.com/job/",
   gitBase:        "https://nausp-aapp0001.aceins.com/mexico-it-chubbnet/",
   sonarBase:      "https://sonar.chubb.com",
-  sonarProjectKey:"NAGH-APM0001304-mexico-it-chubbnet-ACE.BasicBook",
-  projectName:    "ACE.BasicBook",
+  sonarProjectKey:"NAGH-APM0001304-mexico-it-chubbnet-",
+  projectName:    "E001VulnerabilityRemediationReg",
   ...
 });
 ```

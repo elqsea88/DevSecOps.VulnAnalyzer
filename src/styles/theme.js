@@ -2,8 +2,8 @@
 // Usage: import via build concatenation — these are plain JS objects / fns
 
 const card = (extra = {}) => ({
-  background:    "#0A1020",
-  border:        "1px solid #1A2840",
+  background:    "var(--bg-panel)",
+  border:        "1px solid var(--border)",
   borderRadius:  10,
   padding:       "18px 20px",
   marginBottom:  14,
@@ -12,10 +12,10 @@ const card = (extra = {}) => ({
 
 const inp = {
   width:         "100%",
-  background:    "#0F1E35",
-  border:        "1px solid #1A2840",
+  background:    "var(--bg-card)",
+  border:        "1px solid var(--border)",
   borderRadius:  6,
-  color:         "#D0DCF0",
+  color:         "var(--text-primary)",
   fontSize:      12,
   padding:       "8px 10px",
   boxSizing:     "border-box",
@@ -34,7 +34,7 @@ const btnP = {
   alignItems:    "center",
   gap:           6,
   padding:       "8px 16px",
-  background:    "#00D4FF",
+  background:    "var(--accent)",
   color:         "#000",
   border:        "none",
   borderRadius:  6,
@@ -43,14 +43,14 @@ const btnP = {
   cursor:        "pointer",
 };
 
-const btnS = { ...btnP, background: "#00E676" };
-const btnG = { ...btnP, background: "transparent", color: "#4A6080", border: "1px solid #1A2840" };
-const btnA = { ...btnP, background: "#FFB800" };
+const btnS = { ...btnP, background: "var(--success)" };
+const btnG = { ...btnP, background: "transparent", color: "var(--text-secondary)", border: "1px solid var(--border)" };
+const btnA = { ...btnP, background: "var(--warning)" };
 
 const lbl = {
   display:       "block",
   fontSize:      10,
-  color:         "#3A5070",
+  color:         "var(--text-muted)",
   letterSpacing: 1.5,
   marginBottom:  5,
   textTransform: "uppercase",
@@ -98,35 +98,35 @@ const dot = s => ({
 });
 
 const infoBox = {
-  background:    "#00D4FF12",
-  borderLeft:    "3px solid #00D4FF",
+  background:    "var(--bg-input)",
+  borderLeft:    "3px solid var(--accent)",
   padding:       "10px 14px",
   borderRadius:  "0 7px 7px 0",
   fontSize:      12,
-  color:         "#8AACCC",
+  color:         "var(--text-muted)",
   marginBottom:  14,
   lineHeight:    1.6,
 };
 
 const warnBox = {
-  background:    "#FFB80012",
-  borderLeft:    "3px solid #FFB800",
+  background:    "var(--bg-input)",
+  borderLeft:    "3px solid var(--warning)",
   padding:       "10px 14px",
   borderRadius:  "0 7px 7px 0",
   fontSize:      12,
-  color:         "#CCAC88",
+  color:         "var(--text-secondary)",
   marginBottom:  14,
   lineHeight:    1.6,
 };
 
 const codeBox = {
-  background:    "#030810",
-  border:        "1px solid #1A2840",
+  background:    "var(--bg-input)",
+  border:        "1px solid var(--border)",
   borderRadius:  8,
   padding:       16,
   fontFamily:    "monospace",
   fontSize:      11,
-  color:         "#8AACCC",
+  color:         "var(--text-muted)",
   lineHeight:    1.7,
   whiteSpace:    "pre-wrap",
   maxHeight:     400,

@@ -13,7 +13,7 @@ const VULN_KB = {
   • Falta de inventario y monitoreo activo de versiones de dependencias (SCA).
   • No se verifica la compatibilidad segura de librerías de terceros antes de integración.
   • Ausencia de proceso automatizado de actualización de dependencias en el pipeline CI/CD.`,
-    proceso:`• El proyecto ACE.BasicBook.UI referencia jquery-validation a través de packages.config con versión anterior a 1.19.3.
+    proceso:`• El proyecto E001VulnerabilityRemediationReg referencia jquery-validation a través de packages.config con versión anterior a 1.19.3.
 • No existe proceso automatizado de escaneo SCA en el pipeline actual.
 • Las dependencias se actualizan de forma manual y reactiva, sin monitoreo proactivo de CVEs.
 • El archivo packages.config es gestionado por NuGet sin políticas de versión mínima segura definidas.`,

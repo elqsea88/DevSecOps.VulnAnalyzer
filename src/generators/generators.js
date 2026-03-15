@@ -108,7 +108,7 @@ INFORMACIÓN
 ${[...new Set(xssFiles)].join("\n")||"  [Sin archivos]"}
 
 2. ARCHIVOS OSS VULNERABLE
-${ossFiles.join("\n")||"  • ACE.BasicBook.UI/packages.config"}
+${ossFiles.join("\n")||"  • E001VulnerabilityRemediationReg/packages.config"}
 
 3. PATRÓN DE SOLUCIÓN XSS
 ${docData.patron||`  PROBLEMA: Uso de .html() / innerHTML / document.write() sin sanitización.
@@ -211,5 +211,5 @@ APROBACIONES
     dlFile(m[t].n,m[t].f()); showToast(m[t].n+" descargado");
   };
 
-  const completePhase=n=>{ setDone(p=>new Set([...p,n])); showToast(`Fase ${n} completada ✓`); if(n<5)setPhase(n+1); };
-  const progress=Math.round((done.size/6)*100);
+  const completePhase=n=>{ setDone(p=>new Set([...p,n])); showToast(`Fase ${n} completada ✓`); if(n<4)setPhase(n+1); };
+  const progress=Math.round((done.size/5)*100);

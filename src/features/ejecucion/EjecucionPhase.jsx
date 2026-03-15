@@ -14,7 +14,7 @@ function EjecucionPhase({
   claudeMcpUrl, claudeMcpStatus, checkClaudeMcpStatus,
   TODAY, completePhase, showToast,
   card, infoBox, warnBox, btnP, btnS, codeBox,
-  dlAll,
+  dlAll, darkMode,
 }) {
   const { useState, useEffect, useRef, useCallback } = React;
 
@@ -55,12 +55,12 @@ function EjecucionPhase({
   const tabBtn = (t) => ({
     padding: "7px 18px", borderRadius: 6, border: "none", cursor: "pointer",
     fontSize: 12, fontWeight: 700,
-    background: activeTab === t ? "#00D4FF" : "#0D1828",
-    color:      activeTab === t ? "#060B14" : "#4A6080",
+    background: activeTab === t ? "var(--accent)" : "var(--bg-card)",
+    color:      activeTab === t ? "var(--bg-base)" : "var(--text-secondary)",
     transition: "all 0.15s",
   });
 
-  const secTitle = (icon, label, color = "#00D4FF") => (
+  const secTitle = (icon, label, color = "var(--accent)") => (
     <div style={{ fontSize: 11, fontWeight: 700, color, letterSpacing: 1.5,
       marginBottom: 14, textTransform: "uppercase", fontFamily: "monospace" }}>
       {icon} {label}
@@ -69,9 +69,9 @@ function EjecucionPhase({
 
   // ── Parse PDF context around a found GUID ─────────────────────────────────
   // Optimizado para el formato de tabla del reporte:
-  //   Location  ACE.BasicBook.UI/Scripts/Configuracion.js:27
+  //   Location  E001VulnerabilityRemediationReg/Scripts/Configuracion.js:27
   //   Line  27
-  //   Source File  ACE.BasicBook.UI/Scripts/Configuracion.js
+  //   Source File  E001VulnerabilityRemediationReg/Scripts/Configuracion.js
   //   CWE:  79    Repository URL:  https://...
   //   Call  <snippet de código>
   const parsePdfContext = (ctx, issue) => {
@@ -399,12 +399,12 @@ function EjecucionPhase({
 
       {/* Header */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start",
-        marginBottom:24, paddingBottom:18, borderBottom:"1px solid #1A2840" }}>
+        marginBottom:24, paddingBottom:18, borderBottom:"1px solid var(--border)" }}>
         <div>
-          <div style={{ fontSize:10, color:"#00D4FF", letterSpacing:2,
+          <div style={{ fontSize:10, color:"var(--accent)", letterSpacing:2,
             fontFamily:"monospace", marginBottom:4 }}>FASE 4 — EJECUCIÓN</div>
-          <div style={{ fontSize:24, fontWeight:800, color:"#E0EDFF" }}>Ejecución y Validación</div>
-          <div style={{ fontSize:11, color:"#4A6080", marginTop:4 }}>
+          <div style={{ fontSize:24, fontWeight:800, color:"var(--text-bright)" }}>Ejecución y Validación</div>
+          <div style={{ fontSize:11, color:"var(--text-secondary)", marginTop:4 }}>
             {issues.length} issues cargados
             {pdfName    && ` · PDF: ${pdfName} (${pdfPages} págs.)`}
             {analyzed   && ` · ${totalFound}/${issues.length} encontrados`}
@@ -412,23 +412,23 @@ function EjecucionPhase({
             {totalRecs  > 0 && ` · ${totalRecs} recomendaciones IA`}
           </div>
         </div>
-        <button style={btnP} onClick={() => completePhase(4)}>Completar Fase 4 →</button>
+        <button style={btnP} onClick={() => completePhase(3)}>Completar Fase 3 →</button>
       </div>
 
       {/* Stats bar (solo después del análisis) */}
       {analyzed && (
         <div style={{ display:"flex", gap:10, marginBottom:20 }}>
           {[
-            { label:"Issues",        value:issues.length, color:"#4A6080" },
-            { label:"En PDF",        value:totalFound,    color:"#00D4FF" },
+            { label:"Issues",        value:issues.length, color:"var(--text-secondary)" },
+            { label:"En PDF",        value:totalFound,    color:"var(--accent)" },
             { label:"Sin coincid.",  value:issues.length - totalFound, color:"#FF9F43" },
             { label:"Con código",    value:totalCode,     color:"#00E676" },
             { label:"Con IA",        value:totalRecs,     color:"#A78BFA" },
           ].map(({ label, value, color }) => (
-            <div key={label} style={{ background:"#0A1020", border:"1px solid #1A2840",
+            <div key={label} style={{ background:"var(--bg-panel)", border:"1px solid var(--border)",
               borderRadius:8, padding:"10px 14px", flex:1, textAlign:"center" }}>
               <div style={{ fontSize:20, fontWeight:800, color }}>{value}</div>
-              <div style={{ fontSize:10, color:"#4A6080", marginTop:2 }}>{label}</div>
+              <div style={{ fontSize:10, color:"var(--text-secondary)", marginTop:2 }}>{label}</div>
             </div>
           ))}
         </div>
@@ -455,7 +455,7 @@ function EjecucionPhase({
             {secTitle("📄", "Reporte PDF de Vulnerabilidades")}
             <div style={infoBox}>
               Carga el PDF generado por tu herramienta SAST/DAST (Fortify, Checkmarx, Veracode, SonarQube, etc.).
-              La app buscará cada <strong style={{ color:"#00D4FF" }}>Issue Id</strong> (GUID) del Excel dentro del
+              La app buscará cada <strong style={{ color:"var(--accent)" }}>Issue Id</strong> (GUID) del Excel dentro del
               PDF y extraerá tipo, archivo, línea, descripción y recomendación.
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
@@ -474,7 +474,7 @@ function EjecucionPhase({
                 </button>
               )}
               {pdfName && (
-                <span style={{ fontSize:11, color:"#4A6080", fontFamily:"monospace" }}>
+                <span style={{ fontSize:11, color:"var(--text-secondary)", fontFamily:"monospace" }}>
                   {pdfName} · {pdfPages} páginas · {Math.round(pdfText.length / 1024)} KB texto
                 </span>
               )}
@@ -493,7 +493,7 @@ function EjecucionPhase({
               <div style={{ overflowX:"auto" }}>
                 <table style={{ width:"100%", borderCollapse:"collapse", fontSize:11 }}>
                   <thead>
-                    <tr style={{ borderBottom:"2px solid #1A2840" }}>
+                    <tr style={{ borderBottom:"2px solid var(--border)" }}>
                       {["Issue ID","Tipo","Archivo","Línea","Severidad","PDF","Código","IA"].map(h => (
                         <th key={h} style={{ padding:"7px 10px", textAlign:"left",
                           color:"#3A5070", fontWeight:700, fontSize:10,
@@ -512,14 +512,14 @@ function EjecucionPhase({
                       return (
                         <tr key={issue.id}
                           onClick={() => setSelectedId(isSelected ? null : issue.id)}
-                          style={{ borderBottom:"1px solid #0D1828", cursor:"pointer",
-                            background: isSelected ? "#0D1E33" : "transparent",
+                          style={{ borderBottom:"1px solid var(--border)", cursor:"pointer",
+                            background: isSelected ? "var(--bg-card)" : "transparent",
                             transition:"background 0.1s" }}>
                           <td style={{ padding:"7px 10px", fontFamily:"monospace",
                             color:"#5A7A9A", fontSize:10 }}>
                             {issue.id?.substring(0, 8)}…
                           </td>
-                          <td style={{ padding:"7px 10px", color:"#D0DCF0",
+                          <td style={{ padding:"7px 10px", color:"var(--text-primary)",
                             maxWidth:180, overflow:"hidden",
                             textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                             {m.vulnType || issue.issueType}
@@ -553,7 +553,7 @@ function EjecucionPhase({
                   </tbody>
                 </table>
               </div>
-              <div style={{ fontSize:10, color:"#2A4060", marginTop:10 }}>
+              <div style={{ fontSize:10, color:"var(--text-dim)", marginTop:10 }}>
                 ✅ Encontrado · ❌ No encontrado · ⬜ Sin GUID real · Haz clic en una fila para ver detalle
               </div>
             </div>
@@ -578,8 +578,8 @@ function EjecucionPhase({
                     ["Horas est.", (selectedIssue.hrs || 0) + " hrs"],
                   ].map(([k, v]) => (
                     <React.Fragment key={k}>
-                      <span style={{ color:"#4A6080", fontWeight:600, fontSize:10 }}>{k}:</span>
-                      <span style={{ color:"#D0DCF0", wordBreak:"break-all",
+                      <span style={{ color:"var(--text-secondary)", fontWeight:600, fontSize:10 }}>{k}:</span>
+                      <span style={{ color:"var(--text-primary)", wordBreak:"break-all",
                         fontFamily: k==="Issue ID"||k==="Archivo" ? "monospace" : "inherit",
                         fontSize:   k==="Issue ID" ? 10 : 11 }}>{v}</span>
                     </React.Fragment>
@@ -588,11 +588,11 @@ function EjecucionPhase({
 
                 {selectedMatch?.description && (
                   <div style={{ marginBottom:10 }}>
-                    <div style={{ fontSize:10, color:"#4A6080", letterSpacing:1,
+                    <div style={{ fontSize:10, color:"var(--text-secondary)", letterSpacing:1,
                       marginBottom:4, fontFamily:"monospace" }}>DESCRIPCIÓN (PDF):</div>
-                    <div style={{ background:"#060B14", border:"1px solid #1A2840",
+                    <div style={{ background:"var(--bg-base)", border:"1px solid var(--border)",
                       borderRadius:6, padding:"8px 12px", fontSize:11,
-                      color:"#D0DCF0", lineHeight:1.6 }}>
+                      color:"var(--text-primary)", lineHeight:1.6 }}>
                       {selectedMatch.description}
                     </div>
                   </div>
@@ -600,7 +600,7 @@ function EjecucionPhase({
 
                 {selectedMatch?.fix && (
                   <div style={{ marginBottom:10 }}>
-                    <div style={{ fontSize:10, color:"#4A6080", letterSpacing:1,
+                    <div style={{ fontSize:10, color:"var(--text-secondary)", letterSpacing:1,
                       marginBottom:4, fontFamily:"monospace" }}>RECOMENDACIÓN (PDF):</div>
                     <div style={{ background:"#001A0D", border:"1px solid #00E67622",
                       borderRadius:6, padding:"8px 12px", fontSize:11,
@@ -612,9 +612,9 @@ function EjecucionPhase({
 
                 {selectedMatch?.context && (
                   <div>
-                    <div style={{ fontSize:10, color:"#4A6080", letterSpacing:1,
+                    <div style={{ fontSize:10, color:"var(--text-secondary)", letterSpacing:1,
                       marginBottom:4, fontFamily:"monospace" }}>CONTEXTO PDF (fragmento):</div>
-                    <div style={{ ...codeBox, fontSize:10, maxHeight:140, color:"#4A6080" }}>
+                    <div style={{ ...codeBox, fontSize:10, maxHeight:140, color:"var(--text-secondary)" }}>
                       {selectedMatch.context.substring(0, 900)}…
                     </div>
                   </div>
@@ -638,8 +638,8 @@ function EjecucionPhase({
                     </button>
                   </div>
                 ) : (
-                  <div style={{ fontSize:11, color:"#4A6080", marginBottom:10 }}>
-                    → Ve a la pestaña <strong style={{ color:"#00D4FF" }}>Repositorio</strong> y
+                  <div style={{ fontSize:11, color:"var(--text-secondary)", marginBottom:10 }}>
+                    → Ve a la pestaña <strong style={{ color:"var(--accent)" }}>Repositorio</strong> y
                     selecciona la carpeta del repo para leer el código fuente.
                   </div>
                 )}
@@ -651,18 +651,18 @@ function EjecucionPhase({
                   if (!ctx) return null;
                   return (
                     <div style={{ marginBottom:12 }}>
-                      <div style={{ fontSize:10, color:"#4A6080", letterSpacing:1,
+                      <div style={{ fontSize:10, color:"var(--text-secondary)", letterSpacing:1,
                         marginBottom:4, fontFamily:"monospace" }}>
                         {(fp || "").split("/").pop()}
                         {selectedMatch?.line ? ` — línea ${selectedMatch.line}` : ""}
                       </div>
-                      <div style={{ background:"#030810", border:"1px solid #1A2840",
+                      <div style={{ background:"var(--bg-input)", border:"1px solid var(--border)",
                         borderRadius:6, padding:"8px", fontSize:10, fontFamily:"monospace",
                         lineHeight:1.6, maxHeight:200, overflowY:"auto" }}>
                         {ctx.lines.map(({ n, l }) => (
                           <div key={n} style={{ display:"flex", gap:8,
                             background: n === ctx.targetLine ? "#0D2200" : "transparent" }}>
-                            <span style={{ color:"#2A4060", minWidth:32,
+                            <span style={{ color:"var(--text-dim)", minWidth:32,
                               userSelect:"none", textAlign:"right" }}>{n}</span>
                             <span style={{ color: n === ctx.targetLine ? "#00E676" : "#8AACCC",
                               whiteSpace:"pre" }}>{l}</span>
@@ -682,7 +682,7 @@ function EjecucionPhase({
                     boxShadow: claudeMcpStatus==="ok" ? "0 0 6px #00E676"
                       : claudeMcpStatus==="checking" ? "0 0 6px #FFB800" : "none",
                     display:"inline-block" }} />
-                  <span style={{ color:"#4A6080" }}>
+                  <span style={{ color:"var(--text-secondary)" }}>
                     Claude MCP {claudeMcpStatus==="ok" ? "conectado"
                       : claudeMcpStatus==="checking" ? "verificando…" : "desconectado"}
                   </span>
@@ -693,7 +693,7 @@ function EjecucionPhase({
                 </div>
                 <button
                   style={{ ...btnP, width:"100%", marginBottom:10,
-                    background: loadingRec[selectedIssue.id] ? "#1A2840" : "#7C3AED",
+                    background: loadingRec[selectedIssue.id] ? "var(--border)" : "#7C3AED",
                     color:"#fff" }}
                   onClick={() => generateRec(selectedIssue)}
                   disabled={loadingRec[selectedIssue.id] || claudeMcpStatus !== "ok"}>
@@ -703,8 +703,8 @@ function EjecucionPhase({
                 </button>
 
                 {recs[selectedIssue.id] && (
-                  <div style={{ background:"#060B14", border:"1px solid #7C3AED44",
-                    borderRadius:6, padding:"10px 12px", fontSize:11, color:"#D0DCF0",
+                  <div style={{ background:"var(--bg-base)", border:"1px solid #7C3AED44",
+                    borderRadius:6, padding:"10px 12px", fontSize:11, color:"var(--text-primary)",
                     lineHeight:1.7, maxHeight:320, overflowY:"auto", whiteSpace:"pre-wrap" }}>
                     {recs[selectedIssue.id]}
                   </div>
@@ -725,7 +725,7 @@ function EjecucionPhase({
             {secTitle("📁", "Opción A — Repositorio Local (recomendada)")}
             <div style={infoBox}>
               Selecciona la carpeta donde clonaste el repositorio. La app leerá los archivos
-              afectados <strong style={{ color:"#00D4FF" }}>directamente en tu equipo</strong>,
+              afectados <strong style={{ color:"var(--accent)" }}>directamente en tu equipo</strong>,
               sin subir nada a internet. Requiere <strong>Chrome</strong> o <strong>Edge</strong>
               (File System Access API).
             </div>
@@ -759,12 +759,12 @@ function EjecucionPhase({
                   return (
                     <div key={fp} style={{ display:"flex", justifyContent:"space-between",
                       alignItems:"center", padding:"8px 0",
-                      borderBottom:"1px solid #0D1828" }}>
+                      borderBottom:"1px solid var(--border)" }}>
                       <div>
                         <span style={{ fontFamily:"monospace", color:"#8AACCC", fontSize:11 }}>
                           {fname}
                         </span>
-                        <span style={{ marginLeft:8, color:"#2A4060",
+                        <span style={{ marginLeft:8, color:"var(--text-dim)",
                           fontSize:10, fontFamily:"monospace" }}>
                           {fp}
                         </span>
@@ -802,12 +802,12 @@ function EjecucionPhase({
           {/* Opción B — Git Remoto */}
           <div style={card()}>
             {secTitle("🌐", "Opción B — Git Remoto (no disponible en modo standalone)", "#4A6080")}
-            <div style={{ fontSize:12, color:"#4A6080", lineHeight:1.7 }}>
+            <div style={{ fontSize:12, color:"var(--text-secondary)", lineHeight:1.7 }}>
               La integración directa con GitHub / GitLab / Azure DevOps requiere un servidor proxy
               para manejar restricciones CORS del navegador. Esta funcionalidad no está disponible
               en la versión standalone (single-file HTML).<br/><br/>
-              <strong style={{ color:"#D0DCF0" }}>Alternativa recomendada:</strong> clonar el
-              repositorio localmente con <code style={{ color:"#00D4FF" }}>git clone</code> y usar
+              <strong style={{ color:"var(--text-primary)" }}>Alternativa recomendada:</strong> clonar el
+              repositorio localmente con <code style={{ color:"var(--accent)" }}>git clone</code> y usar
               la Opción A.
             </div>
           </div>
@@ -833,10 +833,10 @@ function EjecucionPhase({
                   ? Math.round(totalFound / issues.length * 100) + "%"
                   : "0%" },
               ].map(({ label, value }) => (
-                <div key={label} style={{ background:"#060B14", border:"1px solid #1A2840",
+                <div key={label} style={{ background:"var(--bg-base)", border:"1px solid var(--border)",
                   borderRadius:8, padding:"10px 14px" }}>
-                  <div style={{ fontSize:18, fontWeight:800, color:"#00D4FF" }}>{value}</div>
-                  <div style={{ fontSize:10, color:"#4A6080", marginTop:2 }}>{label}</div>
+                  <div style={{ fontSize:18, fontWeight:800, color:"var(--accent)" }}>{value}</div>
+                  <div style={{ fontSize:10, color:"var(--text-secondary)", marginTop:2 }}>{label}</div>
                 </div>
               ))}
             </div>
@@ -844,7 +844,7 @@ function EjecucionPhase({
               <button style={btnP} onClick={exportExcel}>⬇ Exportar Excel Enriquecido</button>
               <button style={btnS} onClick={exportJson}>⬇ Exportar JSON</button>
               <button style={{ ...btnP, background:"transparent",
-                border:"1px solid #1A2840", color:"#4A6080" }} onClick={dlAll}>
+                border:"1px solid var(--border)", color:"var(--text-secondary)" }} onClick={dlAll}>
                 ⬇ Re-descargar Documentos Fase 2
               </button>
             </div>
@@ -859,7 +859,7 @@ function EjecucionPhase({
                 const rec = recs[issue.id];
                 const fp  = m.file || issue.filePath;
                 return (
-                  <div key={issue.id} style={{ borderBottom:"1px solid #0D1828",
+                  <div key={issue.id} style={{ borderBottom:"1px solid var(--border)",
                     padding:"12px 0" }}>
                     <div style={{ display:"flex", justifyContent:"space-between",
                       alignItems:"flex-start", gap:8 }}>
@@ -868,14 +868,14 @@ function EjecucionPhase({
                           {issue.id?.substring(0, 16)}…
                         </span>
                         <span style={{ marginLeft:10, fontSize:12,
-                          color:"#D0DCF0", fontWeight:600 }}>
+                          color:"var(--text-primary)", fontWeight:600 }}>
                           {m.vulnType || issue.issueType}
                         </span>
                       </div>
                       <div style={{ display:"flex", gap:5, flexShrink:0 }}>
                         {m.found && (
                           <span style={{ padding:"2px 7px", background:"#00D4FF22",
-                            color:"#00D4FF", borderRadius:4, fontSize:10 }}>PDF ✓</span>
+                            color:"var(--accent)", borderRadius:4, fontSize:10 }}>PDF ✓</span>
                         )}
                         {codeCache[fp] && (
                           <span style={{ padding:"2px 7px", background:"#00E67622",
@@ -887,21 +887,21 @@ function EjecucionPhase({
                         )}
                       </div>
                     </div>
-                    <div style={{ fontSize:11, color:"#4A6080",
+                    <div style={{ fontSize:11, color:"var(--text-secondary)",
                       marginTop:4, fontFamily:"monospace" }}>
                       {fp} {m.line ? `· Línea ${m.line}` : ""}
                     </div>
                     {rec && (
-                      <div style={{ marginTop:8, background:"#060B14",
+                      <div style={{ marginTop:8, background:"var(--bg-base)",
                         border:"1px solid #7C3AED44", borderRadius:6,
-                        padding:"8px 12px", fontSize:11, color:"#D0DCF0",
+                        padding:"8px 12px", fontSize:11, color:"var(--text-primary)",
                         lineHeight:1.6, maxHeight:100, overflowY:"auto",
                         whiteSpace:"pre-wrap" }}>
                         {rec.substring(0, 350)}{rec.length > 350 ? "…" : ""}
                       </div>
                     )}
                     {!analyzed && !rec && (
-                      <div style={{ fontSize:11, color:"#2A4060", marginTop:4 }}>
+                      <div style={{ fontSize:11, color:"var(--text-dim)", marginTop:4 }}>
                         → Analiza el PDF y genera recomendación IA para ver resultados
                       </div>
                     )}

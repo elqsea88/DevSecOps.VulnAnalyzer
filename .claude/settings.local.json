@@ -21,7 +21,8 @@
       "Bash(npm info:*)",
       "Bash(find /c/DevSecOps.VulnAnalyzer/DevSecOps.VulnAnalyzer/dist/docs -type f -name *.docx -o -name *.doc -o -name *.template)",
       "Bash(find c:/DevSecOps.VulnAnalyzer/DevSecOps.VulnAnalyzer -name *.docx)",
-      "Bash(node create-template.js)"
+      "Bash(node create-template.js)",
+      "Bash(node -e \"const fs=require\\(''fs''\\); const html=fs.readFileSync\\(''dist/DevSecOps_VulnAnalyzer.html'',''utf8''\\); console.log\\(''darkMode state:'', html.includes\\(''useState\\(true\\)''\\)\\); console.log\\(''data-theme attr:'', html.includes\\(''data-theme=''\\)\\); console.log\\(''CSS vars block:'', html.includes\\(''[data-theme=\"\"dark\"\"]''\\)\\); console.log\\(''Toggle button:'', html.includes\\(''Cambiar a modo claro''\\)\\); console.log\\(''bg-base var:'', html.includes\\(''var\\(--bg-base\\)''\\)\\); console.log\\(''accent var:'', html.includes\\(''var\\(--accent\\)''\\)\\); console.log\\(''darkMode prop passed:'', \\(html.match\\(/darkMode=\\\\{darkMode\\\\}/g\\)||[]\\).length\\);\")"
     ]
   }
 }

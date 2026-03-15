@@ -4,6 +4,7 @@
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
 function App(){
+  const [darkMode,setDarkMode] = useState(true);
   const [phase,setPhase]   = useState(0);
   const [done,setDone]     = useState(new Set());
   const [issues,setIssues] = useState([]);
@@ -13,7 +14,7 @@ function App(){
     gitBase:"https://nausp-aapp0001.aceins.com/mexico-it-chubbnet/",
     sonarBase:"https://sonar.chubb.com",
     sonarProjectKey:"NAGH-APM0001304-mexico-it-chubbnet-",
-    projectName:"ACE.BasicBook", responsable:"", ticket:"SEC-"+TODAY,
+    projectName:"E001VulnerabilityRemediationReg", responsable:"", ticket:"SEC-"+TODAY,
   });
   const [sonarData,setSonarData] = useState({});  // { repoName: { qg, secIssues, secRating, relIssues, relRating, maintIssues, maintRating, coverage, duplications, hotspots, hotspotsStatus, loc, version, branch } }
   const setSonarF = (repo,field,val) => setSonarData(p=>({...p,[repo]:{...(p[repo]||{}), [field]:val}}));
@@ -540,9 +541,6 @@ function App(){
       ["SEC-006","Diseño General redactado y aprobado","Documentación","Obligatorio"],
       ["SEC-007","Diseño Técnico redactado y aprobado","Documentación","Obligatorio"],
       ["SEC-008","CIP completo","Documentación","Obligatorio"],
-      ["APROV-001","Visto Bueno Gerente de Proyecto","Aprobación","Bloqueante"],
-      ["APROV-002","Visto Bueno Oficial de Seguridad","Aprobación","Bloqueante"],
-      ["APROV-003","Visto Bueno QA Lead","Aprobación","Bloqueante"],
       ["DEV-001","jquery-validation actualizado ≥1.19.3","Desarrollo","Obligatorio"],
       ["DEV-002","Instancias XSS sanitizadas con DOMPurify","Desarrollo","Obligatorio"],
       ["DEV-003","DOMPurify agregado como dependencia","Desarrollo","Obligatorio"],
@@ -594,40 +592,98 @@ function App(){
     dlFile(m[t].n,m[t].f()); showToast(m[t].n+" descargado");
   };
 
-  const completePhase=n=>{ setDone(p=>new Set([...p,n])); showToast(`Fase ${n} completada ✓`); if(n<5)setPhase(n+1); };
-  const progress=Math.round((done.size/6)*100);
-  const PHASES=["Importar Excel","Diagnóstico","Documentos","Aprobación","Ejecución","Despliegue"];
+  const completePhase=n=>{ setDone(p=>new Set([...p,n])); showToast(`Fase ${n} completada ✓`); if(n<4)setPhase(n+1); };
+  const progress=Math.round((done.size/5)*100);
+  const PHASES=["Importar Excel","Diagnóstico","Documentos","Ejecución","Despliegue"];
 
   // ── RENDER ───────────────────────────────────────────────────────────────────
   return (
-    <div style={{fontFamily:"'Segoe UI',sans-serif",background:"#060B14",minHeight:"100vh",color:"#D0DCF0",fontSize:13}}>
+    <div data-theme={darkMode ? "dark" : "light"} style={{fontFamily:"'Segoe UI',sans-serif",background:"var(--bg-base)",minHeight:"100vh",color:"var(--text-primary)",fontSize:13}}>
+      <style>{`
+  [data-theme="dark"] {
+    --bg-base: #060B14;
+    --bg-panel: #0A1020;
+    --bg-card: #0F1E35;
+    --bg-input: #0A1828;
+    --border: #1A2840;
+    --border-mid: #243650;
+    --text-dim: #2A4060;
+    --text-muted: #3A5070;
+    --text-secondary: #4A6080;
+    --text-primary: #D0DCF0;
+    --text-bright: #E0EDFF;
+    --accent: #00D4FF;
+    --accent2: #7C3AED;
+    --success: #00E676;
+    --warning: #FFB800;
+    --danger: #FF4444;
+    --row-hover: #0F1E3580;
+  }
+  [data-theme="light"] {
+    --bg-base: #F0F4F8;
+    --bg-panel: #FFFFFF;
+    --bg-card: #F8FAFC;
+    --bg-input: #EEF2F7;
+    --border: #CBD5E1;
+    --border-mid: #E2E8F0;
+    --text-dim: #94A3B8;
+    --text-muted: #64748B;
+    --text-secondary: #475569;
+    --text-primary: #1E293B;
+    --text-bright: #0F172A;
+    --accent: #0284C7;
+    --accent2: #7C3AED;
+    --success: #16A34A;
+    --warning: #D97706;
+    --danger: #DC2626;
+    --row-hover: #E2E8F080;
+  }
+`}</style>
 
       {/* TOPBAR */}
-      <div style={{background:"#0A1020",borderBottom:"1px solid #1A2840",padding:"0 24px",height:52,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100}}>
+      <div style={{background:"var(--bg-panel)",borderBottom:"1px solid var(--border)",padding:"0 24px",height:52,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <div style={{width:30,height:30,background:"linear-gradient(135deg,#00D4FF,#7C3AED)",borderRadius:7,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🔐</div>
-          <span style={{fontSize:15,fontWeight:700,color:"#E0EDFF"}}>DevSecOps · Vulnerability Analyzer</span>
+          <span style={{fontSize:15,fontWeight:700,color:"var(--text-bright)"}}>DevSecOps · Vulnerability Analyzer</span>
         </div>
-        <div style={{fontSize:11,color:"#3A5070",fontFamily:"monospace"}}>{cfg.ticket} | {issues.length} issues | {TODAY_D}</div>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{fontSize:11,color:"var(--text-muted)",fontFamily:"monospace"}}>{cfg.ticket} | {issues.length} issues | {TODAY_D}</div>
+          <button
+            onClick={() => setDarkMode(p => !p)}
+            title={darkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+            style={{
+              background: "none",
+              border: "1px solid var(--border-mid)",
+              borderRadius: 6,
+              color: "var(--text-secondary)",
+              cursor: "pointer",
+              fontSize: 16,
+              padding: "3px 8px",
+              lineHeight: 1,
+            }}
+          >
+            {darkMode ? "☀" : "🌙"}
+          </button>
+        </div>
       </div>
 
       <div style={{display:"flex",minHeight:"calc(100vh - 52px)"}}>
 
         {/* SIDEBAR */}
-        <nav style={{width:200,background:"#0A1020",borderRight:"1px solid #1A2840",padding:"16px 0",flexShrink:0,display:"flex",flexDirection:"column"}}>
-          <div style={{fontSize:9,color:"#2A4060",letterSpacing:2,padding:"0 14px 10px",textTransform:"uppercase",fontFamily:"monospace"}}>FASES SOP</div>
+        <nav style={{width:200,background:"var(--bg-panel)",borderRight:"1px solid var(--border)",padding:"16px 0",flexShrink:0,display:"flex",flexDirection:"column"}}>
+          <div style={{fontSize:9,color:"var(--text-dim)",letterSpacing:2,padding:"0 14px 10px",textTransform:"uppercase",fontFamily:"monospace"}}>FASES SOP</div>
           {PHASES.map((p,i)=>(
-            <button key={i} onClick={()=>setPhase(i)} style={{display:"flex",alignItems:"center",gap:8,padding:"9px 14px",width:"100%",border:"none",background:phase===i?"#0F1E35":"transparent",color:done.has(i)?"#00E676":phase===i?"#00D4FF":"#4A6080",cursor:"pointer",textAlign:"left",fontSize:11,fontWeight:600,borderLeft:`2px solid ${phase===i?"#00D4FF":done.has(i)?"#00E676":"transparent"}`,transition:"all 0.15s"}}>
-              <span style={{width:20,height:20,borderRadius:"50%",background:done.has(i)?"#00E676":phase===i?"#00D4FF":"#1A2840",color:done.has(i)||phase===i?"#000":"#4A6080",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,flexShrink:0}}>{done.has(i)?"✓":i}</span>
+            <button key={i} onClick={()=>setPhase(i)} style={{display:"flex",alignItems:"center",gap:8,padding:"9px 14px",width:"100%",border:"none",background:phase===i?"var(--bg-card)":"transparent",color:done.has(i)?"var(--success)":phase===i?"var(--accent)":"var(--text-secondary)",cursor:"pointer",textAlign:"left",fontSize:11,fontWeight:600,borderLeft:`2px solid ${phase===i?"var(--accent)":done.has(i)?"var(--success)":"transparent"}`,transition:"all 0.15s"}}>
+              <span style={{width:20,height:20,borderRadius:"50%",background:done.has(i)?"var(--success)":phase===i?"var(--accent)":"var(--border)",color:done.has(i)||phase===i?"#000":"var(--text-secondary)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,flexShrink:0}}>{done.has(i)?"✓":i}</span>
               {p}
             </button>
           ))}
-          <div style={{marginTop:"auto",padding:"14px",borderTop:"1px solid #1A2840"}}>
+          <div style={{marginTop:"auto",padding:"14px",borderTop:"1px solid var(--border)"}}>
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
-              <span style={{fontSize:10,color:"#2A4060",fontFamily:"monospace"}}>PROGRESO</span>
-              <span style={{fontSize:10,color:"#00D4FF",fontFamily:"monospace"}}>{progress}%</span>
+              <span style={{fontSize:10,color:"var(--text-dim)",fontFamily:"monospace"}}>PROGRESO</span>
+              <span style={{fontSize:10,color:"var(--accent)",fontFamily:"monospace"}}>{progress}%</span>
             </div>
-            <div style={{background:"#0F1E35",borderRadius:4,height:4}}>
+            <div style={{background:"var(--bg-card)",borderRadius:4,height:4}}>
               <div style={{height:4,background:"linear-gradient(90deg,#00D4FF,#7C3AED)",borderRadius:4,width:`${progress}%`,transition:"width 0.4s"}}/>
             </div>
           </div>
@@ -638,25 +694,25 @@ function App(){
 
 
           {/* ── FASE 0: IMPORTACIÓN ── */}
-          {phase===0&&<ImportacionPhase cfg={cfg} setCfg={setCfg} issues={issues} stats={stats} fileRef={fileRef} handleFile={handleFile} lbl={lbl} inp={inp} card={card} infoBox={infoBox} warnBox={warnBox} btnP={btnP} completePhase={completePhase} sevBadge={sevBadge} methBadge={methBadge}/>}
+          {phase===0&&<ImportacionPhase cfg={cfg} setCfg={setCfg} issues={issues} stats={stats} fileRef={fileRef} handleFile={handleFile} lbl={lbl} inp={inp} card={card} infoBox={infoBox} warnBox={warnBox} btnP={btnP} completePhase={completePhase} sevBadge={sevBadge} methBadge={methBadge} darkMode={darkMode}/>}
 
           {/* ── FASE 1: DIAGNÓSTICO ── */}
-          {phase===1&&<DiagnosticoPhase cfg={cfg} issues={issues} repos={repos} stats={stats} sonarData={sonarData} setSonarF={setSonarF} setRepoF={setRepoF} fetchSonar={fetchSonar} mcpUrl={mcpUrl} setMcpUrl={setMcpUrl} mcpStatus={mcpStatus} checkMcpStatus={checkMcpStatus} jenkinsMcpUrl={jenkinsMcpUrl} setJenkinsMcpUrl={setJenkinsMcpUrl} jenkinsMcpStatus={jenkinsMcpStatus} checkJenkinsMcpStatus={checkJenkinsMcpStatus} getSonarUrl={getSonarUrl} checkRepo={checkRepo} checkAll={checkAll} exportPipelineDashboard={exportPipelineDashboard} loadDashboardExcel={loadDashboardExcel} dashboardWbName={dashboardWbName} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} card={card} inp={inp} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} btnA={btnA} dot={dot} methBadge={methBadge} sevBadge={sevBadge}/>}
+          {phase===1&&<DiagnosticoPhase cfg={cfg} issues={issues} repos={repos} stats={stats} sonarData={sonarData} setSonarF={setSonarF} setRepoF={setRepoF} fetchSonar={fetchSonar} mcpUrl={mcpUrl} setMcpUrl={setMcpUrl} mcpStatus={mcpStatus} checkMcpStatus={checkMcpStatus} jenkinsMcpUrl={jenkinsMcpUrl} setJenkinsMcpUrl={setJenkinsMcpUrl} jenkinsMcpStatus={jenkinsMcpStatus} checkJenkinsMcpStatus={checkJenkinsMcpStatus} getSonarUrl={getSonarUrl} checkRepo={checkRepo} checkAll={checkAll} exportPipelineDashboard={exportPipelineDashboard} loadDashboardExcel={loadDashboardExcel} dashboardWbName={dashboardWbName} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} card={card} inp={inp} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} btnA={btnA} dot={dot} methBadge={methBadge} sevBadge={sevBadge} darkMode={darkMode}/>}
 
           {/* ── FASE 2: DOCUMENTOS ── */}
-          {phase===2&&<DocumentosPhase cfg={cfg} issues={issues} cipData={cipData} docData={docData} docTab={docTab} setDocTab={setDocTab} setVulnF={setVulnF} stats={stats} sonarData={sonarData} dl1={dl1} dlAll={dlAll} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} TODAY={TODAY} card={card} inp={inp} ta={ta} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnS={btnS} btnG={btnG} sevBadge={sevBadge} fetchAI={fetchAI} fetchAI_DT={fetchAI_DT} fetchAI_field={fetchAI_field} aiLoading={aiLoading} claudeMcpStatus={claudeMcpStatus} repos={repos}/>}
+          {phase===2&&<DocumentosPhase cfg={cfg} issues={issues} cipData={cipData} docData={docData} docTab={docTab} setDocTab={setDocTab} setVulnF={setVulnF} stats={stats} sonarData={sonarData} dl1={dl1} dlAll={dlAll} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} TODAY={TODAY} card={card} inp={inp} ta={ta} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnS={btnS} btnG={btnG} sevBadge={sevBadge} fetchAI={fetchAI} fetchAI_DT={fetchAI_DT} fetchAI_field={fetchAI_field} aiLoading={aiLoading} claudeMcpStatus={claudeMcpStatus} repos={repos} darkMode={darkMode}/>}
 
-          {/* ── FASES 3 y 5 ── */}
-          {(phase===3||phase===5)&&<GenericPhase phase={phase} cfg={cfg} cipData={cipData} TODAY={TODAY} dlAll={dlAll} completePhase={completePhase} card={card} infoBox={infoBox} btnP={btnP} btnS={btnS}/>}
+          {/* ── FASE 3: EJECUCIÓN ── */}
+          {phase===3&&<EjecucionPhase cfg={cfg} issues={issues} claudeMcpUrl={claudeMcpUrl} claudeMcpStatus={claudeMcpStatus} checkClaudeMcpStatus={checkClaudeMcpStatus} TODAY={TODAY} completePhase={completePhase} showToast={showToast} card={card} infoBox={infoBox} warnBox={warnBox} btnP={btnP} btnS={btnS} codeBox={codeBox} dlAll={dlAll} darkMode={darkMode}/>}
 
-          {/* ── FASE 4: EJECUCIÓN ── */}
-          {phase===4&&<EjecucionPhase cfg={cfg} issues={issues} claudeMcpUrl={claudeMcpUrl} claudeMcpStatus={claudeMcpStatus} checkClaudeMcpStatus={checkClaudeMcpStatus} TODAY={TODAY} completePhase={completePhase} showToast={showToast} card={card} infoBox={infoBox} warnBox={warnBox} btnP={btnP} btnS={btnS} codeBox={codeBox} dlAll={dlAll}/>}
+          {/* ── FASE 4: DESPLIEGUE ── */}
+          {phase===4&&<GenericPhase phase={phase} cfg={cfg} cipData={cipData} TODAY={TODAY} dlAll={dlAll} completePhase={completePhase} card={card} infoBox={infoBox} btnP={btnP} btnS={btnS} darkMode={darkMode}/>}
         </main>
       </div>
 
       {/* TOAST */}
       {toast&&(
-        <div style={{position:"fixed",bottom:20,right:20,zIndex:9999,background:"#0A1020",border:`1px solid ${toast.type==="ok"?"#00E676":"#FFB800"}`,borderRadius:8,padding:"10px 16px",fontSize:12,color:toast.type==="ok"?"#00E676":"#FFB800",fontFamily:"monospace",boxShadow:`0 8px 24px ${toast.type==="ok"?"#00E67620":"#FFB80020"}`,animation:"slideIn 0.2s ease"}}>
+        <div style={{position:"fixed",bottom:20,right:20,zIndex:9999,background:"var(--bg-panel)",border:`1px solid ${toast.type==="ok"?"var(--success)":"var(--warning)"}`,borderRadius:8,padding:"10px 16px",fontSize:12,color:toast.type==="ok"?"var(--success)":"var(--warning)",fontFamily:"monospace",boxShadow:`0 8px 24px ${toast.type==="ok"?"#00E67620":"#FFB80020"}`,animation:"slideIn 0.2s ease"}}>
           {toast.msg}
         </div>
       )}
