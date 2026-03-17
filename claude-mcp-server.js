@@ -294,8 +294,13 @@ function askClaude(prompt, model, timeoutMs, claudePath = "claude", nodeExtraCaC
       .replace(/^claude-haiku-4.*/i,  "haiku");
 
     // Prompt por stdin: evita límites de longitud de arg en Windows y
-    // caracteres especiales que rompen el parsing del shell
-    const args = ["--print", "--model", cliModel, "--output-format", "text"];
+    // caracteres especiales que rompen el parsing del shell.
+    // Si claudePath apunta a npx/npx.cmd, anteponer el nombre del paquete.
+    const isNpx = /npx(\.cmd)?$/i.test(claudePath);
+    const args = [
+      ...(isNpx ? ["@anthropic-ai/claude-code"] : []),
+      "--print", "--model", cliModel, "--output-format", "text",
+    ];
 
     // Limpiar TODAS las variables de sesión Claude Code para evitar que
     // el CLI detecte ejecución recursiva y se bloquee silenciosamente
