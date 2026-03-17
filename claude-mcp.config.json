@@ -1,9 +1,10 @@
 {
-  "model":          "claude-opus-4-6",
-  "port":           3749,
-  "timeoutMs":      90000,
-  "repositoryPath": "",
-  "contextLines":   30,
-  "gitToken":       "",
-  "claudePath":     "C:/Users/elqse/.local/bin/claude.exe"
+  "model":             "claude-opus-4-6",
+  "port":              3749,
+  "timeoutMs":         90000,
+  "repositoryPath":    "",
+  "contextLines":      30,
+  "gitToken":          "",
+  "claudePath":        "C:/Users/elqse/.local/bin/claude.exe",
+  "nodeExtraCaCerts":  ""
 }

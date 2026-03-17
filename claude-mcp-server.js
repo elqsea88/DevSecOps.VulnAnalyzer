@@ -52,9 +52,13 @@ function loadConfig() {
     timeoutMs:      parseInt(process.env.MCP_CLAUDE_TIMEOUT_MS || cfg.timeoutMs || "90000", 10),
     repositoryPath: process.env.MCP_REPO_PATH  || cfg.repositoryPath || "",
     contextLines:   parseInt(cfg.contextLines  || "30", 10),
-    gitToken:       process.env.MCP_GIT_TOKEN  || cfg.gitToken       || "",
-    gitApiBase:     cfg.gitApiBase             || "https://api.github.com",
-    claudePath:     process.env.CLAUDE_PATH    || cfg.claudePath     || "claude",
+    gitToken:          process.env.MCP_GIT_TOKEN  || cfg.gitToken          || "",
+    gitApiBase:        cfg.gitApiBase             || "https://api.github.com",
+    claudePath:        process.env.CLAUDE_PATH    || cfg.claudePath        || "claude",
+    // Para redes corporativas con proxy SSL (ej. chubb-claude):
+    // Apunta al ca-bundle.pem generado por el instalador corporativo.
+    // Si se configura, reemplaza el NODE_TLS_REJECT_UNAUTHORIZED=0 inseguro.
+    nodeExtraCaCerts:  process.env.NODE_EXTRA_CA_CERTS || cfg.nodeExtraCaCerts || "",
   };
 }
 
@@ -281,7 +285,7 @@ async function readFromGit(repoUrl, filePath, lineNum, gitToken, contextLines = 
 }
 
 // ── CLAUDE CLI CALL ──────────────────────────────────────────────────────────
-function askClaude(prompt, model, timeoutMs, claudePath = "claude") {
+function askClaude(prompt, model, timeoutMs, claudePath = "claude", nodeExtraCaCerts = "") {
   return new Promise((resolve, reject) => {
     // El CLI de Claude usa nombres cortos: "sonnet", "opus", "haiku"
     const cliModel = (model || "sonnet")
@@ -302,6 +306,13 @@ function askClaude(prompt, model, timeoutMs, claudePath = "claude") {
     claudeCodeVars.forEach(k => { delete env[k]; });
     if (claudeCodeVars.length) {
       console.log(`  [askClaude] vars limpiadas: ${claudeCodeVars.join(", ")}`);
+    }
+    // SSL corporativo: preferir certificado explícito; fallback a bypass inseguro
+    if (nodeExtraCaCerts && fs.existsSync(nodeExtraCaCerts)) {
+      env.NODE_EXTRA_CA_CERTS = nodeExtraCaCerts;
+      delete env.NODE_TLS_REJECT_UNAUTHORIZED;
+    } else {
+      env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
     }
 
     const proc = spawn(claudePath, args, { env, stdio: ["pipe", "pipe", "pipe"], shell: claudePath.endsWith(".cmd") });
@@ -598,7 +609,7 @@ const server = http.createServer(async (req, res) => {
     console.log(`  → /api/recommend | issue: ${(body.issueId||"").substring(0,8)}… | tipo: ${body.vulnType || "N/A"} | src: ${srcTag}`);
 
     try {
-      const text = await askClaude(prompt, cfg.model, cfg.timeoutMs, cfg.claudePath);
+      const text = await askClaude(prompt, cfg.model, cfg.timeoutMs, cfg.claudePath, cfg.nodeExtraCaCerts);
       console.log(`  ✓ Recomendación generada (${text.length} chars)`);
       return jsonRes(res, 200, { ok: true, recommendation: text, srcTag });
     } catch (err) {
@@ -617,7 +628,7 @@ const server = http.createServer(async (req, res) => {
     console.log(`  → /api/enhance-vuln | tipo: ${body.type || "N/A"} | modo: ${body.mode || "dg"}`);
 
     try {
-      const text = await askClaude(prompt, cfg.model, cfg.timeoutMs, cfg.claudePath);
+      const text = await askClaude(prompt, cfg.model, cfg.timeoutMs, cfg.claudePath, cfg.nodeExtraCaCerts);
       console.log(`  ✓ Contenido generado (${text.length} chars)`);
       return jsonRes(res, 200, { ok: true, text });
     } catch (err) {
@@ -636,7 +647,7 @@ const server = http.createServer(async (req, res) => {
     console.log(`  → /api/enhance-field | tipo: ${body.type || "N/A"} | campo: ${body.field || "N/A"}`);
 
     try {
-      const text = await askClaude(prompt, cfg.model, cfg.timeoutMs, cfg.claudePath);
+      const text = await askClaude(prompt, cfg.model, cfg.timeoutMs, cfg.claudePath, cfg.nodeExtraCaCerts);
       console.log(`  ✓ Campo generado (${text.length} chars)`);
       return jsonRes(res, 200, { ok: true, text });
     } catch (err) {
@@ -653,6 +664,12 @@ const cfg = loadConfig();
 server.listen(cfg.port, "127.0.0.1", () => {
   console.log(`\n✓ Claude MCP Server  →  http://127.0.0.1:${cfg.port}`);
   console.log(`  CLI     : ${cfg.claudePath}`);
+  if (cfg.nodeExtraCaCerts) {
+    const certOk = fs.existsSync(cfg.nodeExtraCaCerts);
+    console.log(`  SSL     : NODE_EXTRA_CA_CERTS → ${cfg.nodeExtraCaCerts} ${certOk ? "✓" : "⚠ ARCHIVO NO ENCONTRADO"}`);
+  } else {
+    console.log(`  SSL     : NODE_TLS_REJECT_UNAUTHORIZED=0 (bypass — configura "nodeExtraCaCerts" para mejor seguridad)`);
+  }
   console.log(`  Auth    : Claude CLI (~/.claude/.credentials.json)`);
   console.log(`  Modelo  : ${cfg.model}`);
   console.log(`  Timeout : ${cfg.timeoutMs}ms`);
