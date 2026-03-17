@@ -98,7 +98,7 @@ const VULN_KB = {
   • Falta de inventario y monitoreo activo de versiones de dependencias (SCA).
   • No se verifica la compatibilidad segura de librerías de terceros antes de integración.
   • Ausencia de proceso automatizado de actualización de dependencias en el pipeline CI/CD.`,
-    proceso:`• El proyecto ACE.BasicBook.UI referencia jquery-validation a través de packages.config con versión anterior a 1.19.3.
+    proceso:`• El proyecto E001VulnerabilityRemediationReg referencia jquery-validation a través de packages.config con versión anterior a 1.19.3.
 • No existe proceso automatizado de escaneo SCA en el pipeline actual.
 • Las dependencias se actualizan de forma manual y reactiva, sin monitoreo proactivo de CVEs.
 • El archivo packages.config es gestionado por NuGet sin políticas de versión mínima segura definidas.`,
@@ -1713,8 +1713,8 @@ const getSourcesDisplay = (type) => {
 // Usage: import via build concatenation — these are plain JS objects / fns
 
 const card = (extra = {}) => ({
-  background:    "#0A1020",
-  border:        "1px solid #1A2840",
+  background:    "var(--bg-panel)",
+  border:        "1px solid var(--border)",
   borderRadius:  10,
   padding:       "18px 20px",
   marginBottom:  14,
@@ -1723,10 +1723,10 @@ const card = (extra = {}) => ({
 
 const inp = {
   width:         "100%",
-  background:    "#0F1E35",
-  border:        "1px solid #1A2840",
+  background:    "var(--bg-card)",
+  border:        "1px solid var(--border)",
   borderRadius:  6,
-  color:         "#D0DCF0",
+  color:         "var(--text-primary)",
   fontSize:      12,
   padding:       "8px 10px",
   boxSizing:     "border-box",
@@ -1745,7 +1745,7 @@ const btnP = {
   alignItems:    "center",
   gap:           6,
   padding:       "8px 16px",
-  background:    "#00D4FF",
+  background:    "var(--accent)",
   color:         "#000",
   border:        "none",
   borderRadius:  6,
@@ -1754,14 +1754,14 @@ const btnP = {
   cursor:        "pointer",
 };
 
-const btnS = { ...btnP, background: "#00E676" };
-const btnG = { ...btnP, background: "transparent", color: "#4A6080", border: "1px solid #1A2840" };
-const btnA = { ...btnP, background: "#FFB800" };
+const btnS = { ...btnP, background: "var(--success)" };
+const btnG = { ...btnP, background: "transparent", color: "var(--text-secondary)", border: "1px solid var(--border)" };
+const btnA = { ...btnP, background: "var(--warning)" };
 
 const lbl = {
   display:       "block",
   fontSize:      10,
-  color:         "#3A5070",
+  color:         "var(--text-muted)",
   letterSpacing: 1.5,
   marginBottom:  5,
   textTransform: "uppercase",
@@ -1809,35 +1809,35 @@ const dot = s => ({
 });
 
 const infoBox = {
-  background:    "#00D4FF12",
-  borderLeft:    "3px solid #00D4FF",
+  background:    "var(--bg-input)",
+  borderLeft:    "3px solid var(--accent)",
   padding:       "10px 14px",
   borderRadius:  "0 7px 7px 0",
   fontSize:      12,
-  color:         "#8AACCC",
+  color:         "var(--text-muted)",
   marginBottom:  14,
   lineHeight:    1.6,
 };
 
 const warnBox = {
-  background:    "#FFB80012",
-  borderLeft:    "3px solid #FFB800",
+  background:    "var(--bg-input)",
+  borderLeft:    "3px solid var(--warning)",
   padding:       "10px 14px",
   borderRadius:  "0 7px 7px 0",
   fontSize:      12,
-  color:         "#CCAC88",
+  color:         "var(--text-secondary)",
   marginBottom:  14,
   lineHeight:    1.6,
 };
 
 const codeBox = {
-  background:    "#030810",
-  border:        "1px solid #1A2840",
+  background:    "var(--bg-input)",
+  border:        "1px solid var(--border)",
   borderRadius:  8,
   padding:       16,
   fontFamily:    "monospace",
   fontSize:      11,
-  color:         "#8AACCC",
+  color:         "var(--text-muted)",
   lineHeight:    1.7,
   whiteSpace:    "pre-wrap",
   maxHeight:     400,
@@ -1851,20 +1851,20 @@ const codeBox = {
 // ──────────────────────────────────────────────────────────────────
 // ── ImportacionPhase ─────────────────────────────────────────────────────────────────
 // Props destructured from App state
-function ImportacionPhase({ cfg, setCfg, issues, stats, fileRef, handleFile, lbl, inp, card, infoBox, warnBox, btnP, completePhase, sevBadge, methBadge }) {
+function ImportacionPhase({ cfg, setCfg, issues, stats, fileRef, handleFile, lbl, inp, card, infoBox, warnBox, btnP, completePhase, sevBadge, methBadge, darkMode }) {
   return (
             <div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24,paddingBottom:18,borderBottom:"1px solid #1A2840"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24,paddingBottom:18,borderBottom:"1px solid var(--border)"}}>
                 <div>
-                  <div style={{fontSize:10,color:"#00D4FF",letterSpacing:2,fontFamily:"monospace",marginBottom:4}}>FASE 0 — IMPORTACIÓN</div>
-                  <div style={{fontSize:24,fontWeight:800,color:"#E0EDFF"}}>Cargar Reporte de Vulnerabilidades</div>
-                  <div style={{fontSize:12,color:"#4A6080",marginTop:4}}>Importa tu Excel. Las columnas se detectan automáticamente.</div>
+                  <div style={{fontSize:10,color:"var(--accent)",letterSpacing:2,fontFamily:"monospace",marginBottom:4}}>FASE 0 — IMPORTACIÓN</div>
+                  <div style={{fontSize:24,fontWeight:800,color:"var(--text-bright)"}}>Cargar Reporte de Vulnerabilidades</div>
+                  <div style={{fontSize:12,color:"var(--text-secondary)",marginTop:4}}>Importa tu Excel. Las columnas se detectan automáticamente.</div>
                 </div>
                 {issues.length>0&&<button style={btnP} onClick={()=>completePhase(0)}>Continuar →</button>}
               </div>
 
               <div style={card()}>
-                <div style={{fontSize:11,fontWeight:700,color:"#00D4FF",letterSpacing:1.5,marginBottom:14,textTransform:"uppercase",fontFamily:"monospace"}}>⚙ Configuración del Proyecto</div>
+                <div style={{fontSize:11,fontWeight:700,color:"var(--accent)",letterSpacing:1.5,marginBottom:14,textTransform:"uppercase",fontFamily:"monospace"}}>⚙ Configuración del Proyecto</div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
                   {[["projectName","Nombre del Proyecto"],["responsable","Responsable / Tech Lead"],["ticket","Ticket ID"]].map(([k,l])=>(
                     <div key={k}><label style={lbl}>{l}</label><input style={inp} value={cfg[k]} onChange={e=>setCfg(p=>({...p,[k]:e.target.value}))}/></div>
@@ -1881,18 +1881,18 @@ function ImportacionPhase({ cfg, setCfg, issues, stats, fileRef, handleFile, lbl
                     <input style={inp} value={cfg.sonarBase} onChange={e=>setCfg(p=>({...p,sonarBase:e.target.value}))} placeholder="https://sonar.chubb.com"/>
                   </div>
                   <div>
-                    <label style={lbl}>SonarQube Project Key <span style={{color:"#FFB800",fontWeight:400}}>(solo prefijo)</span></label>
+                    <label style={lbl}>SonarQube Project Key <span style={{color:"var(--warning)",fontWeight:400}}>(solo prefijo)</span></label>
                     <input style={inp} value={cfg.sonarProjectKey} onChange={e=>setCfg(p=>({...p,sonarProjectKey:e.target.value}))} placeholder="NAGH-APM0001304-mexico-it-chubbnet-"/>
-                    <div style={{fontSize:9,color:"#2A4060",fontFamily:"monospace",marginTop:4}}>
-                      Key completo: {cfg.sonarProjectKey||"NAGH-APM0001304-mexico-it-chubbnet-"}<span style={{color:"#FFB800"}}>[NombreRepo]</span>
+                    <div style={{fontSize:9,color:"var(--text-dim)",fontFamily:"monospace",marginTop:4}}>
+                      Key completo: {cfg.sonarProjectKey||"NAGH-APM0001304-mexico-it-chubbnet-"}<span style={{color:"var(--warning)"}}>[NombreRepo]</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div style={card()}>
-                <div style={{fontSize:11,fontWeight:700,color:"#00D4FF",letterSpacing:1.5,marginBottom:12,textTransform:"uppercase",fontFamily:"monospace"}}>📂 Importar Excel</div>
-                <div style={infoBox}><strong style={{color:"#00D4FF"}}>Columnas detectadas:</strong> Issue Id · Severity · Issue Type Name · Threat Class · Repo · Discovery Method · Git Source File Uri · hrs · Release · Comentario</div>
+                <div style={{fontSize:11,fontWeight:700,color:"var(--accent)",letterSpacing:1.5,marginBottom:12,textTransform:"uppercase",fontFamily:"monospace"}}>📂 Importar Excel</div>
+                <div style={infoBox}><strong style={{color:"var(--accent)"}}>Columnas detectadas:</strong> Issue Id · Severity · Issue Type Name · Threat Class · Repo · Discovery Method · Git Source File Uri · hrs · Release · Comentario</div>
                 <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleFile} style={{display:"none"}}/>
                 <button style={btnP} onClick={()=>fileRef.current.click()}>📂 Seleccionar Archivo Excel</button>
               </div>
@@ -1900,27 +1900,27 @@ function ImportacionPhase({ cfg, setCfg, issues, stats, fileRef, handleFile, lbl
               {issues.length>0&&(
                 <>
                   <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:14}}>
-                    {[{l:"Total Issues",v:stats.total,c:"#00D4FF"},{l:"Alta / Crítica",v:stats.high,c:"#FF4560"},{l:"Media",v:stats.medium,c:"#FFB800"},{l:"Repos",v:stats.repos,c:"#A78BFA"},{l:"Horas Est.",v:stats.hrs,c:"#00E676"}].map(s=>(
+                    {[{l:"Total Issues",v:stats.total,c:"var(--accent)"},{l:"Alta / Crítica",v:stats.high,c:"#FF4560"},{l:"Media",v:stats.medium,c:"var(--warning)"},{l:"Repos",v:stats.repos,c:"#A78BFA"},{l:"Horas Est.",v:stats.hrs,c:"var(--success)"}].map(s=>(
                       <div key={s.l} style={card({marginBottom:0,textAlign:"center"})}>
                         <div style={{fontSize:22,fontWeight:800,color:s.c}}>{s.v}</div>
-                        <div style={{fontSize:10,color:"#3A5070",marginTop:2}}>{s.l}</div>
+                        <div style={{fontSize:10,color:"var(--text-muted)",marginTop:2}}>{s.l}</div>
                       </div>
                     ))}
                   </div>
                   <div style={card()}>
-                    <div style={{fontSize:11,fontWeight:700,color:"#00D4FF",letterSpacing:1.5,marginBottom:12,textTransform:"uppercase",fontFamily:"monospace"}}>📋 Issues Importados ({issues.length})</div>
+                    <div style={{fontSize:11,fontWeight:700,color:"var(--accent)",letterSpacing:1.5,marginBottom:12,textTransform:"uppercase",fontFamily:"monospace"}}>📋 Issues Importados ({issues.length})</div>
                     <div style={{overflowX:"auto"}}>
                       <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-                        <thead><tr>{["Severidad","Tipo","Repo","Archivo","Método","Hrs"].map(h=><th key={h} style={{padding:"7px 10px",borderBottom:"1px solid #1A2840",textAlign:"left",fontSize:10,color:"#3A5070",letterSpacing:1,textTransform:"uppercase",fontFamily:"monospace",background:"#0A1020"}}>{h}</th>)}</tr></thead>
+                        <thead><tr>{["Severidad","Tipo","Repo","Archivo","Método","Hrs"].map(h=><th key={h} style={{padding:"7px 10px",borderBottom:"1px solid var(--border)",textAlign:"left",fontSize:10,color:"var(--text-muted)",letterSpacing:1,textTransform:"uppercase",fontFamily:"monospace",background:"var(--bg-panel)"}}>{h}</th>)}</tr></thead>
                         <tbody>
                           {issues.map((iss,i)=>(
                             <tr key={i}>
-                              <td style={{padding:"8px 10px",borderBottom:"1px solid #111D2E",verticalAlign:"middle"}}><span style={sevBadge(iss.severity)}>{SEV[iss.severity]?.label||iss.severity}</span></td>
-                              <td style={{padding:"8px 10px",borderBottom:"1px solid #111D2E",color:"#D0DCF0",maxWidth:150}}>{TYPE_MAP[iss.issueType]||iss.issueType}</td>
-                              <td style={{padding:"8px 10px",borderBottom:"1px solid #111D2E",color:"#8AACCC"}}>{iss.repo}</td>
-                              <td style={{padding:"8px 10px",borderBottom:"1px solid #111D2E",maxWidth:180,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}><span style={{fontFamily:"monospace",fontSize:10,color:"#00D4FF"}} title={iss.filePath}>{iss.fileName}</span></td>
-                              <td style={{padding:"8px 10px",borderBottom:"1px solid #111D2E"}}><span style={methBadge("sast")}>{iss.method||"SAST"}</span></td>
-                              <td style={{padding:"8px 10px",borderBottom:"1px solid #111D2E",color:"#8AACCC",textAlign:"right"}}>{iss.hrs}</td>
+                              <td style={{padding:"8px 10px",borderBottom:"1px solid var(--border)",verticalAlign:"middle"}}><span style={sevBadge(iss.severity)}>{SEV[iss.severity]?.label||iss.severity}</span></td>
+                              <td style={{padding:"8px 10px",borderBottom:"1px solid var(--border)",color:"var(--text-primary)",maxWidth:150}}>{TYPE_MAP[iss.issueType]||iss.issueType}</td>
+                              <td style={{padding:"8px 10px",borderBottom:"1px solid var(--border)",color:"#8AACCC"}}>{iss.repo}</td>
+                              <td style={{padding:"8px 10px",borderBottom:"1px solid var(--border)",maxWidth:180,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}><span style={{fontFamily:"monospace",fontSize:10,color:"var(--accent)"}} title={iss.filePath}>{iss.fileName}</span></td>
+                              <td style={{padding:"8px 10px",borderBottom:"1px solid var(--border)"}}><span style={methBadge("sast")}>{iss.method||"SAST"}</span></td>
+                              <td style={{padding:"8px 10px",borderBottom:"1px solid var(--border)",color:"#8AACCC",textAlign:"right"}}>{iss.hrs}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -1940,22 +1940,22 @@ function ImportacionPhase({ cfg, setCfg, issues, stats, fileRef, handleFile, lbl
 // ──────────────────────────────────────────────────────────────────
 // ── DiagnosticoPhase ─────────────────────────────────────────────────────────────────
 // Props destructured from App state
-function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, setRepoF, fetchSonar, mcpUrl, setMcpUrl, mcpStatus, checkMcpStatus, jenkinsMcpUrl, setJenkinsMcpUrl, jenkinsMcpStatus, checkJenkinsMcpStatus, getSonarUrl, checkRepo, checkAll, exportPipelineDashboard, loadDashboardExcel, dashboardWbName, completePhase, showSources, setShowSources, getSourcesDisplay, card, inp, infoBox, warnBox, lbl, btnP, btnS, btnG, btnA, dot, methBadge, sevBadge }) {
+function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, setRepoF, fetchSonar, mcpUrl, setMcpUrl, mcpStatus, checkMcpStatus, jenkinsMcpUrl, setJenkinsMcpUrl, jenkinsMcpStatus, checkJenkinsMcpStatus, getSonarUrl, checkRepo, checkAll, exportPipelineDashboard, loadDashboardExcel, dashboardWbName, completePhase, showSources, setShowSources, getSourcesDisplay, card, inp, infoBox, warnBox, lbl, btnP, btnS, btnG, btnA, dot, methBadge, sevBadge, darkMode }) {
   const excelInputRef = React.useRef(null);
   return (
             <div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24,paddingBottom:18,borderBottom:"1px solid #1A2840"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24,paddingBottom:18,borderBottom:"1px solid var(--border)"}}>
                 <div>
-                  <div style={{fontSize:10,color:"#00D4FF",letterSpacing:2,fontFamily:"monospace",marginBottom:4}}>FASE 1 — DIAGNÓSTICO</div>
-                  <div style={{fontSize:24,fontWeight:800,color:"#E0EDFF"}}>Verificación Pipeline + Deuda Técnica</div>
-                  <div style={{fontSize:12,color:"#4A6080",marginTop:4}}>Verificación dual: Jenkinsfile en Git + Job activo en Jenkins + SonarQube.</div>
+                  <div style={{fontSize:10,color:"var(--accent)",letterSpacing:2,fontFamily:"monospace",marginBottom:4}}>FASE 1 — DIAGNÓSTICO</div>
+                  <div style={{fontSize:24,fontWeight:800,color:"var(--text-bright)"}}>Verificación Pipeline + Deuda Técnica</div>
+                  <div style={{fontSize:12,color:"var(--text-secondary)",marginTop:4}}>Verificación dual: Jenkinsfile en Git + Job activo en Jenkins + SonarQube.</div>
                 </div>
                 <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",justifyContent:"flex-end"}}>
                   <button style={btnA} onClick={checkAll}>⚡ Analizar Todos</button>
                   {/* Cargar Excel existente para agregar datos sin sobrescribir */}
                   <input ref={excelInputRef} type="file" accept=".xlsx,.xls" style={{display:"none"}} onChange={loadDashboardExcel}/>
                   <button
-                    style={{...btnS,background:"#00304010",border:"1px solid #00D4FF40",color:"#00D4FF"}}
+                    style={{...btnS,background:"#00304010",border:"1px solid #00D4FF40",color:"var(--accent)"}}
                     onClick={()=>excelInputRef.current&&excelInputRef.current.click()}
                     title="Carga un Excel previo para agregar datos desde la primera fila vacía">
                     📂 {dashboardWbName ? dashboardWbName : "Cargar Excel existente"}
@@ -1970,45 +1970,45 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, set
               {/* MCP Servers row */}
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
                 {/* SonarQube MCP */}
-                <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#060B14",border:`1px solid ${mcpStatus==="ok"?"#00E67630":mcpStatus==="error"?"#FF456030":"#1A2840"}`,borderRadius:8}}>
-                  <span style={{fontSize:10,color:"#00D4FF",fontFamily:"monospace",whiteSpace:"nowrap"}}>📊 SONAR MCP</span>
+                <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"var(--bg-base)",border:`1px solid ${mcpStatus==="ok"?"#00E67630":mcpStatus==="error"?"#FF456030":"#1A2840"}`,borderRadius:8}}>
+                  <span style={{fontSize:10,color:"var(--accent)",fontFamily:"monospace",whiteSpace:"nowrap"}}>📊 SONAR MCP</span>
                   <input style={{...inp,flex:1,fontSize:11}} value={mcpUrl} onChange={e=>setMcpUrl(e.target.value)} placeholder="http://127.0.0.1:3747"/>
                   <button
                     onClick={()=>checkMcpStatus(mcpUrl)}
                     disabled={mcpStatus==="checking"}
-                    style={{padding:"6px 12px",borderRadius:6,border:"1px solid #00D4FF40",background:"#00D4FF10",color:"#00D4FF",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"monospace",whiteSpace:"nowrap",opacity:mcpStatus==="checking"?0.6:1}}>
+                    style={{padding:"6px 12px",borderRadius:6,border:"1px solid #00D4FF40",background:"#00D4FF10",color:"var(--accent)",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"monospace",whiteSpace:"nowrap",opacity:mcpStatus==="checking"?0.6:1}}>
                     {mcpStatus==="checking"?"⟳…":"Conectar"}
                   </button>
                   <span style={{fontSize:10,fontFamily:"monospace",whiteSpace:"nowrap",color:mcpStatus==="ok"?"#00E676":mcpStatus==="error"?"#FF4560":"#2A4060"}}>
                     {mcpStatus==="ok"?"● Conectado":mcpStatus==="error"?"● Sin conexión":mcpStatus==="checking"?"● Verificando…":"● Sin verificar"}
                   </span>
-                  <span style={{fontSize:9,color:"#2A4060",fontFamily:"monospace",whiteSpace:"nowrap"}}>node sonar-mcp-server.js</span>
+                  <span style={{fontSize:9,color:"var(--text-dim)",fontFamily:"monospace",whiteSpace:"nowrap"}}>node sonar-mcp-server.js</span>
                 </div>
                 {/* Jenkins MCP */}
-                <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#060B14",border:`1px solid ${jenkinsMcpStatus==="ok"?"#FFB80030":jenkinsMcpStatus==="error"?"#FF456030":"#1A2840"}`,borderRadius:8}}>
-                  <span style={{fontSize:10,color:"#FFB800",fontFamily:"monospace",whiteSpace:"nowrap"}}>⚙ JENKINS MCP</span>
+                <div style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"var(--bg-base)",border:`1px solid ${jenkinsMcpStatus==="ok"?"#FFB80030":jenkinsMcpStatus==="error"?"#FF456030":"#1A2840"}`,borderRadius:8}}>
+                  <span style={{fontSize:10,color:"var(--warning)",fontFamily:"monospace",whiteSpace:"nowrap"}}>⚙ JENKINS MCP</span>
                   <input style={{...inp,flex:1,fontSize:11}} value={jenkinsMcpUrl} onChange={e=>setJenkinsMcpUrl(e.target.value)} placeholder="http://127.0.0.1:3748"/>
                   <button
                     onClick={()=>checkJenkinsMcpStatus(jenkinsMcpUrl)}
                     disabled={jenkinsMcpStatus==="checking"}
-                    style={{padding:"6px 12px",borderRadius:6,border:"1px solid #FFB80040",background:"#FFB80010",color:"#FFB800",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"monospace",whiteSpace:"nowrap",opacity:jenkinsMcpStatus==="checking"?0.6:1}}>
+                    style={{padding:"6px 12px",borderRadius:6,border:"1px solid #FFB80040",background:"#FFB80010",color:"var(--warning)",fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:"monospace",whiteSpace:"nowrap",opacity:jenkinsMcpStatus==="checking"?0.6:1}}>
                     {jenkinsMcpStatus==="checking"?"⟳…":"Conectar"}
                   </button>
                   <span style={{fontSize:10,fontFamily:"monospace",whiteSpace:"nowrap",color:jenkinsMcpStatus==="ok"?"#00E676":jenkinsMcpStatus==="error"?"#FF4560":"#2A4060"}}>
                     {jenkinsMcpStatus==="ok"?"● Conectado":jenkinsMcpStatus==="error"?"● Sin conexión":jenkinsMcpStatus==="checking"?"● Verificando…":"● Sin verificar"}
                   </span>
-                  <span style={{fontSize:9,color:"#2A4060",fontFamily:"monospace",whiteSpace:"nowrap"}}>node jenkins-mcp-server.js</span>
+                  <span style={{fontSize:9,color:"var(--text-dim)",fontFamily:"monospace",whiteSpace:"nowrap"}}>node jenkins-mcp-server.js</span>
                 </div>
               </div>
 
               {/* Distribución por tipo */}
               <div style={card()}>
-                <div style={{fontSize:11,fontWeight:700,color:"#00D4FF",letterSpacing:1.5,marginBottom:12,textTransform:"uppercase",fontFamily:"monospace"}}>📊 Distribución por Tipo</div>
+                <div style={{fontSize:11,fontWeight:700,color:"var(--accent)",letterSpacing:1.5,marginBottom:12,textTransform:"uppercase",fontFamily:"monospace"}}>📊 Distribución por Tipo</div>
                 <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                   {stats.byType.map(t=>(
-                    <div key={t.type} style={{background:"#0F1E35",border:"1px solid #1A2840",borderRadius:8,padding:"8px 14px",textAlign:"center",minWidth:100}}>
+                    <div key={t.type} style={{background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:8,padding:"8px 14px",textAlign:"center",minWidth:100}}>
                       <div style={{fontSize:20,fontWeight:800,color:"#FF4560"}}>{t.count}</div>
-                      <div style={{fontSize:10,color:"#3A5070",maxWidth:120,marginTop:2}}>{TYPE_MAP[t.type]||t.type}</div>
+                      <div style={{fontSize:10,color:"var(--text-muted)",maxWidth:120,marginTop:2}}>{TYPE_MAP[t.type]||t.type}</div>
                     </div>
                   ))}
                 </div>
@@ -2025,10 +2025,10 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, set
                     {/* Header */}
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
                       <div style={{display:"flex",alignItems:"center",gap:10}}>
-                        <div style={{width:36,height:36,borderRadius:8,background:"#0F1E35",border:"1px solid #1A2840",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🗃</div>
+                        <div style={{width:36,height:36,borderRadius:8,background:"var(--bg-card)",border:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🗃</div>
                         <div>
-                          <div style={{fontWeight:700,color:"#E0EDFF",fontSize:14}}>{repo.name}</div>
-                          <div style={{fontSize:10,color:"#3A5070",fontFamily:"monospace",marginTop:1}}>{repo.issues.length} vulnerabilidades · {repo.gitUrl||cfg.gitBase+repo.name}</div>
+                          <div style={{fontWeight:700,color:"var(--text-bright)",fontSize:14}}>{repo.name}</div>
+                          <div style={{fontSize:10,color:"var(--text-muted)",fontFamily:"monospace",marginTop:1}}>{repo.issues.length} vulnerabilidades · {repo.gitUrl||cfg.gitBase+repo.name}</div>
                         </div>
                       </div>
                       <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -2040,26 +2040,26 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, set
                     {/* 2 panels */}
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                       {/* Jenkins job */}
-                      <div style={{background:"#060B14",borderRadius:8,padding:14,border:`1px solid ${repo.jenkinsCheckStatus==="ok"?"#00D4FF30":repo.jenkinsCheckStatus==="error"?"#FF456030":"#1A2840"}`}}>
-                        <div style={{fontSize:10,color:"#3A5070",fontFamily:"monospace",marginBottom:10}}>⚙ JENKINS — JOB ACTIVO</div>
+                      <div style={{background:"var(--bg-base)",borderRadius:8,padding:14,border:`1px solid ${repo.jenkinsCheckStatus==="ok"?"#00D4FF30":repo.jenkinsCheckStatus==="error"?"#FF456030":"#1A2840"}`}}>
+                        <div style={{fontSize:10,color:"var(--text-muted)",fontFamily:"monospace",marginBottom:10}}>⚙ JENKINS — JOB ACTIVO</div>
                         <div style={{display:"flex",alignItems:"flex-start",gap:6,marginBottom:8}}>
                           <span style={dot(repo.jenkinsCheckStatus==="ok"?"ok":repo.jenkinsCheckStatus==="error"?"error":repo.jenkinsCheckStatus==="checking"?"checking":"gray")}/>
                           <div>
                             <div style={{fontSize:11,fontWeight:600,color:repo.jenkinsCheckStatus==="ok"?"#00D4FF":repo.jenkinsCheckStatus==="error"?"#FF4560":repo.jenkinsCheckStatus==="checking"?"#FFB800":"#3A5070"}}>
                               {repo.jenkinsCheckStatus==="ok"?"Job activo en Jenkins":repo.jenkinsCheckStatus==="error"?"Job no encontrado":repo.jenkinsCheckStatus==="checking"?"Verificando…":repo.jenkinsCheckStatus==="skipped"?"Omitido (sin Jenkinsfile)":"Pendiente de Step 1"}
                             </div>
-                            <div style={{fontSize:10,color:"#3A5070",marginTop:2,fontFamily:"monospace"}}>{repo.jenkinsCheckMsg||"GET /api/json?tree=lastBuild"}</div>
+                            <div style={{fontSize:10,color:"var(--text-muted)",marginTop:2,fontFamily:"monospace"}}>{repo.jenkinsCheckMsg||"GET /api/json?tree=lastBuild"}</div>
                           </div>  
                         </div>
                         {repo.lastBuild&&(
                           <div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap",alignItems:"center"}}>
-                            <span style={{background:"#0A1020",borderRadius:4,padding:"3px 7px",fontSize:10,fontFamily:"monospace",color:"#8AACCC"}}>Build: <strong style={{color:"#E0EDFF"}}>{repo.lastBuild}</strong></span>
-                            <span style={{background:"#0A1020",borderRadius:4,padding:"3px 7px",fontSize:10,fontFamily:"monospace",color:repo.lastBuildStatus==="SUCCESS"?"#00E676":"#FF4560",fontWeight:700}}>{repo.lastBuildStatus}</span>
+                            <span style={{background:"var(--bg-panel)",borderRadius:4,padding:"3px 7px",fontSize:10,fontFamily:"monospace",color:"#8AACCC"}}>Build: <strong style={{color:"var(--text-bright)"}}>{repo.lastBuild}</strong></span>
+                            <span style={{background:"var(--bg-panel)",borderRadius:4,padding:"3px 7px",fontSize:10,fontFamily:"monospace",color:repo.lastBuildStatus==="SUCCESS"?"#00E676":"#FF4560",fontWeight:700}}>{repo.lastBuildStatus}</span>
                           </div>
                         )}
                         {/* DCL — editable manualmente para forzar condición en export */}
                         <div style={{marginTop:8}}>
-                          <label style={{fontSize:9,color:"#3A5070",fontFamily:"monospace",letterSpacing:1,display:"block",marginBottom:3}}>🎫 DCL (opcional — activa: Completado / 100 / Sin Deuda)</label>
+                          <label style={{fontSize:9,color:"var(--text-muted)",fontFamily:"monospace",letterSpacing:1,display:"block",marginBottom:3}}>🎫 DCL (opcional — activa: Completado / 100 / Sin Deuda)</label>
                           <input
                             style={{...inp,fontSize:11,width:"100%"}}
                             value={repo.lastDCL||""}
@@ -2067,7 +2067,7 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, set
                             placeholder="DCL-946"
                           />
                         </div>
-                        <div style={{fontSize:10,color:"#2A4060",fontFamily:"monospace",wordBreak:"break-all",padding:"5px 8px",background:"#0A1020",borderRadius:4,marginTop:6}}>{(repo.jenkinsUrl||cfg.jenkinsBase+repo.name)+"/api/json"}</div>
+                        <div style={{fontSize:10,color:"var(--text-dim)",fontFamily:"monospace",wordBreak:"break-all",padding:"5px 8px",background:"var(--bg-panel)",borderRadius:4,marginTop:6}}>{(repo.jenkinsUrl||cfg.jenkinsBase+repo.name)+"/api/json"}</div>
                       </div>
 
                       {/* SonarQube — manual entry panel */}
@@ -2078,18 +2078,18 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, set
                         const sonarUrl = getSonarUrl(repoName, sd.branch || cfg.ticket);
                         const ratingColor = r => ({A:"#00E676",B:"#69F0AE",C:"#FFB800",D:"#FF7043",E:"#FF4560"}[r]||"#3A5070");
                         return (
-                          <div style={{background:"#060B14",borderRadius:8,padding:14,border:`1px solid ${qgSet?(qgOk?"#00E67640":"#FF456040"):"#1A2840"}`}}>
+                          <div style={{background:"var(--bg-base)",borderRadius:8,padding:14,border:`1px solid ${qgSet?(qgOk?"#00E67640":"#FF456040"):"#1A2840"}`}}>
                             {/* Header + URL */}
                             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-                              <div style={{fontSize:10,color:"#3A5070",fontFamily:"monospace"}}>📊 SONARQUBE — DEUDA TÉCNICA</div>
+                              <div style={{fontSize:10,color:"var(--text-muted)",fontFamily:"monospace"}}>📊 SONARQUBE — DEUDA TÉCNICA</div>
                               <a href={sonarUrl} target="_blank" rel="noopener noreferrer"
-                                style={{fontSize:10,color:"#00D4FF",background:"#00D4FF10",padding:"3px 10px",borderRadius:4,border:"1px solid #00D4FF30",textDecoration:"none",fontFamily:"monospace",display:"flex",alignItems:"center",gap:5}}>
+                                style={{fontSize:10,color:"var(--accent)",background:"#00D4FF10",padding:"3px 10px",borderRadius:4,border:"1px solid #00D4FF30",textDecoration:"none",fontFamily:"monospace",display:"flex",alignItems:"center",gap:5}}>
                                 🔗 Abrir SonarQube ↗
                               </a>
                             </div>
 
                             {/* Dynamic URL preview */}
-                            <div style={{fontSize:9,color:"#2A4060",fontFamily:"monospace",wordBreak:"break-all",padding:"4px 8px",background:"#030810",borderRadius:4,marginBottom:10,border:"1px solid #0A1828"}}>
+                            <div style={{fontSize:9,color:"var(--text-dim)",fontFamily:"monospace",wordBreak:"break-all",padding:"4px 8px",background:"var(--bg-input)",borderRadius:4,marginBottom:10,border:"1px solid var(--bg-input)"}}>
                               {sonarUrl}
                             </div>
 
@@ -2101,7 +2101,7 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, set
                                 <button
                                   onClick={()=>fetchSonar(repoName, sd.branch||"")}
                                   disabled={sd._fetching}
-                                  style={{padding:"6px 12px",borderRadius:6,border:"1px solid #00D4FF40",background:sd._fetching?"#00D4FF10":"#00D4FF15",color:"#00D4FF",fontSize:11,fontWeight:700,cursor:sd._fetching?"not-allowed":"pointer",fontFamily:"monospace",whiteSpace:"nowrap",opacity:sd._fetching?0.6:1}}>
+                                  style={{padding:"6px 12px",borderRadius:6,border:"1px solid #00D4FF40",background:sd._fetching?"#00D4FF10":"#00D4FF15",color:"var(--accent)",fontSize:11,fontWeight:700,cursor:sd._fetching?"not-allowed":"pointer",fontFamily:"monospace",whiteSpace:"nowrap",opacity:sd._fetching?0.6:1}}>
                                   {sd._fetching?"⟳ Cargando…":"⬇ Fetch"}
                                 </button>
                               </div>
@@ -2124,11 +2124,11 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, set
                             {/* Metrics grid — mirrors SonarQube dashboard */}
                             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:7,marginBottom:8}}>
                               {/* Security */}
-                              <div style={{background:"#0A1020",borderRadius:6,padding:"8px 10px"}}>
-                                <div style={{fontSize:9,color:"#3A5070",fontFamily:"monospace",marginBottom:5,letterSpacing:1}}>SECURITY</div>
+                              <div style={{background:"var(--bg-panel)",borderRadius:6,padding:"8px 10px"}}>
+                                <div style={{fontSize:9,color:"var(--text-muted)",fontFamily:"monospace",marginBottom:5,letterSpacing:1}}>SECURITY</div>
                                 <div style={{display:"flex",gap:5,alignItems:"center"}}>
                                   <input style={{...inp,width:55,fontSize:12,textAlign:"center",padding:"4px 6px"}} value={sd.secIssues||""} onChange={e=>setSonarF(repoName,"secIssues",e.target.value)} placeholder="7"/>
-                                  <span style={{fontSize:10,color:"#3A5070"}}>issues</span>
+                                  <span style={{fontSize:10,color:"var(--text-muted)"}}>issues</span>
                                   <select style={{...inp,width:44,fontSize:12,padding:"4px 4px",textAlign:"center"}} value={sd.secRating||""} onChange={e=>setSonarF(repoName,"secRating",e.target.value)}>
                                     <option value="">-</option>
                                     {["A","B","C","D","E"].map(r=><option key={r} value={r}>{r}</option>)}
@@ -2138,11 +2138,11 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, set
                               </div>
 
                               {/* Reliability */}
-                              <div style={{background:"#0A1020",borderRadius:6,padding:"8px 10px"}}>
-                                <div style={{fontSize:9,color:"#3A5070",fontFamily:"monospace",marginBottom:5,letterSpacing:1}}>RELIABILITY</div>
+                              <div style={{background:"var(--bg-panel)",borderRadius:6,padding:"8px 10px"}}>
+                                <div style={{fontSize:9,color:"var(--text-muted)",fontFamily:"monospace",marginBottom:5,letterSpacing:1}}>RELIABILITY</div>
                                 <div style={{display:"flex",gap:5,alignItems:"center"}}>
                                   <input style={{...inp,width:55,fontSize:12,textAlign:"center",padding:"4px 6px"}} value={sd.relIssues||""} onChange={e=>setSonarF(repoName,"relIssues",e.target.value)} placeholder="41"/>
-                                  <span style={{fontSize:10,color:"#3A5070"}}>issues</span>
+                                  <span style={{fontSize:10,color:"var(--text-muted)"}}>issues</span>
                                   <select style={{...inp,width:44,fontSize:12,padding:"4px 4px"}} value={sd.relRating||""} onChange={e=>setSonarF(repoName,"relRating",e.target.value)}>
                                     <option value="">-</option>
                                     {["A","B","C","D","E"].map(r=><option key={r} value={r}>{r}</option>)}
@@ -2152,11 +2152,11 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, set
                               </div>
 
                               {/* Maintainability */}
-                              <div style={{background:"#0A1020",borderRadius:6,padding:"8px 10px"}}>
-                                <div style={{fontSize:9,color:"#3A5070",fontFamily:"monospace",marginBottom:5,letterSpacing:1}}>MAINTAINABILITY</div>
+                              <div style={{background:"var(--bg-panel)",borderRadius:6,padding:"8px 10px"}}>
+                                <div style={{fontSize:9,color:"var(--text-muted)",fontFamily:"monospace",marginBottom:5,letterSpacing:1}}>MAINTAINABILITY</div>
                                 <div style={{display:"flex",gap:5,alignItems:"center"}}>
                                   <input style={{...inp,width:55,fontSize:12,textAlign:"center",padding:"4px 6px"}} value={sd.maintIssues||""} onChange={e=>setSonarF(repoName,"maintIssues",e.target.value)} placeholder="2.3k"/>
-                                  <span style={{fontSize:10,color:"#3A5070"}}>issues</span>
+                                  <span style={{fontSize:10,color:"var(--text-muted)"}}>issues</span>
                                   <select style={{...inp,width:44,fontSize:12,padding:"4px 4px"}} value={sd.maintRating||""} onChange={e=>setSonarF(repoName,"maintRating",e.target.value)}>
                                     <option value="">-</option>
                                     {["A","B","C","D","E"].map(r=><option key={r} value={r}>{r}</option>)}
@@ -2168,18 +2168,18 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, set
 
                             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:7,marginBottom:8}}>
                               {/* Coverage */}
-                              <div style={{background:"#0A1020",borderRadius:6,padding:"8px 10px"}}>
-                                <div style={{fontSize:9,color:"#3A5070",fontFamily:"monospace",marginBottom:5}}>COVERAGE %</div>
+                              <div style={{background:"var(--bg-panel)",borderRadius:6,padding:"8px 10px"}}>
+                                <div style={{fontSize:9,color:"var(--text-muted)",fontFamily:"monospace",marginBottom:5}}>COVERAGE %</div>
                                 <input style={{...inp,fontSize:12,textAlign:"center",padding:"4px 6px"}} value={sd.coverage||""} onChange={e=>setSonarF(repoName,"coverage",e.target.value)} placeholder="0.0%"/>
                               </div>
                               {/* Duplications */}
-                              <div style={{background:"#0A1020",borderRadius:6,padding:"8px 10px"}}>
-                                <div style={{fontSize:9,color:"#3A5070",fontFamily:"monospace",marginBottom:5}}>DUPLICATIONS %</div>
+                              <div style={{background:"var(--bg-panel)",borderRadius:6,padding:"8px 10px"}}>
+                                <div style={{fontSize:9,color:"var(--text-muted)",fontFamily:"monospace",marginBottom:5}}>DUPLICATIONS %</div>
                                 <input style={{...inp,fontSize:12,textAlign:"center",padding:"4px 6px"}} value={sd.duplications||""} onChange={e=>setSonarF(repoName,"duplications",e.target.value)} placeholder="11.4%"/>
                               </div>
                               {/* Hotspots */}
-                              <div style={{background:"#0A1020",borderRadius:6,padding:"8px 10px"}}>
-                                <div style={{fontSize:9,color:"#3A5070",fontFamily:"monospace",marginBottom:5}}>HOTSPOTS</div>
+                              <div style={{background:"var(--bg-panel)",borderRadius:6,padding:"8px 10px"}}>
+                                <div style={{fontSize:9,color:"var(--text-muted)",fontFamily:"monospace",marginBottom:5}}>HOTSPOTS</div>
                                 <input style={{...inp,fontSize:12,textAlign:"center",padding:"4px 6px"}} value={sd.hotspots||""} onChange={e=>setSonarF(repoName,"hotspots",e.target.value)} placeholder="6"/>
                                 <select style={{...inp,fontSize:10,padding:"3px 4px",marginTop:4}} value={sd.hotspotsStatus||""} onChange={e=>setSonarF(repoName,"hotspotsStatus",e.target.value)}>
                                   <option value="">Estado</option>
@@ -2188,8 +2188,8 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, set
                                 </select>
                               </div>
                               {/* Lines of Code */}
-                              <div style={{background:"#0A1020",borderRadius:6,padding:"8px 10px"}}>
-                                <div style={{fontSize:9,color:"#3A5070",fontFamily:"monospace",marginBottom:5}}>LINES OF CODE</div>
+                              <div style={{background:"var(--bg-panel)",borderRadius:6,padding:"8px 10px"}}>
+                                <div style={{fontSize:9,color:"var(--text-muted)",fontFamily:"monospace",marginBottom:5}}>LINES OF CODE</div>
                                 <input style={{...inp,fontSize:12,textAlign:"center",padding:"4px 6px"}} value={sd.loc||""} onChange={e=>setSonarF(repoName,"loc",e.target.value)} placeholder="45k"/>
                               </div>
                             </div>
@@ -2205,9 +2205,9 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, set
                               <div style={{marginTop:10,display:"flex",flexWrap:"wrap",gap:5}}>
                                 <span style={{...sevBadge(qgOk?"Low":"High"),fontSize:9}}>QG: {sd.qg}</span>
                                 {sd.secIssues&&<span style={{fontSize:9,padding:"2px 7px",borderRadius:100,background:"#FF456015",color:"#FF4560",border:"1px solid #FF456030",fontFamily:"monospace"}}>🔒 Seg: {sd.secIssues} ({sd.secRating||"?"})</span>}
-                                {sd.relIssues&&<span style={{fontSize:9,padding:"2px 7px",borderRadius:100,background:"#FFB80015",color:"#FFB800",border:"1px solid #FFB80030",fontFamily:"monospace"}}>⚡ Rel: {sd.relIssues} ({sd.relRating||"?"})</span>}
+                                {sd.relIssues&&<span style={{fontSize:9,padding:"2px 7px",borderRadius:100,background:"#FFB80015",color:"var(--warning)",border:"1px solid #FFB80030",fontFamily:"monospace"}}>⚡ Rel: {sd.relIssues} ({sd.relRating||"?"})</span>}
                                 {sd.hotspots&&<span style={{fontSize:9,padding:"2px 7px",borderRadius:100,background:"#FF456015",color:"#FF7043",border:"1px solid #FF456030",fontFamily:"monospace"}}>🔥 Hotspots: {sd.hotspots} ({sd.hotspotsStatus||"?"})</span>}
-                                {sd.coverage&&<span style={{fontSize:9,padding:"2px 7px",borderRadius:100,background:"#00D4FF15",color:"#00D4FF",border:"1px solid #00D4FF30",fontFamily:"monospace"}}>📊 Coverage: {sd.coverage}</span>}
+                                {sd.coverage&&<span style={{fontSize:9,padding:"2px 7px",borderRadius:100,background:"#00D4FF15",color:"var(--accent)",border:"1px solid #00D4FF30",fontFamily:"monospace"}}>📊 Coverage: {sd.coverage}</span>}
                                 {sd.duplications&&<span style={{fontSize:9,padding:"2px 7px",borderRadius:100,background:"#A78BFA15",color:"#A78BFA",border:"1px solid #A78BFA30",fontFamily:"monospace"}}>⧉ Dup: {sd.duplications}</span>}
                               </div>
                             )}
@@ -2225,12 +2225,12 @@ function DiagnosticoPhase({ cfg, issues, repos, stats, sonarData, setSonarF, set
                             <div style={{fontSize:12,fontWeight:700,color:method==="pipeline"?"#00D4FF":"#A78BFA"}}>
                               {method==="pipeline"?"Pipeline CI/CD confirmado — Jenkinsfile ✓ + Job Jenkins ✓":`Despliegue Manual${!repo.hasJF?" — Jenkinsfile ausente":" — Job Jenkins no encontrado"}`}
                             </div>
-                            <div style={{fontSize:10,color:"#3A5070",marginTop:2}}>{method==="pipeline"?`Último build: ${repo.lastBuild} (${repo.lastBuildStatus})`:"Requiere ventana de mantenimiento y transferencia manual"}</div>
+                            <div style={{fontSize:10,color:"var(--text-muted)",marginTop:2}}>{method==="pipeline"?`Último build: ${repo.lastBuild} (${repo.lastBuildStatus})`:"Requiere ventana de mantenimiento y transferencia manual"}</div>
                           </div>
                         </div>
                         <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-                          {repo.lastDCL&&<span style={{background:"#FFB80015",borderRadius:6,padding:"4px 10px",fontSize:11,fontFamily:"monospace",color:"#FFB800",border:"1px solid #FFB80030",fontWeight:700}}>🎫 {repo.lastDCL}</span>}
-                          <div style={{fontSize:10,fontFamily:"monospace",color:"#3A5070"}}>
+                          {repo.lastDCL&&<span style={{background:"#FFB80015",borderRadius:6,padding:"4px 10px",fontSize:11,fontFamily:"monospace",color:"var(--warning)",border:"1px solid #FFB80030",fontWeight:700}}>🎫 {repo.lastDCL}</span>}
+                          <div style={{fontSize:10,fontFamily:"monospace",color:"var(--text-muted)"}}>
                             {sonarData[repoName]?.qg&&<span>QG: <span style={{color:sonarData[repoName]?.qg==="Passed"?"#00E676":"#FF4560",fontWeight:700}}>{sonarData[repoName]?.qg}</span></span>}
                             {sonarData[repoName]?.hotspots&&<span style={{marginLeft:8}}>🔥 {sonarData[repoName]?.hotspots} hotspots</span>}
                           </div>
@@ -2603,26 +2603,26 @@ function exportAllVulnsDTInOneDocx(stats, docData, cfg, repos, TODAY) {
 
 // ── DocumentosPhase ─────────────────────────────────────────────────────────────────
 // Props destructured from App state
-function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, setVulnF, stats, sonarData, dl1, dlAll, showSources, setShowSources, getSourcesDisplay, TODAY, card, inp, ta, infoBox, warnBox, lbl, btnS, btnG, sevBadge, fetchAI, fetchAI_DT, fetchAI_field, aiLoading, claudeMcpStatus, repos }) {
+function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, setVulnF, stats, sonarData, dl1, dlAll, showSources, setShowSources, getSourcesDisplay, TODAY, card, inp, ta, infoBox, warnBox, lbl, btnS, btnG, sevBadge, fetchAI, fetchAI_DT, fetchAI_field, aiLoading, claudeMcpStatus, repos, darkMode }) {
   return (
             <div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24,paddingBottom:18,borderBottom:"1px solid #1A2840"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24,paddingBottom:18,borderBottom:"1px solid var(--border)"}}>
                 <div>
-                  <div style={{fontSize:10,color:"#00D4FF",letterSpacing:2,fontFamily:"monospace",marginBottom:4}}>FASE 2 — DOCUMENTACIÓN</div>
-                  <div style={{fontSize:24,fontWeight:800,color:"#E0EDFF"}}>Generación de los 4 Documentos</div>
-                  <div style={{fontSize:12,color:"#4A6080",marginTop:4}}>Auto-llenados con datos del reporte. Edita y descarga.</div>
+                  <div style={{fontSize:10,color:"var(--accent)",letterSpacing:2,fontFamily:"monospace",marginBottom:4}}>FASE 2 — DOCUMENTACIÓN</div>
+                  <div style={{fontSize:24,fontWeight:800,color:"var(--text-bright)"}}>Generación de los 4 Documentos</div>
+                  <div style={{fontSize:12,color:"var(--text-secondary)",marginTop:4}}>Auto-llenados con datos del reporte. Edita y descarga.</div>
                 </div>
                 <button style={btnS} onClick={dlAll}>⬇ Descargar 4 Docs</button>
               </div>
 
               {issues.length===0&&<div style={warnBox}>⚠ Sin datos. Importa el Excel en Fase 0 primero.</div>}
-              <div style={infoBox}><strong style={{color:"#00D4FF"}}>Auto-llenado:</strong> Archivos, tipos de vulnerabilidad, repos y estimaciones se extraen directamente de tu Excel.</div>
+              <div style={infoBox}><strong style={{color:"var(--accent)"}}>Auto-llenado:</strong> Archivos, tipos de vulnerabilidad, repos y estimaciones se extraen directamente de tu Excel.</div>
 
               {/* Tabs */}
               <div style={card({padding:0,overflow:"hidden"})}>
-                <div style={{display:"flex",borderBottom:"1px solid #1A2840",background:"#060B14"}}>
+                <div style={{display:"flex",borderBottom:"1px solid var(--border)",background:"var(--bg-base)"}}>
                   {["📄 Diseño General","📐 Diseño Técnico","✅ Checklist","📦 CIP"].map((t,i)=>(
-                    <button key={i} style={{padding:"10px 18px",border:"none",background:docTab===i?"#0F1E35":"transparent",color:docTab===i?"#00D4FF":"#3A5070",cursor:"pointer",fontSize:12,fontWeight:600,borderBottom:docTab===i?"2px solid #00D4FF":"2px solid transparent",transition:"all 0.15s"}} onClick={()=>setDocTab(i)}>{t}</button>
+                    <button key={i} style={{padding:"10px 18px",border:"none",background:docTab===i?"var(--bg-card)":"transparent",color:docTab===i?"var(--accent)":"var(--text-muted)",cursor:"pointer",fontSize:12,fontWeight:600,borderBottom:docTab===i?"2px solid var(--accent)":"2px solid transparent",transition:"all 0.15s"}} onClick={()=>setDocTab(i)}>{t}</button>
                   ))}
                 </div>
                 <div style={{padding:20}}>
@@ -2632,15 +2632,15 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                     <div>
                       <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
                         <button
-                          style={{...btnG, color:"#00D4FF", borderColor:"#1A3A5C"}}
+                          style={{...btnG, color:"var(--accent)", borderColor:"#1A3A5C"}}
                           onClick={()=>exportAllVulnsInOneDocx(stats, docData, cfg, TODAY)}
                           title="Genera un único .docx con todas las vulnerabilidades detectadas"
                         >📄 Exportar Word</button>
                       </div>
 
                       {/* App description */}
-                      <div style={card({background:"#060B14",marginBottom:16})}>
-                        <div style={{fontSize:11,fontWeight:700,color:"#00D4FF",letterSpacing:1.5,marginBottom:10,textTransform:"uppercase",fontFamily:"monospace"}}>🏗 Diseño de la Aplicación</div>
+                      <div style={card({background:"var(--bg-base)",marginBottom:16})}>
+                        <div style={{fontSize:11,fontWeight:700,color:"var(--accent)",letterSpacing:1.5,marginBottom:10,textTransform:"uppercase",fontFamily:"monospace"}}>🏗 Diseño de la Aplicación</div>
                         <label style={lbl}>Descripción del Aplicativo (vacío = auto-generado)</label>
                         <textarea style={{...ta,minHeight:100}} value={docData.appDesc} onChange={e=>setDocData(p=>({...p,appDesc:e.target.value}))} placeholder={`${cfg.projectName} es una aplicación web ASP.NET MVC que gestiona…`}/>
                       </div>
@@ -2652,14 +2652,14 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                         const typeFiles=[...new Set(issues.filter(i=>i.issueType===type).map(i=>i.filePath).filter(Boolean))];
                         const typeHrs=issues.filter(i=>i.issueType===type).reduce((a,b)=>a+(parseFloat(b.hrs)||0),0).toFixed(1);
                         return (
-                          <div key={type} style={card({background:"#060B14",border:"1px solid #1E3050"})}>
+                          <div key={type} style={card({background:"var(--bg-base)",border:"1px solid #1E3050"})}>
                             {/* Header */}
                             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}>
                               <div style={{display:"flex",alignItems:"center",gap:10}}>
                                 <span style={{fontSize:22}}>{kb.icon}</span>
                                 <div>
-                                  <div style={{fontWeight:700,color:"#E0EDFF",fontSize:13}}>{kb.label !== type ? kb.label : type}</div>
-                                  <div style={{fontSize:10,color:"#3A5070",fontFamily:"monospace",marginTop:2}}>{count} issues · {typeFiles.length} archivos únicos · {typeHrs} hrs</div>
+                                  <div style={{fontWeight:700,color:"var(--text-bright)",fontSize:13}}>{kb.label !== type ? kb.label : type}</div>
+                                  <div style={{fontSize:10,color:"var(--text-muted)",fontFamily:"monospace",marginTop:2}}>{count} issues · {typeFiles.length} archivos únicos · {typeHrs} hrs</div>
                                 </div>
                               </div>
                               <div style={{display:"flex",gap:6,alignItems:"center"}}>
@@ -2680,11 +2680,11 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                                       title="Restaurar contenido original desde la base de conocimiento interna"
                                     >↺ Restaurar KB</button>
                                     <button
-                                      style={{...btnG,fontSize:10,padding:"4px 10px",color:showSources[type]?"#00D4FF":"#4A6080",borderColor:showSources[type]?"#1A3A5C":"#1A2840"}}
+                                      style={{...btnG,fontSize:10,padding:"4px 10px",color:showSources[type]?"var(--accent)":"var(--text-secondary)",borderColor:showSources[type]?"var(--border-mid)":"var(--border)"}}
                                       onClick={()=>setShowSources(p=>({...p,[type]:!p[type]}))}
                                     >{showSources[type]?"▲ Ocultar fuentes":"📚 Ver fuentes"}</button>
                                   </div>
-                                  <div style={{fontSize:9,color:"#2A4060",fontFamily:"monospace",textAlign:"right"}}>
+                                  <div style={{fontSize:9,color:"var(--text-dim)",fontFamily:"monospace",textAlign:"right"}}>
                                     {kb._isDefault
                                       ? <span style={{color:"#A78BFA"}}>⚠ sin KB interna — usa IA para complementar</span>
                                       : <>base de conocimiento interna · {getSourcesDisplay(type).length} fuentes oficiales</>
@@ -2697,11 +2697,11 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                             {/* Fuentes oficiales — desplegable */}
                             {showSources[type]&&(
                               <div style={{marginBottom:12,padding:"10px 14px",background:"#00D4FF08",border:"1px solid #00D4FF20",borderRadius:7}}>
-                                <div style={{fontSize:9,color:"#3A5070",fontFamily:"monospace",letterSpacing:1.5,marginBottom:7}}>FUENTES OFICIALES CONSULTADAS PARA ESTA BASE DE CONOCIMIENTO</div>
+                                <div style={{fontSize:9,color:"var(--text-muted)",fontFamily:"monospace",letterSpacing:1.5,marginBottom:7}}>FUENTES OFICIALES CONSULTADAS PARA ESTA BASE DE CONOCIMIENTO</div>
                                 <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
                                   {getSourcesDisplay(type).map((s,i)=>(
                                     <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
-                                      style={{fontSize:10,color:"#00D4FF",background:"#00D4FF10",padding:"3px 9px",borderRadius:4,border:"1px solid #00D4FF30",textDecoration:"none",fontFamily:"monospace"}}>
+                                      style={{fontSize:10,color:"var(--accent)",background:"#00D4FF10",padding:"3px 9px",borderRadius:4,border:"1px solid #00D4FF30",textDecoration:"none",fontFamily:"monospace"}}>
                                       🔗 {s.label}
                                     </a>
                                   ))}
@@ -2731,7 +2731,7 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                                       >{isLoading?"⟳ IA…":"🤖 IA"}</button>
                                     </div>
                                     <textarea
-                                      style={{...ta,minHeight:130,fontSize:11,borderColor:accent?"#1A3A5C":"#1A2840",color:"#D0DCF0"}}
+                                      style={{...ta,minHeight:130,fontSize:11,borderColor:accent?"var(--border-mid)":"var(--border)",color:"var(--text-primary)"}}
                                       value={ov[key]||""}
                                       onChange={e=>setVulnF(type,key,e.target.value)}
                                     />
@@ -2741,13 +2741,13 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                             </div>
 
                             {/* Files */}
-                            <div style={{marginTop:10,padding:"8px 12px",background:"#0A1020",borderRadius:6,border:"1px solid #1A2840"}}>
-                              <div style={{fontSize:9,color:"#2A4060",fontFamily:"monospace",marginBottom:5}}>ARCHIVOS IMPACTADOS ({typeFiles.length})</div>
+                            <div style={{marginTop:10,padding:"8px 12px",background:"var(--bg-panel)",borderRadius:6,border:"1px solid var(--border)"}}>
+                              <div style={{fontSize:9,color:"var(--text-dim)",fontFamily:"monospace",marginBottom:5}}>ARCHIVOS IMPACTADOS ({typeFiles.length})</div>
                               <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
                                 {typeFiles.slice(0,8).map((fp,i)=>(
-                                  <span key={i} style={{fontSize:10,fontFamily:"monospace",color:"#00D4FF",background:"#060B14",padding:"2px 6px",borderRadius:4,border:"1px solid #1A2840"}}>{fname(fp)}</span>
+                                  <span key={i} style={{fontSize:10,fontFamily:"monospace",color:"var(--accent)",background:"var(--bg-base)",padding:"2px 6px",borderRadius:4,border:"1px solid var(--border)"}}>{fname(fp)}</span>
                                 ))}
-                                {typeFiles.length>8&&<span style={{fontSize:10,color:"#3A5070"}}>+{typeFiles.length-8} más</span>}
+                                {typeFiles.length>8&&<span style={{fontSize:10,color:"var(--text-muted)"}}>+{typeFiles.length-8} más</span>}
                               </div>
                             </div>
                           </div>
@@ -2762,7 +2762,7 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                     <div>
                       <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
                         <button
-                          style={{...btnG, color:"#00D4FF", borderColor:"#1A3A5C"}}
+                          style={{...btnG, color:"var(--accent)", borderColor:"#1A3A5C"}}
                           onClick={()=>exportAllVulnsDTInOneDocx(stats, docData, cfg, repos, TODAY)}
                           title="Genera un único .docx con las tablas DT de todas las vulnerabilidades"
                         >📄 Exportar Word</button>
@@ -2773,18 +2773,18 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                         const typeFiles=[...new Set(issues.filter(i=>i.issueType===type).map(i=>i.filePath).filter(Boolean))];
                         const repoUrls=Object.keys(repos||{}).map(r=>`${cfg.gitBase.replace(/\/$/,"")}/${r}`);
                         const hasLittleContent=!ov.situacionEsperada&&!ov.reglaNegocio&&!ov.propuestaGeneral;
-                        const rowS={display:"grid",gridTemplateColumns:"180px 1fr",borderBottom:"1px solid #1A2840"};
-                        const lblS={padding:"10px 14px",background:"#0A1828",color:"#8AACCC",fontSize:11,fontWeight:700,display:"flex",alignItems:"flex-start",paddingTop:12};
-                        const valS={padding:"8px 12px",background:"#060B14"};
+                        const rowS={display:"grid",gridTemplateColumns:"180px 1fr",borderBottom:"1px solid var(--border)"};
+                        const lblS={padding:"10px 14px",background:"var(--bg-input)",color:"var(--text-muted)",fontSize:11,fontWeight:700,display:"flex",alignItems:"flex-start",paddingTop:12};
+                        const valS={padding:"8px 12px",background:"var(--bg-base)"};
                         return (
                           <div key={type} style={{marginBottom:24,border:"1px solid #1E3050",borderRadius:8,overflow:"hidden"}}>
                             {/* Card header */}
-                            <div style={{padding:"10px 16px",background:"#0D1F35",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid #1A2840"}}>
+                            <div style={{padding:"10px 16px",background:"var(--bg-card)",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid var(--border)"}}>
                               <div style={{display:"flex",gap:10,alignItems:"center"}}>
                                 <span style={{fontSize:20}}>{kb.icon}</span>
                                 <div>
-                                  <div style={{fontWeight:700,color:"#E0EDFF",fontSize:13}}>{kb.label!==type?kb.label:type}</div>
-                                  <div style={{fontSize:10,color:"#3A5070",fontFamily:"monospace"}}>{count} issues · {typeFiles.length} archivos</div>
+                                  <div style={{fontWeight:700,color:"var(--text-bright)",fontSize:13}}>{kb.label!==type?kb.label:type}</div>
+                                  <div style={{fontSize:10,color:"var(--text-muted)",fontFamily:"monospace"}}>{count} issues · {typeFiles.length} archivos</div>
                                 </div>
                               </div>
                               {(hasLittleContent||kb._isDefault)&&(
@@ -2802,13 +2802,13 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                                 <div style={lblS}>Historia de Usuario</div>
                                 <div style={{...valS,display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
                                   <input style={{...inp,flex:2,minWidth:180,fontSize:11}} value={ov.hu||""} onChange={e=>setVulnF(type,"hu",e.target.value)} placeholder="VTR329-1343, VTR329-1348"/>
-                                  <span style={{color:"#3A5070",fontSize:11,whiteSpace:"nowrap"}}>Alineación:</span>
+                                  <span style={{color:"var(--text-muted)",fontSize:11,whiteSpace:"nowrap"}}>Alineación:</span>
                                   <input style={{...inp,width:110,fontSize:11}} value={ov.alineacion!==undefined?ov.alineacion:"Chubb"} onChange={e=>setVulnF(type,"alineacion",e.target.value)} placeholder="Chubb"/>
                                 </div>
                               </div>
                               {/* Vuln name row */}
                               <div style={rowS}>
-                                <div style={{...lblS,color:"#00D4FF"}}>{kb.label!==type?kb.label:type}</div>
+                                <div style={{...lblS,color:"var(--accent)"}}>{kb.label!==type?kb.label:type}</div>
                                 <div style={{...valS,color:"#8AACCC",fontSize:11,display:"flex",alignItems:"center"}}>{type}</div>
                               </div>
                               {/* Proceso Actual */}
@@ -2842,10 +2842,10 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                                 <div style={valS}>
                                   <textarea style={{...ta,minHeight:100,fontSize:11}} value={ov.solucion||""} onChange={e=>setVulnF(type,"solucion",e.target.value)} placeholder="Pasos detallados de remediación…"/>
                                   {repoUrls.length>0&&(
-                                    <div style={{marginTop:8,padding:"8px 10px",background:"#0A1020",borderRadius:6,border:"1px solid #1A2840"}}>
-                                      <div style={{fontSize:9,color:"#3A5070",fontFamily:"monospace",marginBottom:5,letterSpacing:1}}>REPOSITORIOS</div>
+                                    <div style={{marginTop:8,padding:"8px 10px",background:"var(--bg-panel)",borderRadius:6,border:"1px solid var(--border)"}}>
+                                      <div style={{fontSize:9,color:"var(--text-muted)",fontFamily:"monospace",marginBottom:5,letterSpacing:1}}>REPOSITORIOS</div>
                                       {repoUrls.map((u,i)=>(
-                                        <div key={i}><a href={u} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:"#00D4FF",fontFamily:"monospace",wordBreak:"break-all"}}>{u}</a></div>
+                                        <div key={i}><a href={u} target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:"var(--accent)",fontFamily:"monospace",wordBreak:"break-all"}}>{u}</a></div>
                                       ))}
                                     </div>
                                   )}
@@ -2875,23 +2875,23 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
                       <div style={{display:"flex",gap:8,marginBottom:14}}>
                         <button style={btnG} onClick={()=>dl1("cip")}>⬇ Exportar CSV</button>
                       </div>
-                      <div style={infoBox}><strong style={{color:"#00D4FF"}}>CIP auto-generado:</strong> {cipData.length} archivos únicos agrupados de {stats.total} issues. Columnas: archivo, tipo, acción, severidad máxima, conteo, horas.</div>
+                      <div style={infoBox}><strong style={{color:"var(--accent)"}}>CIP auto-generado:</strong> {cipData.length} archivos únicos agrupados de {stats.total} issues. Columnas: archivo, tipo, acción, severidad máxima, conteo, horas.</div>
                       <div style={{overflowX:"auto"}}>
                         <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-                          <thead><tr>{["#","Archivo","Tipo","Acción","Issues","Hrs","Sev."].map(h=><th key={h} style={{padding:"7px 10px",borderBottom:"1px solid #1A2840",textAlign:"left",fontSize:10,color:"#3A5070",letterSpacing:1,textTransform:"uppercase",fontFamily:"monospace",background:"#0A1020"}}>{h}</th>)}</tr></thead>
+                          <thead><tr>{["#","Archivo","Tipo","Acción","Issues","Hrs","Sev."].map(h=><th key={h} style={{padding:"7px 10px",borderBottom:"1px solid var(--border)",textAlign:"left",fontSize:10,color:"var(--text-muted)",letterSpacing:1,textTransform:"uppercase",fontFamily:"monospace",background:"var(--bg-panel)"}}>{h}</th>)}</tr></thead>
                           <tbody>
                             {cipData.map((c,i)=>(
                               <tr key={i}>
-                                <td style={{padding:"8px 10px",borderBottom:"1px solid #111D2E",color:"#3A5070"}}>{i+1}</td>
-                                <td style={{padding:"8px 10px",borderBottom:"1px solid #111D2E"}}>
-                                  <div style={{fontFamily:"monospace",fontSize:11,color:"#00D4FF"}}>{c.fileName}</div>
-                                  <div style={{fontSize:10,color:"#2A4060",maxWidth:220,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={c.filePath}>{c.filePath}</div>
+                                <td style={{padding:"8px 10px",borderBottom:"1px solid var(--border)",color:"var(--text-muted)"}}>{i+1}</td>
+                                <td style={{padding:"8px 10px",borderBottom:"1px solid var(--border)"}}>
+                                  <div style={{fontFamily:"monospace",fontSize:11,color:"var(--accent)"}}>{c.fileName}</div>
+                                  <div style={{fontSize:10,color:"var(--text-dim)",maxWidth:220,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={c.filePath}>{c.filePath}</div>
                                 </td>
-                                <td style={{padding:"8px 10px",borderBottom:"1px solid #111D2E",color:"#8AACCC",fontSize:11}}>{c.types.split(";")[0]}</td>
-                                <td style={{padding:"8px 10px",borderBottom:"1px solid #111D2E"}}><span style={methBadge(c.action==="MODIFICAR"?"pipeline":"manual")}>{c.action}</span></td>
-                                <td style={{padding:"8px 10px",borderBottom:"1px solid #111D2E",textAlign:"center",fontWeight:700,color:"#FF4560"}}>{c.count}</td>
-                                <td style={{padding:"8px 10px",borderBottom:"1px solid #111D2E",textAlign:"center",color:"#8AACCC"}}>{c.hrs}</td>
-                                <td style={{padding:"8px 10px",borderBottom:"1px solid #111D2E"}}><span style={sevBadge(c.severity)}>{SEV[c.severity]?.label}</span></td>
+                                <td style={{padding:"8px 10px",borderBottom:"1px solid var(--border)",color:"#8AACCC",fontSize:11}}>{c.types.split(";")[0]}</td>
+                                <td style={{padding:"8px 10px",borderBottom:"1px solid var(--border)"}}><span style={methBadge(c.action==="MODIFICAR"?"pipeline":"manual")}>{c.action}</span></td>
+                                <td style={{padding:"8px 10px",borderBottom:"1px solid var(--border)",textAlign:"center",fontWeight:700,color:"#FF4560"}}>{c.count}</td>
+                                <td style={{padding:"8px 10px",borderBottom:"1px solid var(--border)",textAlign:"center",color:"#8AACCC"}}>{c.hrs}</td>
+                                <td style={{padding:"8px 10px",borderBottom:"1px solid var(--border)"}}><span style={sevBadge(c.severity)}>{SEV[c.severity]?.label}</span></td>
                               </tr>
                             ))}
                           </tbody>
@@ -2912,28 +2912,28 @@ function DocumentosPhase({ cfg, issues, cipData, docData, docTab, setDocTab, set
 // ──────────────────────────────────────────────────────────────────
 // ── GenericPhase ─────────────────────────────────────────────────────────────────
 // Props destructured from App state
-function GenericPhase({ phase, cfg, cipData, TODAY, dlAll, completePhase, card, infoBox, btnP, btnS }) {
+function GenericPhase({ phase, cfg, cipData, TODAY, dlAll, completePhase, card, infoBox, btnP, btnS, darkMode }) {
   return (
             <div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24,paddingBottom:18,borderBottom:"1px solid #1A2840"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:24,paddingBottom:18,borderBottom:"1px solid var(--border)"}}>
                 <div>
-                  <div style={{fontSize:10,color:"#00D4FF",letterSpacing:2,fontFamily:"monospace",marginBottom:4}}>FASE {phase} — {["","","","APROBACIÓN","EJECUCIÓN","DESPLIEGUE"][phase]}</div>
-                  <div style={{fontSize:24,fontWeight:800,color:"#E0EDFF"}}>{["","","","Visto Bueno (VO)","Ejecución y Validación","Despliegue y Contingencia"][phase]}</div>
+                  <div style={{fontSize:10,color:"var(--accent)",letterSpacing:2,fontFamily:"monospace",marginBottom:4}}>FASE {phase} — {["","","","EJECUCIÓN","DESPLIEGUE"][phase]}</div>
+                  <div style={{fontSize:24,fontWeight:800,color:"var(--text-bright)"}}>{["","","","Ejecución y Validación","Despliegue y Contingencia"][phase]}</div>
                 </div>
-                <button style={btnP} onClick={()=>completePhase(phase)}>{phase<5?`Completar Fase ${phase} →`:"✓ Cerrar SOP"}</button>
+                <button style={btnP} onClick={()=>completePhase(phase)}>{phase<4?`Completar Fase ${phase} →`:"✓ Cerrar SOP"}</button>
               </div>
-              <div style={infoBox}><strong style={{color:"#00D4FF"}}>Continúa el flujo SOP</strong> usando el módulo DevSecOps completo con los documentos generados en Fase 2.</div>
+              <div style={infoBox}><strong style={{color:"var(--accent)"}}>Continúa el flujo SOP</strong> usando el módulo DevSecOps completo con los documentos generados en Fase 2.</div>
               <div style={card()}>
-                <div style={{fontSize:11,fontWeight:700,color:"#00D4FF",letterSpacing:1.5,marginBottom:12,textTransform:"uppercase",fontFamily:"monospace"}}>📦 Entregables Generados</div>
+                <div style={{fontSize:11,fontWeight:700,color:"var(--accent)",letterSpacing:1.5,marginBottom:12,textTransform:"uppercase",fontFamily:"monospace"}}>📦 Entregables Generados</div>
                 {[
                   `DISEÑO_GENERAL_${cfg.projectName}_${TODAY}.txt`,
                   `DISEÑO_TECNICO_${cfg.projectName}_${TODAY}.txt`,
                   `CHECKLIST_CUMPLIMIENTO_${cfg.projectName}_${TODAY}.csv`,
                   `CIP_${cfg.projectName}_${TODAY}.csv — ${cipData.length} archivos únicos`,
                 ].map((f,i)=>(
-                  <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"9px 0",borderBottom:"1px solid #111D2E",fontSize:12}}>
+                  <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"9px 0",borderBottom:"1px solid var(--border)",fontSize:12}}>
                     <span style={{fontFamily:"monospace",color:"#8AACCC"}}>{f}</span>
-                    <span style={{color:"#00E676",fontWeight:700}}>✅ Listo</span>
+                    <span style={{color:"var(--success)",fontWeight:700}}>✅ Listo</span>
                   </div>
                 ))}
                 <div style={{marginTop:14}}>
@@ -2965,7 +2965,7 @@ function EjecucionPhase({
   claudeMcpUrl, claudeMcpStatus, checkClaudeMcpStatus,
   TODAY, completePhase, showToast,
   card, infoBox, warnBox, btnP, btnS, codeBox,
-  dlAll,
+  dlAll, darkMode,
 }) {
   const { useState, useEffect, useRef, useCallback } = React;
 
@@ -3006,12 +3006,12 @@ function EjecucionPhase({
   const tabBtn = (t) => ({
     padding: "7px 18px", borderRadius: 6, border: "none", cursor: "pointer",
     fontSize: 12, fontWeight: 700,
-    background: activeTab === t ? "#00D4FF" : "#0D1828",
-    color:      activeTab === t ? "#060B14" : "#4A6080",
+    background: activeTab === t ? "var(--accent)" : "var(--bg-card)",
+    color:      activeTab === t ? "var(--bg-base)" : "var(--text-secondary)",
     transition: "all 0.15s",
   });
 
-  const secTitle = (icon, label, color = "#00D4FF") => (
+  const secTitle = (icon, label, color = "var(--accent)") => (
     <div style={{ fontSize: 11, fontWeight: 700, color, letterSpacing: 1.5,
       marginBottom: 14, textTransform: "uppercase", fontFamily: "monospace" }}>
       {icon} {label}
@@ -3020,9 +3020,9 @@ function EjecucionPhase({
 
   // ── Parse PDF context around a found GUID ─────────────────────────────────
   // Optimizado para el formato de tabla del reporte:
-  //   Location  ACE.BasicBook.UI/Scripts/Configuracion.js:27
+  //   Location  E001VulnerabilityRemediationReg/Scripts/Configuracion.js:27
   //   Line  27
-  //   Source File  ACE.BasicBook.UI/Scripts/Configuracion.js
+  //   Source File  E001VulnerabilityRemediationReg/Scripts/Configuracion.js
   //   CWE:  79    Repository URL:  https://...
   //   Call  <snippet de código>
   const parsePdfContext = (ctx, issue) => {
@@ -3350,12 +3350,12 @@ function EjecucionPhase({
 
       {/* Header */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start",
-        marginBottom:24, paddingBottom:18, borderBottom:"1px solid #1A2840" }}>
+        marginBottom:24, paddingBottom:18, borderBottom:"1px solid var(--border)" }}>
         <div>
-          <div style={{ fontSize:10, color:"#00D4FF", letterSpacing:2,
+          <div style={{ fontSize:10, color:"var(--accent)", letterSpacing:2,
             fontFamily:"monospace", marginBottom:4 }}>FASE 4 — EJECUCIÓN</div>
-          <div style={{ fontSize:24, fontWeight:800, color:"#E0EDFF" }}>Ejecución y Validación</div>
-          <div style={{ fontSize:11, color:"#4A6080", marginTop:4 }}>
+          <div style={{ fontSize:24, fontWeight:800, color:"var(--text-bright)" }}>Ejecución y Validación</div>
+          <div style={{ fontSize:11, color:"var(--text-secondary)", marginTop:4 }}>
             {issues.length} issues cargados
             {pdfName    && ` · PDF: ${pdfName} (${pdfPages} págs.)`}
             {analyzed   && ` · ${totalFound}/${issues.length} encontrados`}
@@ -3363,23 +3363,23 @@ function EjecucionPhase({
             {totalRecs  > 0 && ` · ${totalRecs} recomendaciones IA`}
           </div>
         </div>
-        <button style={btnP} onClick={() => completePhase(4)}>Completar Fase 4 →</button>
+        <button style={btnP} onClick={() => completePhase(3)}>Completar Fase 3 →</button>
       </div>
 
       {/* Stats bar (solo después del análisis) */}
       {analyzed && (
         <div style={{ display:"flex", gap:10, marginBottom:20 }}>
           {[
-            { label:"Issues",        value:issues.length, color:"#4A6080" },
-            { label:"En PDF",        value:totalFound,    color:"#00D4FF" },
+            { label:"Issues",        value:issues.length, color:"var(--text-secondary)" },
+            { label:"En PDF",        value:totalFound,    color:"var(--accent)" },
             { label:"Sin coincid.",  value:issues.length - totalFound, color:"#FF9F43" },
             { label:"Con código",    value:totalCode,     color:"#00E676" },
             { label:"Con IA",        value:totalRecs,     color:"#A78BFA" },
           ].map(({ label, value, color }) => (
-            <div key={label} style={{ background:"#0A1020", border:"1px solid #1A2840",
+            <div key={label} style={{ background:"var(--bg-panel)", border:"1px solid var(--border)",
               borderRadius:8, padding:"10px 14px", flex:1, textAlign:"center" }}>
               <div style={{ fontSize:20, fontWeight:800, color }}>{value}</div>
-              <div style={{ fontSize:10, color:"#4A6080", marginTop:2 }}>{label}</div>
+              <div style={{ fontSize:10, color:"var(--text-secondary)", marginTop:2 }}>{label}</div>
             </div>
           ))}
         </div>
@@ -3406,7 +3406,7 @@ function EjecucionPhase({
             {secTitle("📄", "Reporte PDF de Vulnerabilidades")}
             <div style={infoBox}>
               Carga el PDF generado por tu herramienta SAST/DAST (Fortify, Checkmarx, Veracode, SonarQube, etc.).
-              La app buscará cada <strong style={{ color:"#00D4FF" }}>Issue Id</strong> (GUID) del Excel dentro del
+              La app buscará cada <strong style={{ color:"var(--accent)" }}>Issue Id</strong> (GUID) del Excel dentro del
               PDF y extraerá tipo, archivo, línea, descripción y recomendación.
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
@@ -3425,7 +3425,7 @@ function EjecucionPhase({
                 </button>
               )}
               {pdfName && (
-                <span style={{ fontSize:11, color:"#4A6080", fontFamily:"monospace" }}>
+                <span style={{ fontSize:11, color:"var(--text-secondary)", fontFamily:"monospace" }}>
                   {pdfName} · {pdfPages} páginas · {Math.round(pdfText.length / 1024)} KB texto
                 </span>
               )}
@@ -3444,7 +3444,7 @@ function EjecucionPhase({
               <div style={{ overflowX:"auto" }}>
                 <table style={{ width:"100%", borderCollapse:"collapse", fontSize:11 }}>
                   <thead>
-                    <tr style={{ borderBottom:"2px solid #1A2840" }}>
+                    <tr style={{ borderBottom:"2px solid var(--border)" }}>
                       {["Issue ID","Tipo","Archivo","Línea","Severidad","PDF","Código","IA"].map(h => (
                         <th key={h} style={{ padding:"7px 10px", textAlign:"left",
                           color:"#3A5070", fontWeight:700, fontSize:10,
@@ -3463,14 +3463,14 @@ function EjecucionPhase({
                       return (
                         <tr key={issue.id}
                           onClick={() => setSelectedId(isSelected ? null : issue.id)}
-                          style={{ borderBottom:"1px solid #0D1828", cursor:"pointer",
-                            background: isSelected ? "#0D1E33" : "transparent",
+                          style={{ borderBottom:"1px solid var(--border)", cursor:"pointer",
+                            background: isSelected ? "var(--bg-card)" : "transparent",
                             transition:"background 0.1s" }}>
                           <td style={{ padding:"7px 10px", fontFamily:"monospace",
                             color:"#5A7A9A", fontSize:10 }}>
                             {issue.id?.substring(0, 8)}…
                           </td>
-                          <td style={{ padding:"7px 10px", color:"#D0DCF0",
+                          <td style={{ padding:"7px 10px", color:"var(--text-primary)",
                             maxWidth:180, overflow:"hidden",
                             textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                             {m.vulnType || issue.issueType}
@@ -3504,7 +3504,7 @@ function EjecucionPhase({
                   </tbody>
                 </table>
               </div>
-              <div style={{ fontSize:10, color:"#2A4060", marginTop:10 }}>
+              <div style={{ fontSize:10, color:"var(--text-dim)", marginTop:10 }}>
                 ✅ Encontrado · ❌ No encontrado · ⬜ Sin GUID real · Haz clic en una fila para ver detalle
               </div>
             </div>
@@ -3529,8 +3529,8 @@ function EjecucionPhase({
                     ["Horas est.", (selectedIssue.hrs || 0) + " hrs"],
                   ].map(([k, v]) => (
                     <React.Fragment key={k}>
-                      <span style={{ color:"#4A6080", fontWeight:600, fontSize:10 }}>{k}:</span>
-                      <span style={{ color:"#D0DCF0", wordBreak:"break-all",
+                      <span style={{ color:"var(--text-secondary)", fontWeight:600, fontSize:10 }}>{k}:</span>
+                      <span style={{ color:"var(--text-primary)", wordBreak:"break-all",
                         fontFamily: k==="Issue ID"||k==="Archivo" ? "monospace" : "inherit",
                         fontSize:   k==="Issue ID" ? 10 : 11 }}>{v}</span>
                     </React.Fragment>
@@ -3539,11 +3539,11 @@ function EjecucionPhase({
 
                 {selectedMatch?.description && (
                   <div style={{ marginBottom:10 }}>
-                    <div style={{ fontSize:10, color:"#4A6080", letterSpacing:1,
+                    <div style={{ fontSize:10, color:"var(--text-secondary)", letterSpacing:1,
                       marginBottom:4, fontFamily:"monospace" }}>DESCRIPCIÓN (PDF):</div>
-                    <div style={{ background:"#060B14", border:"1px solid #1A2840",
+                    <div style={{ background:"var(--bg-base)", border:"1px solid var(--border)",
                       borderRadius:6, padding:"8px 12px", fontSize:11,
-                      color:"#D0DCF0", lineHeight:1.6 }}>
+                      color:"var(--text-primary)", lineHeight:1.6 }}>
                       {selectedMatch.description}
                     </div>
                   </div>
@@ -3551,7 +3551,7 @@ function EjecucionPhase({
 
                 {selectedMatch?.fix && (
                   <div style={{ marginBottom:10 }}>
-                    <div style={{ fontSize:10, color:"#4A6080", letterSpacing:1,
+                    <div style={{ fontSize:10, color:"var(--text-secondary)", letterSpacing:1,
                       marginBottom:4, fontFamily:"monospace" }}>RECOMENDACIÓN (PDF):</div>
                     <div style={{ background:"#001A0D", border:"1px solid #00E67622",
                       borderRadius:6, padding:"8px 12px", fontSize:11,
@@ -3563,9 +3563,9 @@ function EjecucionPhase({
 
                 {selectedMatch?.context && (
                   <div>
-                    <div style={{ fontSize:10, color:"#4A6080", letterSpacing:1,
+                    <div style={{ fontSize:10, color:"var(--text-secondary)", letterSpacing:1,
                       marginBottom:4, fontFamily:"monospace" }}>CONTEXTO PDF (fragmento):</div>
-                    <div style={{ ...codeBox, fontSize:10, maxHeight:140, color:"#4A6080" }}>
+                    <div style={{ ...codeBox, fontSize:10, maxHeight:140, color:"var(--text-secondary)" }}>
                       {selectedMatch.context.substring(0, 900)}…
                     </div>
                   </div>
@@ -3589,8 +3589,8 @@ function EjecucionPhase({
                     </button>
                   </div>
                 ) : (
-                  <div style={{ fontSize:11, color:"#4A6080", marginBottom:10 }}>
-                    → Ve a la pestaña <strong style={{ color:"#00D4FF" }}>Repositorio</strong> y
+                  <div style={{ fontSize:11, color:"var(--text-secondary)", marginBottom:10 }}>
+                    → Ve a la pestaña <strong style={{ color:"var(--accent)" }}>Repositorio</strong> y
                     selecciona la carpeta del repo para leer el código fuente.
                   </div>
                 )}
@@ -3602,18 +3602,18 @@ function EjecucionPhase({
                   if (!ctx) return null;
                   return (
                     <div style={{ marginBottom:12 }}>
-                      <div style={{ fontSize:10, color:"#4A6080", letterSpacing:1,
+                      <div style={{ fontSize:10, color:"var(--text-secondary)", letterSpacing:1,
                         marginBottom:4, fontFamily:"monospace" }}>
                         {(fp || "").split("/").pop()}
                         {selectedMatch?.line ? ` — línea ${selectedMatch.line}` : ""}
                       </div>
-                      <div style={{ background:"#030810", border:"1px solid #1A2840",
+                      <div style={{ background:"var(--bg-input)", border:"1px solid var(--border)",
                         borderRadius:6, padding:"8px", fontSize:10, fontFamily:"monospace",
                         lineHeight:1.6, maxHeight:200, overflowY:"auto" }}>
                         {ctx.lines.map(({ n, l }) => (
                           <div key={n} style={{ display:"flex", gap:8,
                             background: n === ctx.targetLine ? "#0D2200" : "transparent" }}>
-                            <span style={{ color:"#2A4060", minWidth:32,
+                            <span style={{ color:"var(--text-dim)", minWidth:32,
                               userSelect:"none", textAlign:"right" }}>{n}</span>
                             <span style={{ color: n === ctx.targetLine ? "#00E676" : "#8AACCC",
                               whiteSpace:"pre" }}>{l}</span>
@@ -3633,7 +3633,7 @@ function EjecucionPhase({
                     boxShadow: claudeMcpStatus==="ok" ? "0 0 6px #00E676"
                       : claudeMcpStatus==="checking" ? "0 0 6px #FFB800" : "none",
                     display:"inline-block" }} />
-                  <span style={{ color:"#4A6080" }}>
+                  <span style={{ color:"var(--text-secondary)" }}>
                     Claude MCP {claudeMcpStatus==="ok" ? "conectado"
                       : claudeMcpStatus==="checking" ? "verificando…" : "desconectado"}
                   </span>
@@ -3644,7 +3644,7 @@ function EjecucionPhase({
                 </div>
                 <button
                   style={{ ...btnP, width:"100%", marginBottom:10,
-                    background: loadingRec[selectedIssue.id] ? "#1A2840" : "#7C3AED",
+                    background: loadingRec[selectedIssue.id] ? "var(--border)" : "#7C3AED",
                     color:"#fff" }}
                   onClick={() => generateRec(selectedIssue)}
                   disabled={loadingRec[selectedIssue.id] || claudeMcpStatus !== "ok"}>
@@ -3654,8 +3654,8 @@ function EjecucionPhase({
                 </button>
 
                 {recs[selectedIssue.id] && (
-                  <div style={{ background:"#060B14", border:"1px solid #7C3AED44",
-                    borderRadius:6, padding:"10px 12px", fontSize:11, color:"#D0DCF0",
+                  <div style={{ background:"var(--bg-base)", border:"1px solid #7C3AED44",
+                    borderRadius:6, padding:"10px 12px", fontSize:11, color:"var(--text-primary)",
                     lineHeight:1.7, maxHeight:320, overflowY:"auto", whiteSpace:"pre-wrap" }}>
                     {recs[selectedIssue.id]}
                   </div>
@@ -3676,7 +3676,7 @@ function EjecucionPhase({
             {secTitle("📁", "Opción A — Repositorio Local (recomendada)")}
             <div style={infoBox}>
               Selecciona la carpeta donde clonaste el repositorio. La app leerá los archivos
-              afectados <strong style={{ color:"#00D4FF" }}>directamente en tu equipo</strong>,
+              afectados <strong style={{ color:"var(--accent)" }}>directamente en tu equipo</strong>,
               sin subir nada a internet. Requiere <strong>Chrome</strong> o <strong>Edge</strong>
               (File System Access API).
             </div>
@@ -3710,12 +3710,12 @@ function EjecucionPhase({
                   return (
                     <div key={fp} style={{ display:"flex", justifyContent:"space-between",
                       alignItems:"center", padding:"8px 0",
-                      borderBottom:"1px solid #0D1828" }}>
+                      borderBottom:"1px solid var(--border)" }}>
                       <div>
                         <span style={{ fontFamily:"monospace", color:"#8AACCC", fontSize:11 }}>
                           {fname}
                         </span>
-                        <span style={{ marginLeft:8, color:"#2A4060",
+                        <span style={{ marginLeft:8, color:"var(--text-dim)",
                           fontSize:10, fontFamily:"monospace" }}>
                           {fp}
                         </span>
@@ -3753,12 +3753,12 @@ function EjecucionPhase({
           {/* Opción B — Git Remoto */}
           <div style={card()}>
             {secTitle("🌐", "Opción B — Git Remoto (no disponible en modo standalone)", "#4A6080")}
-            <div style={{ fontSize:12, color:"#4A6080", lineHeight:1.7 }}>
+            <div style={{ fontSize:12, color:"var(--text-secondary)", lineHeight:1.7 }}>
               La integración directa con GitHub / GitLab / Azure DevOps requiere un servidor proxy
               para manejar restricciones CORS del navegador. Esta funcionalidad no está disponible
               en la versión standalone (single-file HTML).<br/><br/>
-              <strong style={{ color:"#D0DCF0" }}>Alternativa recomendada:</strong> clonar el
-              repositorio localmente con <code style={{ color:"#00D4FF" }}>git clone</code> y usar
+              <strong style={{ color:"var(--text-primary)" }}>Alternativa recomendada:</strong> clonar el
+              repositorio localmente con <code style={{ color:"var(--accent)" }}>git clone</code> y usar
               la Opción A.
             </div>
           </div>
@@ -3784,10 +3784,10 @@ function EjecucionPhase({
                   ? Math.round(totalFound / issues.length * 100) + "%"
                   : "0%" },
               ].map(({ label, value }) => (
-                <div key={label} style={{ background:"#060B14", border:"1px solid #1A2840",
+                <div key={label} style={{ background:"var(--bg-base)", border:"1px solid var(--border)",
                   borderRadius:8, padding:"10px 14px" }}>
-                  <div style={{ fontSize:18, fontWeight:800, color:"#00D4FF" }}>{value}</div>
-                  <div style={{ fontSize:10, color:"#4A6080", marginTop:2 }}>{label}</div>
+                  <div style={{ fontSize:18, fontWeight:800, color:"var(--accent)" }}>{value}</div>
+                  <div style={{ fontSize:10, color:"var(--text-secondary)", marginTop:2 }}>{label}</div>
                 </div>
               ))}
             </div>
@@ -3795,7 +3795,7 @@ function EjecucionPhase({
               <button style={btnP} onClick={exportExcel}>⬇ Exportar Excel Enriquecido</button>
               <button style={btnS} onClick={exportJson}>⬇ Exportar JSON</button>
               <button style={{ ...btnP, background:"transparent",
-                border:"1px solid #1A2840", color:"#4A6080" }} onClick={dlAll}>
+                border:"1px solid var(--border)", color:"var(--text-secondary)" }} onClick={dlAll}>
                 ⬇ Re-descargar Documentos Fase 2
               </button>
             </div>
@@ -3810,7 +3810,7 @@ function EjecucionPhase({
                 const rec = recs[issue.id];
                 const fp  = m.file || issue.filePath;
                 return (
-                  <div key={issue.id} style={{ borderBottom:"1px solid #0D1828",
+                  <div key={issue.id} style={{ borderBottom:"1px solid var(--border)",
                     padding:"12px 0" }}>
                     <div style={{ display:"flex", justifyContent:"space-between",
                       alignItems:"flex-start", gap:8 }}>
@@ -3819,14 +3819,14 @@ function EjecucionPhase({
                           {issue.id?.substring(0, 16)}…
                         </span>
                         <span style={{ marginLeft:10, fontSize:12,
-                          color:"#D0DCF0", fontWeight:600 }}>
+                          color:"var(--text-primary)", fontWeight:600 }}>
                           {m.vulnType || issue.issueType}
                         </span>
                       </div>
                       <div style={{ display:"flex", gap:5, flexShrink:0 }}>
                         {m.found && (
                           <span style={{ padding:"2px 7px", background:"#00D4FF22",
-                            color:"#00D4FF", borderRadius:4, fontSize:10 }}>PDF ✓</span>
+                            color:"var(--accent)", borderRadius:4, fontSize:10 }}>PDF ✓</span>
                         )}
                         {codeCache[fp] && (
                           <span style={{ padding:"2px 7px", background:"#00E67622",
@@ -3838,21 +3838,21 @@ function EjecucionPhase({
                         )}
                       </div>
                     </div>
-                    <div style={{ fontSize:11, color:"#4A6080",
+                    <div style={{ fontSize:11, color:"var(--text-secondary)",
                       marginTop:4, fontFamily:"monospace" }}>
                       {fp} {m.line ? `· Línea ${m.line}` : ""}
                     </div>
                     {rec && (
-                      <div style={{ marginTop:8, background:"#060B14",
+                      <div style={{ marginTop:8, background:"var(--bg-base)",
                         border:"1px solid #7C3AED44", borderRadius:6,
-                        padding:"8px 12px", fontSize:11, color:"#D0DCF0",
+                        padding:"8px 12px", fontSize:11, color:"var(--text-primary)",
                         lineHeight:1.6, maxHeight:100, overflowY:"auto",
                         whiteSpace:"pre-wrap" }}>
                         {rec.substring(0, 350)}{rec.length > 350 ? "…" : ""}
                       </div>
                     )}
                     {!analyzed && !rec && (
-                      <div style={{ fontSize:11, color:"#2A4060", marginTop:4 }}>
+                      <div style={{ fontSize:11, color:"var(--text-dim)", marginTop:4 }}>
                         → Analiza el PDF y genera recomendación IA para ver resultados
                       </div>
                     )}
@@ -3884,6 +3884,7 @@ function EjecucionPhase({
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
 function App(){
+  const [darkMode,setDarkMode] = useState(true);
   const [phase,setPhase]   = useState(0);
   const [done,setDone]     = useState(new Set());
   const [issues,setIssues] = useState([]);
@@ -3893,7 +3894,7 @@ function App(){
     gitBase:"https://nausp-aapp0001.aceins.com/mexico-it-chubbnet/",
     sonarBase:"https://sonar.chubb.com",
     sonarProjectKey:"NAGH-APM0001304-mexico-it-chubbnet-",
-    projectName:"ACE.BasicBook", responsable:"", ticket:"SEC-"+TODAY,
+    projectName:"E001VulnerabilityRemediationReg", responsable:"", ticket:"SEC-"+TODAY,
   });
   const [sonarData,setSonarData] = useState({});  // { repoName: { qg, secIssues, secRating, relIssues, relRating, maintIssues, maintRating, coverage, duplications, hotspots, hotspotsStatus, loc, version, branch } }
   const setSonarF = (repo,field,val) => setSonarData(p=>({...p,[repo]:{...(p[repo]||{}), [field]:val}}));
@@ -4420,9 +4421,6 @@ function App(){
       ["SEC-006","Diseño General redactado y aprobado","Documentación","Obligatorio"],
       ["SEC-007","Diseño Técnico redactado y aprobado","Documentación","Obligatorio"],
       ["SEC-008","CIP completo","Documentación","Obligatorio"],
-      ["APROV-001","Visto Bueno Gerente de Proyecto","Aprobación","Bloqueante"],
-      ["APROV-002","Visto Bueno Oficial de Seguridad","Aprobación","Bloqueante"],
-      ["APROV-003","Visto Bueno QA Lead","Aprobación","Bloqueante"],
       ["DEV-001","jquery-validation actualizado ≥1.19.3","Desarrollo","Obligatorio"],
       ["DEV-002","Instancias XSS sanitizadas con DOMPurify","Desarrollo","Obligatorio"],
       ["DEV-003","DOMPurify agregado como dependencia","Desarrollo","Obligatorio"],
@@ -4474,40 +4472,98 @@ function App(){
     dlFile(m[t].n,m[t].f()); showToast(m[t].n+" descargado");
   };
 
-  const completePhase=n=>{ setDone(p=>new Set([...p,n])); showToast(`Fase ${n} completada ✓`); if(n<5)setPhase(n+1); };
-  const progress=Math.round((done.size/6)*100);
-  const PHASES=["Importar Excel","Diagnóstico","Documentos","Aprobación","Ejecución","Despliegue"];
+  const completePhase=n=>{ setDone(p=>new Set([...p,n])); showToast(`Fase ${n} completada ✓`); if(n<4)setPhase(n+1); };
+  const progress=Math.round((done.size/5)*100);
+  const PHASES=["Importar Excel","Diagnóstico","Documentos","Ejecución","Despliegue"];
 
   // ── RENDER ───────────────────────────────────────────────────────────────────
   return (
-    <div style={{fontFamily:"'Segoe UI',sans-serif",background:"#060B14",minHeight:"100vh",color:"#D0DCF0",fontSize:13}}>
+    <div data-theme={darkMode ? "dark" : "light"} style={{fontFamily:"'Segoe UI',sans-serif",background:"var(--bg-base)",minHeight:"100vh",color:"var(--text-primary)",fontSize:13}}>
+      <style>{`
+  [data-theme="dark"] {
+    --bg-base: #060B14;
+    --bg-panel: #0A1020;
+    --bg-card: #0F1E35;
+    --bg-input: #0A1828;
+    --border: #1A2840;
+    --border-mid: #243650;
+    --text-dim: #2A4060;
+    --text-muted: #3A5070;
+    --text-secondary: #4A6080;
+    --text-primary: #D0DCF0;
+    --text-bright: #E0EDFF;
+    --accent: #00D4FF;
+    --accent2: #7C3AED;
+    --success: #00E676;
+    --warning: #FFB800;
+    --danger: #FF4444;
+    --row-hover: #0F1E3580;
+  }
+  [data-theme="light"] {
+    --bg-base: #F0F4F8;
+    --bg-panel: #FFFFFF;
+    --bg-card: #F8FAFC;
+    --bg-input: #EEF2F7;
+    --border: #CBD5E1;
+    --border-mid: #E2E8F0;
+    --text-dim: #94A3B8;
+    --text-muted: #64748B;
+    --text-secondary: #475569;
+    --text-primary: #1E293B;
+    --text-bright: #0F172A;
+    --accent: #0284C7;
+    --accent2: #7C3AED;
+    --success: #16A34A;
+    --warning: #D97706;
+    --danger: #DC2626;
+    --row-hover: #E2E8F080;
+  }
+`}</style>
 
       {/* TOPBAR */}
-      <div style={{background:"#0A1020",borderBottom:"1px solid #1A2840",padding:"0 24px",height:52,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100}}>
+      <div style={{background:"var(--bg-panel)",borderBottom:"1px solid var(--border)",padding:"0 24px",height:52,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <div style={{width:30,height:30,background:"linear-gradient(135deg,#00D4FF,#7C3AED)",borderRadius:7,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>🔐</div>
-          <span style={{fontSize:15,fontWeight:700,color:"#E0EDFF"}}>DevSecOps · Vulnerability Analyzer</span>
+          <span style={{fontSize:15,fontWeight:700,color:"var(--text-bright)"}}>DevSecOps · Vulnerability Analyzer</span>
         </div>
-        <div style={{fontSize:11,color:"#3A5070",fontFamily:"monospace"}}>{cfg.ticket} | {issues.length} issues | {TODAY_D}</div>
+        <div style={{display:"flex",alignItems:"center",gap:12}}>
+          <div style={{fontSize:11,color:"var(--text-muted)",fontFamily:"monospace"}}>{cfg.ticket} | {issues.length} issues | {TODAY_D}</div>
+          <button
+            onClick={() => setDarkMode(p => !p)}
+            title={darkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+            style={{
+              background: "none",
+              border: "1px solid var(--border-mid)",
+              borderRadius: 6,
+              color: "var(--text-secondary)",
+              cursor: "pointer",
+              fontSize: 16,
+              padding: "3px 8px",
+              lineHeight: 1,
+            }}
+          >
+            {darkMode ? "☀" : "🌙"}
+          </button>
+        </div>
       </div>
 
       <div style={{display:"flex",minHeight:"calc(100vh - 52px)"}}>
 
         {/* SIDEBAR */}
-        <nav style={{width:200,background:"#0A1020",borderRight:"1px solid #1A2840",padding:"16px 0",flexShrink:0,display:"flex",flexDirection:"column"}}>
-          <div style={{fontSize:9,color:"#2A4060",letterSpacing:2,padding:"0 14px 10px",textTransform:"uppercase",fontFamily:"monospace"}}>FASES SOP</div>
+        <nav style={{width:200,background:"var(--bg-panel)",borderRight:"1px solid var(--border)",padding:"16px 0",flexShrink:0,display:"flex",flexDirection:"column"}}>
+          <div style={{fontSize:9,color:"var(--text-dim)",letterSpacing:2,padding:"0 14px 10px",textTransform:"uppercase",fontFamily:"monospace"}}>FASES SOP</div>
           {PHASES.map((p,i)=>(
-            <button key={i} onClick={()=>setPhase(i)} style={{display:"flex",alignItems:"center",gap:8,padding:"9px 14px",width:"100%",border:"none",background:phase===i?"#0F1E35":"transparent",color:done.has(i)?"#00E676":phase===i?"#00D4FF":"#4A6080",cursor:"pointer",textAlign:"left",fontSize:11,fontWeight:600,borderLeft:`2px solid ${phase===i?"#00D4FF":done.has(i)?"#00E676":"transparent"}`,transition:"all 0.15s"}}>
-              <span style={{width:20,height:20,borderRadius:"50%",background:done.has(i)?"#00E676":phase===i?"#00D4FF":"#1A2840",color:done.has(i)||phase===i?"#000":"#4A6080",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,flexShrink:0}}>{done.has(i)?"✓":i}</span>
+            <button key={i} onClick={()=>setPhase(i)} style={{display:"flex",alignItems:"center",gap:8,padding:"9px 14px",width:"100%",border:"none",background:phase===i?"var(--bg-card)":"transparent",color:done.has(i)?"var(--success)":phase===i?"var(--accent)":"var(--text-secondary)",cursor:"pointer",textAlign:"left",fontSize:11,fontWeight:600,borderLeft:`2px solid ${phase===i?"var(--accent)":done.has(i)?"var(--success)":"transparent"}`,transition:"all 0.15s"}}>
+              <span style={{width:20,height:20,borderRadius:"50%",background:done.has(i)?"var(--success)":phase===i?"var(--accent)":"var(--border)",color:done.has(i)||phase===i?"#000":"var(--text-secondary)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,flexShrink:0}}>{done.has(i)?"✓":i}</span>
               {p}
             </button>
           ))}
-          <div style={{marginTop:"auto",padding:"14px",borderTop:"1px solid #1A2840"}}>
+          <div style={{marginTop:"auto",padding:"14px",borderTop:"1px solid var(--border)"}}>
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
-              <span style={{fontSize:10,color:"#2A4060",fontFamily:"monospace"}}>PROGRESO</span>
-              <span style={{fontSize:10,color:"#00D4FF",fontFamily:"monospace"}}>{progress}%</span>
+              <span style={{fontSize:10,color:"var(--text-dim)",fontFamily:"monospace"}}>PROGRESO</span>
+              <span style={{fontSize:10,color:"var(--accent)",fontFamily:"monospace"}}>{progress}%</span>
             </div>
-            <div style={{background:"#0F1E35",borderRadius:4,height:4}}>
+            <div style={{background:"var(--bg-card)",borderRadius:4,height:4}}>
               <div style={{height:4,background:"linear-gradient(90deg,#00D4FF,#7C3AED)",borderRadius:4,width:`${progress}%`,transition:"width 0.4s"}}/>
             </div>
           </div>
@@ -4518,25 +4574,25 @@ function App(){
 
 
           {/* ── FASE 0: IMPORTACIÓN ── */}
-          {phase===0&&<ImportacionPhase cfg={cfg} setCfg={setCfg} issues={issues} stats={stats} fileRef={fileRef} handleFile={handleFile} lbl={lbl} inp={inp} card={card} infoBox={infoBox} warnBox={warnBox} btnP={btnP} completePhase={completePhase} sevBadge={sevBadge} methBadge={methBadge}/>}
+          {phase===0&&<ImportacionPhase cfg={cfg} setCfg={setCfg} issues={issues} stats={stats} fileRef={fileRef} handleFile={handleFile} lbl={lbl} inp={inp} card={card} infoBox={infoBox} warnBox={warnBox} btnP={btnP} completePhase={completePhase} sevBadge={sevBadge} methBadge={methBadge} darkMode={darkMode}/>}
 
           {/* ── FASE 1: DIAGNÓSTICO ── */}
-          {phase===1&&<DiagnosticoPhase cfg={cfg} issues={issues} repos={repos} stats={stats} sonarData={sonarData} setSonarF={setSonarF} setRepoF={setRepoF} fetchSonar={fetchSonar} mcpUrl={mcpUrl} setMcpUrl={setMcpUrl} mcpStatus={mcpStatus} checkMcpStatus={checkMcpStatus} jenkinsMcpUrl={jenkinsMcpUrl} setJenkinsMcpUrl={setJenkinsMcpUrl} jenkinsMcpStatus={jenkinsMcpStatus} checkJenkinsMcpStatus={checkJenkinsMcpStatus} getSonarUrl={getSonarUrl} checkRepo={checkRepo} checkAll={checkAll} exportPipelineDashboard={exportPipelineDashboard} loadDashboardExcel={loadDashboardExcel} dashboardWbName={dashboardWbName} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} card={card} inp={inp} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} btnA={btnA} dot={dot} methBadge={methBadge} sevBadge={sevBadge}/>}
+          {phase===1&&<DiagnosticoPhase cfg={cfg} issues={issues} repos={repos} stats={stats} sonarData={sonarData} setSonarF={setSonarF} setRepoF={setRepoF} fetchSonar={fetchSonar} mcpUrl={mcpUrl} setMcpUrl={setMcpUrl} mcpStatus={mcpStatus} checkMcpStatus={checkMcpStatus} jenkinsMcpUrl={jenkinsMcpUrl} setJenkinsMcpUrl={setJenkinsMcpUrl} jenkinsMcpStatus={jenkinsMcpStatus} checkJenkinsMcpStatus={checkJenkinsMcpStatus} getSonarUrl={getSonarUrl} checkRepo={checkRepo} checkAll={checkAll} exportPipelineDashboard={exportPipelineDashboard} loadDashboardExcel={loadDashboardExcel} dashboardWbName={dashboardWbName} completePhase={completePhase} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} card={card} inp={inp} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnP={btnP} btnS={btnS} btnG={btnG} btnA={btnA} dot={dot} methBadge={methBadge} sevBadge={sevBadge} darkMode={darkMode}/>}
 
           {/* ── FASE 2: DOCUMENTOS ── */}
-          {phase===2&&<DocumentosPhase cfg={cfg} issues={issues} cipData={cipData} docData={docData} docTab={docTab} setDocTab={setDocTab} setVulnF={setVulnF} stats={stats} sonarData={sonarData} dl1={dl1} dlAll={dlAll} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} TODAY={TODAY} card={card} inp={inp} ta={ta} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnS={btnS} btnG={btnG} sevBadge={sevBadge} fetchAI={fetchAI} fetchAI_DT={fetchAI_DT} fetchAI_field={fetchAI_field} aiLoading={aiLoading} claudeMcpStatus={claudeMcpStatus} repos={repos}/>}
+          {phase===2&&<DocumentosPhase cfg={cfg} issues={issues} cipData={cipData} docData={docData} docTab={docTab} setDocTab={setDocTab} setVulnF={setVulnF} stats={stats} sonarData={sonarData} dl1={dl1} dlAll={dlAll} showSources={showSources} setShowSources={setShowSources} getSourcesDisplay={getSourcesDisplay} TODAY={TODAY} card={card} inp={inp} ta={ta} infoBox={infoBox} warnBox={warnBox} lbl={lbl} btnS={btnS} btnG={btnG} sevBadge={sevBadge} fetchAI={fetchAI} fetchAI_DT={fetchAI_DT} fetchAI_field={fetchAI_field} aiLoading={aiLoading} claudeMcpStatus={claudeMcpStatus} repos={repos} darkMode={darkMode}/>}
 
-          {/* ── FASES 3 y 5 ── */}
-          {(phase===3||phase===5)&&<GenericPhase phase={phase} cfg={cfg} cipData={cipData} TODAY={TODAY} dlAll={dlAll} completePhase={completePhase} card={card} infoBox={infoBox} btnP={btnP} btnS={btnS}/>}
+          {/* ── FASE 3: EJECUCIÓN ── */}
+          {phase===3&&<EjecucionPhase cfg={cfg} issues={issues} claudeMcpUrl={claudeMcpUrl} claudeMcpStatus={claudeMcpStatus} checkClaudeMcpStatus={checkClaudeMcpStatus} TODAY={TODAY} completePhase={completePhase} showToast={showToast} card={card} infoBox={infoBox} warnBox={warnBox} btnP={btnP} btnS={btnS} codeBox={codeBox} dlAll={dlAll} darkMode={darkMode}/>}
 
-          {/* ── FASE 4: EJECUCIÓN ── */}
-          {phase===4&&<EjecucionPhase cfg={cfg} issues={issues} claudeMcpUrl={claudeMcpUrl} claudeMcpStatus={claudeMcpStatus} checkClaudeMcpStatus={checkClaudeMcpStatus} TODAY={TODAY} completePhase={completePhase} showToast={showToast} card={card} infoBox={infoBox} warnBox={warnBox} btnP={btnP} btnS={btnS} codeBox={codeBox} dlAll={dlAll}/>}
+          {/* ── FASE 4: DESPLIEGUE ── */}
+          {phase===4&&<GenericPhase phase={phase} cfg={cfg} cipData={cipData} TODAY={TODAY} dlAll={dlAll} completePhase={completePhase} card={card} infoBox={infoBox} btnP={btnP} btnS={btnS} darkMode={darkMode}/>}
         </main>
       </div>
 
       {/* TOAST */}
       {toast&&(
-        <div style={{position:"fixed",bottom:20,right:20,zIndex:9999,background:"#0A1020",border:`1px solid ${toast.type==="ok"?"#00E676":"#FFB800"}`,borderRadius:8,padding:"10px 16px",fontSize:12,color:toast.type==="ok"?"#00E676":"#FFB800",fontFamily:"monospace",boxShadow:`0 8px 24px ${toast.type==="ok"?"#00E67620":"#FFB80020"}`,animation:"slideIn 0.2s ease"}}>
+        <div style={{position:"fixed",bottom:20,right:20,zIndex:9999,background:"var(--bg-panel)",border:`1px solid ${toast.type==="ok"?"var(--success)":"var(--warning)"}`,borderRadius:8,padding:"10px 16px",fontSize:12,color:toast.type==="ok"?"var(--success)":"var(--warning)",fontFamily:"monospace",boxShadow:`0 8px 24px ${toast.type==="ok"?"#00E67620":"#FFB80020"}`,animation:"slideIn 0.2s ease"}}>
           {toast.msg}
         </div>
       )}

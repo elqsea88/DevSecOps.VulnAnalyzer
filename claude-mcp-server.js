@@ -54,6 +54,7 @@ function loadConfig() {
     contextLines:   parseInt(cfg.contextLines  || "30", 10),
     gitToken:       process.env.MCP_GIT_TOKEN  || cfg.gitToken       || "",
     gitApiBase:     cfg.gitApiBase             || "https://api.github.com",
+    claudePath:     process.env.CLAUDE_PATH    || cfg.claudePath     || "claude",
   };
 }
 
@@ -280,7 +281,7 @@ async function readFromGit(repoUrl, filePath, lineNum, gitToken, contextLines = 
 }
 
 // ── CLAUDE CLI CALL ──────────────────────────────────────────────────────────
-function askClaude(prompt, model, timeoutMs) {
+function askClaude(prompt, model, timeoutMs, claudePath = "claude") {
   return new Promise((resolve, reject) => {
     // El CLI de Claude usa nombres cortos: "sonnet", "opus", "haiku"
     const cliModel = (model || "sonnet")
@@ -303,7 +304,7 @@ function askClaude(prompt, model, timeoutMs) {
       console.log(`  [askClaude] vars limpiadas: ${claudeCodeVars.join(", ")}`);
     }
 
-    const proc = spawn("claude", args, { env, stdio: ["pipe", "pipe", "pipe"] });
+    const proc = spawn(claudePath, args, { env, stdio: ["pipe", "pipe", "pipe"], shell: claudePath.endsWith(".cmd") });
 
     // Enviar el prompt por stdin y cerrarlo para que el CLI sepa que terminó
     proc.stdin.write(prompt, "utf8");
@@ -597,7 +598,7 @@ const server = http.createServer(async (req, res) => {
     console.log(`  → /api/recommend | issue: ${(body.issueId||"").substring(0,8)}… | tipo: ${body.vulnType || "N/A"} | src: ${srcTag}`);
 
     try {
-      const text = await askClaude(prompt, cfg.model, cfg.timeoutMs);
+      const text = await askClaude(prompt, cfg.model, cfg.timeoutMs, cfg.claudePath);
       console.log(`  ✓ Recomendación generada (${text.length} chars)`);
       return jsonRes(res, 200, { ok: true, recommendation: text, srcTag });
     } catch (err) {
@@ -616,7 +617,7 @@ const server = http.createServer(async (req, res) => {
     console.log(`  → /api/enhance-vuln | tipo: ${body.type || "N/A"} | modo: ${body.mode || "dg"}`);
 
     try {
-      const text = await askClaude(prompt, cfg.model, cfg.timeoutMs);
+      const text = await askClaude(prompt, cfg.model, cfg.timeoutMs, cfg.claudePath);
       console.log(`  ✓ Contenido generado (${text.length} chars)`);
       return jsonRes(res, 200, { ok: true, text });
     } catch (err) {
@@ -635,7 +636,7 @@ const server = http.createServer(async (req, res) => {
     console.log(`  → /api/enhance-field | tipo: ${body.type || "N/A"} | campo: ${body.field || "N/A"}`);
 
     try {
-      const text = await askClaude(prompt, cfg.model, cfg.timeoutMs);
+      const text = await askClaude(prompt, cfg.model, cfg.timeoutMs, cfg.claudePath);
       console.log(`  ✓ Campo generado (${text.length} chars)`);
       return jsonRes(res, 200, { ok: true, text });
     } catch (err) {
@@ -651,6 +652,7 @@ const server = http.createServer(async (req, res) => {
 const cfg = loadConfig();
 server.listen(cfg.port, "127.0.0.1", () => {
   console.log(`\n✓ Claude MCP Server  →  http://127.0.0.1:${cfg.port}`);
+  console.log(`  CLI     : ${cfg.claudePath}`);
   console.log(`  Auth    : Claude CLI (~/.claude/.credentials.json)`);
   console.log(`  Modelo  : ${cfg.model}`);
   console.log(`  Timeout : ${cfg.timeoutMs}ms`);

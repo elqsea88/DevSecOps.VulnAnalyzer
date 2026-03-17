@@ -4,5 +4,6 @@
   "timeoutMs":      90000,
   "repositoryPath": "",
   "contextLines":   30,
-  "gitToken":       ""
+  "gitToken":       "",
+  "claudePath":     "C:/Users/elqse/.local/bin/claude.exe"
 }
